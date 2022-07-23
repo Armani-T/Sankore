@@ -2,6 +2,14 @@ from PySide6 import QtWidgets as widgets
 
 APP_NAME = "Sankore"
 
+# TODO: Populate `libraries` using the DB.
+libraries = {
+    "All Books": (),
+    "To Read": (),
+    "Already Read": (),
+    "Currently Reading": (),
+}
+
 
 class AppWindow(widgets.QMainWindow):
     """The main window which holds all the pages in the app."""
@@ -25,16 +33,16 @@ class AppWindow(widgets.QMainWindow):
 class StartPage(widgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.current_library = "All Books"
-        libraries = [self.current_library, "To Read", "Already Read"]
-        # TODO: Replace with a call to the db.
 
-        layout = widgets.QHBoxLayout()
         self.combo = widgets.QComboBox()
-        self.combo.addItems(libraries)
+        self.combo.addItems(libraries.keys())
+        self.combo.currentTextChanged.connect(self.update_table)
+
         self.table = widgets.QTableWidget()
         self.table.resizeColumnsToContents()
-        self.fill_table()
+        self.update_table(self.combo.currentText())
+
+        layout = widgets.QHBoxLayout()
         left_layout = widgets.QVBoxLayout()
         left_layout.addWidget(self.combo)
         left_layout.addWidget(self.table)
@@ -45,6 +53,7 @@ class StartPage(widgets.QWidget):
         progress_title = widgets.QLabel("My Monthly Progress")
         progress_text = widgets.QLabel("You've completed 4 books this month!")
         progress_bar = widgets.QProgressBar()
+
         right_layout = widgets.QVBoxLayout()
         right_layout.addWidget(update_button)
         right_layout.addWidget(progress_title)
@@ -55,5 +64,5 @@ class StartPage(widgets.QWidget):
 
         self.setLayout(layout)
 
-    def fill_table(self):
+    def update_table(self, library):
         ...
