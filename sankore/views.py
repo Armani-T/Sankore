@@ -49,8 +49,7 @@ class StartPage(widgets.QWidget):
         self.combo.addItems(libraries.keys())
         self.combo.currentTextChanged.connect(self.update_table)
 
-        self.model = LibraryModel(self.combo.currentText())
-        self.table = widgets.QTableView()
+        self.table = widgets.QTableWidget()
         self.update_table(self.combo.currentText())
 
         layout = widgets.QHBoxLayout()
@@ -62,6 +61,8 @@ class StartPage(widgets.QWidget):
         layout.addLayout(left_layout)
 
         update_button = widgets.QPushButton("Update reading position")
+        update_button.clicked.connect(self.update_progress)
+
         progress_title = widgets.QLabel("My Monthly Progress")
         progress_text = widgets.QLabel("You've completed 4 books this month!")
         progress_bar = widgets.QProgressBar()
@@ -74,34 +75,19 @@ class StartPage(widgets.QWidget):
         right_layout.addStretch()
         layout.addLayout(right_layout)
 
+    def update_progress(self):
+        print("Clicked!")
+
     def update_table(self, lib_name):
-        self.model = LibraryModel(lib_name)
-        self.table.setModel(self.model)
+        self.table.setColumnCount(3)
+        self.table.setRowCount(len(libraries[lib_name]))
+        self.table.setHorizontalHeaderLabels(("Title", "Author(s)", "No. of pages"))
+        self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
+        for row_index, row in enumerate(libraries[lib_name]):
+            for col_index, value in enumerate(row):
+                self.table.setItem(
+                    row_index, col_index, widgets.QTableWidgetItem(str(value))
+                )
 
 
-class LibraryModel(core.QAbstractTableModel):
-    cols = ("Title", "Author(s)", "No. of pages")
-
-    def __init__(self, lib_name):
-        super().__init__()
-        self._data = libraries  # TODO: Populate using the DB.
-        self.current_lib = lib_name
-
-    def columnCount(self, _):
-        return len(self.cols)
-
-    def data(self, index, role=core.Qt.DisplayRole):
-        if role == core.Qt.BackgroundRole:
-            return gui.QColor(core.Qt.white)
-        if role == core.Qt.TextAlignmentRole:
-            return core.Qt.AlignCenter
-        row, col = index.row(), index.column()
-        return self._data[self.current_lib][row][col]
-
-    def headerData(self, section, orientation, role):
-        if role == core.Qt.DisplayRole and orientation == core.Qt.Horizontal:
-            return self.cols[section]
-        return None
-
-    def rowCount(self, _):
-        return len(self._data[self.current_lib])
+AppWindow().run()
