@@ -51,7 +51,6 @@ class StartPage(widgets.QWidget):
         self.combo.currentTextChanged.connect(self.update_table)
 
         self.table = widgets.QTableView()
-        self.table.resizeRowsToContents()
         self.table.setModel(self.model)
         self.update_table(self.combo.currentText())
 
@@ -82,34 +81,32 @@ class StartPage(widgets.QWidget):
 
 
 class LibraryModel(core.QAbstractTableModel):
+    _columns = ("Title", "Author(s)", "No. of pages")
+
     def __init__(self):
         super().__init__()
-        self._data = libraries  # TODO: Populate this using the DB.
-
-    def _index_data(self, col):
-        col = col % self.columnCount(None)
-        print(self._data["All Books"])
-        return self._data["All Books"][col]
+        self._data = libraries  # TODO: Populate using the DB.
 
     def columnCount(self, _):
-        return 3
+        return len(self._columns)
+
+    def data(self, index, role=core.Qt.DisplayRole):
+        if role == core.Qt.BackgroundRole:
+            return gui.QColor(core.Qt.white)
+        if role == core.Qt.TextAlignmentRole:
+            return core.Qt.AlignCenter
+        if role == core.Qt.DisplayRole:
+            return self._index_data(index.column())
+        return None
+
+    def headerData(self, section, orientation, role):
+        if role == core.Qt.DisplayRole and orientation == core.Qt.Horizontal:
+            return self._columns[section]
+        return None
 
     def rowCount(self, _):
         return len(self._data)
 
-    def headerData(self, section, orientation, role):
-        if role != core.Qt.DisplayRole:
-            return None
-        if orientation == core.Qt.Horizontal:
-            return ("Title", "Author(s)", "Number of Pages")[section]
-        return None
-
-    def data(self, index, role=core.Qt.DisplayRole):
-        row, col = index.row(), index.column()
-        if role == core.Qt.BackgroundRole:
-            return gui.QColor(core.Qt.white)
-        if role == core.Qt.TextAlignmentRole:
-            return gui.QColor(core.Qt.AlignRight)
-        if role == core.Qt.DisplayRole:
-            return self._index_data(col)
-        return None
+    def _index_data(self, col):
+        col = col % self.columnCount(None)
+        return self._data["All Books"][col]
