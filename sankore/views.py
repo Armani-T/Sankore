@@ -4,10 +4,24 @@ APP_NAME = "Sankore"
 
 # TODO: Populate `libraries` using the DB.
 libraries = {
-    "All Books": (),
-    "To Read": (),
-    "Already Read": (),
-    "Currently Reading": (),
+    "All Books": (
+        ("The Gallic War", "Julius Caesar", 470),
+        ("The Civil War", "Julius Caesar", 368),
+        ("Meditations", "Marcus Aurelius", 254),
+        ("On The Laws", "Marcus Cicero", 544),
+        ("On The Ideal Orator", "Marcus Cicero", 384),
+    ),
+    "To Read": (
+        ("On The Laws", "Marcus Cicero", 544),
+    ),
+    "Already Read": (
+        ("The Gallic War", "Julius Caesar", 470),
+        ("The Civil War", "Julius Caesar", 368),
+        ("Meditations", "Marcus Aurelius", 254),
+    ),
+    "Currently Reading": (
+        ("On The Ideal Orator", "Marcus Cicero", 384),
+    ),
 }
 
 
