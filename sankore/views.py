@@ -51,7 +51,7 @@ class StartPage(widgets.QWidget):
         self.combo.currentTextChanged.connect(self.update_table)
 
         self.table = widgets.QTableView()
-        self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
         self.table.setModel(self.model)
         self.update_table(self.combo.currentText())
 
@@ -79,3 +79,37 @@ class StartPage(widgets.QWidget):
 
     def update_table(self, lib_name):
         books = libraries.get(lib_name, "All Books")
+
+
+class LibraryModel(core.QAbstractTableModel):
+    def __init__(self):
+        super().__init__()
+        self._data = libraries  # TODO: Populate this using the DB.
+
+    def _index_data(self, col):
+        col = col % self.columnCount(None)
+        print(self._data["All Books"])
+        return self._data["All Books"][col]
+
+    def columnCount(self, _):
+        return 3
+
+    def rowCount(self, _):
+        return len(self._data)
+
+    def headerData(self, section, orientation, role):
+        if role != core.Qt.DisplayRole:
+            return None
+        if orientation == core.Qt.Horizontal:
+            return ("Title", "Author(s)", "Number of Pages")[section]
+        return None
+
+    def data(self, index, role=core.Qt.DisplayRole):
+        row, col = index.row(), index.column()
+        if role == core.Qt.BackgroundRole:
+            return gui.QColor(core.Qt.white)
+        if role == core.Qt.TextAlignmentRole:
+            return gui.QColor(core.Qt.AlignRight)
+        if role == core.Qt.DisplayRole:
+            return self._index_data(col)
+        return None
