@@ -44,11 +44,11 @@ class AppWindow(widgets.QMainWindow):
 class StartPage(widgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.model = LibraryModel()
 
         self.combo = widgets.QComboBox()
         self.combo.addItems(libraries.keys())
         self.combo.currentTextChanged.connect(self.update_table)
+        self.model = LibraryModel(self.combo.currentText())
 
         self.table = widgets.QTableView()
         self.table.setModel(self.model)
@@ -77,36 +77,32 @@ class StartPage(widgets.QWidget):
         self.setLayout(layout)
 
     def update_table(self, lib_name):
-        books = libraries.get(lib_name, "All Books")
+        self.model.current_lib = self.combo.currentText()
 
 
 class LibraryModel(core.QAbstractTableModel):
-    _columns = ("Title", "Author(s)", "No. of pages")
+    cols = ("Title", "Author(s)", "No. of pages")
 
-    def __init__(self):
+    def __init__(self, lib_name):
         super().__init__()
         self._data = libraries  # TODO: Populate using the DB.
+        self.current_lib = lib_name
 
     def columnCount(self, _):
-        return len(self._columns)
+        return len(self.cols)
 
     def data(self, index, role=core.Qt.DisplayRole):
         if role == core.Qt.BackgroundRole:
             return gui.QColor(core.Qt.white)
         if role == core.Qt.TextAlignmentRole:
             return core.Qt.AlignCenter
-        if role == core.Qt.DisplayRole:
-            return self._index_data(index.column())
-        return None
+        row, col = index.row(), index.column()
+        return self._data[self.current_lib][row][col]
 
     def headerData(self, section, orientation, role):
         if role == core.Qt.DisplayRole and orientation == core.Qt.Horizontal:
-            return self._columns[section]
+            return self.cols[section]
         return None
 
     def rowCount(self, _):
-        return len(self._data)
-
-    def _index_data(self, col):
-        col = col % self.columnCount(None)
-        return self._data["All Books"][col]
+        return len(self._data[self.current_lib])
