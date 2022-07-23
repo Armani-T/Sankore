@@ -1,5 +1,5 @@
-from PySide6 import QtCore as core
-from PySide6 import QtGui as gui
+from PySide6.QtCore import QAbstractTableModel, Qt
+from PySide6.QtGui import QColor
 from PySide6 import QtWidgets as widgets
 
 APP_NAME = "Sankore"
