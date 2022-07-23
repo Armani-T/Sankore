@@ -48,13 +48,13 @@ class StartPage(widgets.QWidget):
         self.combo = widgets.QComboBox()
         self.combo.addItems(libraries.keys())
         self.combo.currentTextChanged.connect(self.update_table)
-        self.model = LibraryModel(self.combo.currentText())
 
+        self.model = LibraryModel(self.combo.currentText())
         self.table = widgets.QTableView()
-        self.table.setModel(self.model)
         self.update_table(self.combo.currentText())
 
         layout = widgets.QHBoxLayout()
+        self.setLayout(layout)
         left_layout = widgets.QVBoxLayout()
         left_layout.addWidget(self.combo)
         left_layout.addWidget(self.table)
@@ -74,10 +74,9 @@ class StartPage(widgets.QWidget):
         right_layout.addStretch()
         layout.addLayout(right_layout)
 
-        self.setLayout(layout)
-
     def update_table(self, lib_name):
-        self.model.current_lib = self.combo.currentText()
+        self.model = LibraryModel(lib_name)
+        self.table.setModel(self.model)
 
 
 class LibraryModel(core.QAbstractTableModel):
