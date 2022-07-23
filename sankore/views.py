@@ -1,8 +1,9 @@
+from PySide6 import QtCore as core
+from PySide6 import QtGui as gui
 from PySide6 import QtWidgets as widgets
 
 APP_NAME = "Sankore"
 
-# TODO: Populate `libraries` using the DB.
 libraries = {
     "All Books": (
         ("The Gallic War", "Julius Caesar", 470),
@@ -11,17 +12,13 @@ libraries = {
         ("On The Laws", "Marcus Cicero", 544),
         ("On The Ideal Orator", "Marcus Cicero", 384),
     ),
-    "To Read": (
-        ("On The Laws", "Marcus Cicero", 544),
-    ),
+    "To Read": (("On The Laws", "Marcus Cicero", 544),),
     "Already Read": (
         ("The Gallic War", "Julius Caesar", 470),
         ("The Civil War", "Julius Caesar", 368),
         ("Meditations", "Marcus Aurelius", 254),
     ),
-    "Currently Reading": (
-        ("On The Ideal Orator", "Marcus Cicero", 384),
-    ),
+    "Currently Reading": (("On The Ideal Orator", "Marcus Cicero", 384),),
 }
 
 
@@ -47,13 +44,15 @@ class AppWindow(widgets.QMainWindow):
 class StartPage(widgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.model = LibraryModel()
 
         self.combo = widgets.QComboBox()
         self.combo.addItems(libraries.keys())
         self.combo.currentTextChanged.connect(self.update_table)
 
-        self.table = widgets.QTableWidget()
+        self.table = widgets.QTableView()
         self.table.resizeColumnsToContents()
+        self.table.setModel(self.model)
         self.update_table(self.combo.currentText())
 
         layout = widgets.QHBoxLayout()
@@ -78,5 +77,5 @@ class StartPage(widgets.QWidget):
 
         self.setLayout(layout)
 
-    def update_table(self, library):
-        ...
+    def update_table(self, lib_name):
+        books = libraries.get(lib_name, "All Books")
