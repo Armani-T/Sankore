@@ -42,6 +42,8 @@ class AppWindow(widgets.QMainWindow):
 
 
 class StartPage(widgets.QWidget):
+    columns = ("Title", "Author(s)", "No. of pages")
+
     def __init__(self):
         super().__init__()
 
@@ -81,7 +83,7 @@ class StartPage(widgets.QWidget):
     def update_table(self, lib_name):
         self.table.setColumnCount(3)
         self.table.setRowCount(len(libraries[lib_name]))
-        self.table.setHorizontalHeaderLabels(("Title", "Author(s)", "No. of pages"))
+        self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
         for row_index, row in enumerate(libraries[lib_name]):
             for col_index, value in enumerate(row):
@@ -89,5 +91,4 @@ class StartPage(widgets.QWidget):
                     row_index, col_index, widgets.QTableWidgetItem(str(value))
                 )
 
-
-AppWindow().run()
+        self.table.resizeColumnsToContents()
