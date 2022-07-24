@@ -1,3 +1,5 @@
+from itertools import chain
+
 from PySide6.QtCore import QAbstractTableModel, Qt
 from PySide6.QtGui import QColor
 from PySide6 import QtWidgets as widgets
@@ -5,21 +7,24 @@ from PySide6 import QtWidgets as widgets
 APP_NAME = "Sankore"
 
 libraries = {
-    "All Books": (
-        ("The Gallic War", "Julius Caesar", 470),
-        ("The Civil War", "Julius Caesar", 368),
-        ("Meditations", "Marcus Aurelius", 254),
-        ("On The Laws", "Marcus Cicero", 544),
-        ("On The Ideal Orator", "Marcus Cicero", 384),
-    ),
     "To Read": (("On The Laws", "Marcus Cicero", 544),),
     "Already Read": (
         ("The Gallic War", "Julius Caesar", 470),
         ("The Civil War", "Julius Caesar", 368),
         ("Meditations", "Marcus Aurelius", 254),
     ),
-    "Currently Reading": (("On The Ideal Orator", "Marcus Cicero", 384),),
+    "Currently Reading": (
+        ("On The Ideal Orator", "Marcus Cicero", 384),
+        ("Peace of Mind", "Lucius Seneca", 44),
+    ),
+    "On Hiatus": (
+        ("Metamorphoses", "Ovid", 723),
+        ("Aeneid", "Virgil", 442),
+    ),
 }
+get_all_books = lambda: chain(libraries.values())
+get_book_list = lambda name: libraries[name]
+get_library_names = lambda: libraries.keys()
 
 
 class AppWindow(widgets.QMainWindow):
@@ -48,7 +53,7 @@ class StartPage(widgets.QWidget):
         super().__init__()
 
         self.combo = widgets.QComboBox()
-        self.combo.addItems(libraries.keys())
+        self.combo.addItems(get_library_names())
         self.combo.currentTextChanged.connect(self.update_table)
         self.table = widgets.QTableWidget()
         self.table.setSizeAdjustPolicy(widgets.QAbstractScrollArea.AdjustToContents)
@@ -82,10 +87,10 @@ class StartPage(widgets.QWidget):
 
     def update_table(self, lib_name):
         self.table.setColumnCount(3)
-        self.table.setRowCount(len(libraries[lib_name]))
+        self.table.setRowCount(len(get_book_list(lib_name)))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
-        for row_index, row in enumerate(libraries[lib_name]):
+        for row_index, row in enumerate(get_book_list(lib_name)):
             for col_index, value in enumerate(row):
                 self.table.setItem(
                     row_index, col_index, widgets.QTableWidgetItem(str(value))
