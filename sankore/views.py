@@ -76,7 +76,8 @@ class StartPage(widgets.QWidget):
         layout.addLayout(right_layout)
 
     def update_progress(self):
-        print("Clicked!")
+        dialog = BookListDialog(self)
+        dialog.exec()
 
     def update_table(self, lib_name):
         self.table.setColumnCount(3)
