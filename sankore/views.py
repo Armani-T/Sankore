@@ -1,13 +1,15 @@
-from itertools import chain
-
 from PySide6.QtCore import QAbstractTableModel, Qt
 from PySide6.QtGui import QColor
 from PySide6 import QtWidgets as widgets
 
+ALL_BOOKS_NAME = "All Books"
 APP_NAME = "Sankore"
 
 libraries = {
-    "To Read": (("On The Laws", "Marcus Cicero", 544),),
+    "To Read": (
+        ("On The Laws", "Marcus Cicero", 544),
+        ("History of the Peloponnesian War", "Thucydides", 648),
+    ),
     "Already Read": (
         ("The Gallic War", "Julius Caesar", 470),
         ("The Civil War", "Julius Caesar", 368),
@@ -22,9 +24,11 @@ libraries = {
         ("Aeneid", "Virgil", 442),
     ),
 }
-get_all_books = lambda: chain(libraries.values())
-get_book_list = lambda name: libraries[name]
-get_library_names = lambda: libraries.keys()
+get_all_books = lambda: sum(libraries.values(), ())
+get_book_list = lambda name: (
+    get_all_books() if name == ALL_BOOKS_NAME else libraries[name]
+)
+get_library_names = lambda: [ALL_BOOKS_NAME] + list(libraries.keys())
 
 
 class AppWindow(widgets.QMainWindow):
@@ -86,11 +90,12 @@ class StartPage(widgets.QWidget):
         dialog.exec()
 
     def update_table(self, lib_name):
+        book_list = get_book_list(lib_name)
         self.table.setColumnCount(3)
-        self.table.setRowCount(len(get_book_list(lib_name)))
+        self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
-        for row_index, row in enumerate(get_book_list(lib_name)):
+        for row_index, row in enumerate(book_list):
             for col_index, value in enumerate(row):
                 self.table.setItem(
                     row_index, col_index, widgets.QTableWidgetItem(str(value))
