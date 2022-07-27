@@ -1,44 +1,47 @@
+from collections import namedtuple
+
 from PySide6.QtCore import QAbstractTableModel, Qt
 from PySide6.QtGui import QColor
 from PySide6 import QtWidgets as widgets
 
-ALL_BOOKS_NAME = "All Books"
-APP_NAME = "Sankore"
+ALL_BOOKS = "All Books"
+
+Book = namedtuple("Book", ("title", "author", "pages"))
 
 libraries = {
     "To Read": (
-        ("On The Laws", "Marcus Cicero", 544),
-        ("History of the Peloponnesian War", "Thucydides", 648),
+        Book("On The Laws", "Marcus Cicero", 544),
+        Book("History of the Peloponnesian War", "Thucydides", 648),
     ),
     "Already Read": (
-        ("The Gallic War", "Julius Caesar", 470),
-        ("The Civil War", "Julius Caesar", 368),
-        ("Meditations", "Marcus Aurelius", 254),
+        Book("The Gallic War", "Julius Caesar", 470),
+        Book("The Civil War", "Julius Caesar", 368),
+        Book("Meditations", "Marcus Aurelius", 254),
     ),
     "Currently Reading": (
-        ("On The Ideal Orator", "Marcus Cicero", 384),
-        ("Peace of Mind", "Lucius Seneca", 44),
+        Book("On The Ideal Orator", "Marcus Cicero", 384),
+        Book("Peace of Mind", "Lucius Seneca", 44),
     ),
-    "On Hiatus": (
-        ("Metamorphoses", "Ovid", 723),
-        ("Aeneid", "Virgil", 442),
+    "Reading Paused": (
+        Book("Metamorphoses", "Ovid", 723),
+        Book("Aeneid", "Virgil", 442),
     ),
 }
-get_all_books = lambda: sum(libraries.values(), ())
+
 get_book_list = lambda name: (
-    get_all_books() if name == ALL_BOOKS_NAME else libraries[name]
+    sum(libraries.values(), ()) if name == ALL_BOOKS else libraries[name]
 )
-get_library_names = lambda: [ALL_BOOKS_NAME] + list(libraries.keys())
+get_library_names = lambda: [ALL_BOOKS] + list(libraries.keys())
 
 
-class AppWindow(widgets.QMainWindow):
+class Window(widgets.QMainWindow):
     """The main window which holds all the pages in the app."""
 
     app = widgets.QApplication()
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(APP_NAME)
+        self.setWindowTitle("Sankore")
         self.to_start_page()
 
     def run(self):
@@ -106,11 +109,10 @@ class StartPage(widgets.QWidget):
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
-        for row_index, row in enumerate(book_list):
-            for col_index, value in enumerate(row):
-                self.table.setItem(
-                    row_index, col_index, widgets.QTableWidgetItem(str(value))
-                )
+        for index, book in enumerate(book_list):
+            self.table.setItem(index, 0, widgets.QTableWidgetItem(book.title))
+            self.table.setItem(index, 1, widgets.QTableWidgetItem(book.author))
+            self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book.pages)))
 
         self.table.resizeColumnsToContents()
 
@@ -125,9 +127,9 @@ class BookListDialog(widgets.QDialog):
         layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
         self.setLayout(layout)
 
-        for title, _, _ in get_book_list("Currently Reading"):
-            button = widgets.QPushButton(title)
-            button.clicked.connect(lambda *_, title_=title: self.update_book(title_))
+        for book in get_book_list("Currently Reading"):
+            button = widgets.QPushButton(book.title)
+            button.clicked.connect(lambda *_, title_=book.title: self.update_book(title_))
             layout.addWidget(button)
 
     def update_book(self, book_title):
@@ -161,6 +163,3 @@ class BookUpdateDialog(widgets.QDialog):
 
     def reject(self):
         self.done(False)
-
-
-AppWindow().run()
