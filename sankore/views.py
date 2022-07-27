@@ -59,16 +59,21 @@ class StartPage(widgets.QWidget):
         self.combo = widgets.QComboBox()
         self.combo.addItems(get_library_names())
         self.combo.currentTextChanged.connect(self.update_table)
+
         self.table = widgets.QTableWidget()
         self.table.setSizeAdjustPolicy(widgets.QAbstractScrollArea.AdjustToContents)
         self.update_table(self.combo.currentText())
 
+        new_book_button = widgets.QPushButton("New Book")
+        edit_book_button = widgets.QPushButton("Edit Book")
         update_button = widgets.QPushButton("Update Reading Position")
+        new_book_button.clicked.connect(self.new_book)
+        edit_book_button.clicked.connect(self.edit_book)
         update_button.clicked.connect(self.update_progress)
 
         progress_widget = widgets.QWidget()
         progress_layout = widgets.QVBoxLayout()
-        progress_title = widgets.QLabel("Monthly Progress")
+        progress_title = widgets.QLabel("<h2>Monthly Progress</h2>")
         progress_text = widgets.QLabel("You've completed 4 books this month!")
         progress_bar = widgets.QProgressBar()
         progress_layout.addWidget(progress_title)
@@ -77,13 +82,19 @@ class StartPage(widgets.QWidget):
         progress_widget.setLayout(progress_layout)
 
         layout = widgets.QGridLayout()
-        layout.addWidget(self.combo, 0, 0, 1, 5)
-        layout.addWidget(self.table, 1, 0, 4, 5)
-        layout.addWidget(update_button, 0, 6, 1, 2)
-        layout.addWidget(progress_title, 1, 6, 1, 2)
-        layout.addWidget(progress_text, 2, 6, 2, 2)
-        layout.addWidget(progress_bar, 3, 6, 1, 2)
+        layout.addWidget(self.combo, 0, 0, 1, 8)
+        layout.addWidget(self.table, 1, 0, 8, 8)
+        layout.addWidget(new_book_button, 9, 0, 1, 4)
+        layout.addWidget(edit_book_button, 9, 4, 1, 4)
+        layout.addWidget(update_button, 0, 8, 1, 2)
+        layout.addWidget(progress_widget, 1, 8, 3, 2)
         self.setLayout(layout)
+
+    def new_book(self):
+        print("Create a new book")
+
+    def edit_book(self):
+        print("Edit an existing book")
 
     def update_progress(self):
         dialog = BookListDialog(self)
@@ -102,3 +113,54 @@ class StartPage(widgets.QWidget):
                 )
 
         self.table.resizeColumnsToContents()
+
+
+class BookListDialog(widgets.QDialog):
+    title = "Choose a Book to Update"
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle(self.title)
+        layout = widgets.QVBoxLayout()
+        layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
+        self.setLayout(layout)
+
+        for title, _, _ in get_book_list("Currently Reading"):
+            button = widgets.QPushButton(title)
+            button.clicked.connect(lambda *_, title_=title: self.update_book(title_))
+            layout.addWidget(button)
+
+    def update_book(self, book_title):
+        dialog = BookUpdateDialog(book_title, self)
+        result = dialog.exec()
+        print(result)
+        return result
+
+
+class BookUpdateDialog(widgets.QDialog):
+    def __init__(self, book_title, parent):
+        super().__init__(parent)
+        book_title = book_title.title()
+
+        self.button_box = widgets.QDialogButtonBox(
+            widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
+        )
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        layout = widgets.QGridLayout()
+        title = widgets.QLabel(f"<h1>{book_title}</h1>")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title, 0, 0, 1, 1)
+        layout.addWidget(self.button_box)
+        self.setLayout(layout)
+        self.setWindowTitle(f'Updating "{book_title}"')
+
+    def accept(self):
+        self.done(True)
+
+    def reject(self):
+        self.done(False)
+
+
+AppWindow().run()
