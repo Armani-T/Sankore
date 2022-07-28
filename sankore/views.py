@@ -1,7 +1,7 @@
 from collections import namedtuple
 
-from PySide6.QtCore import QAbstractTableModel, Qt
-from PySide6.QtGui import QColor
+from PySide6.QtCore import QRegularExpression, Qt
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
 ALL_BOOKS = "All Books"
@@ -121,6 +121,42 @@ class HomePage(widgets.QWidget):
         self.table.resizeColumnsToContents()
 
 
+class NewBookDialog(widgets.QDialog):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle("Add a book")
+        self.title_edit = widgets.QLineEdit()
+        self.author_edit = widgets.QLineEdit()
+        self.page_edit = widgets.QLineEdit()
+        self.combo = widgets.QComboBox()
+        self.combo.addItems(get_library_names())
+        self.page_edit.setValidator(
+            QRegularExpressionValidator(QRegularExpression(r"\d+"), self)
+        )
+
+        save_button = widgets.QPushButton("Add to Books")
+        save_button.clicked.connect(self.done)
+
+        layout = widgets.QFormLayout()
+        layout.addRow("Title:", self.title_edit)
+        layout.addRow("Author(s):", self.author_edit)
+        layout.addRow("Number of pages:", self.page_edit)
+        layout.addRow("Library:", self.combo)
+        layout.addRow(save_button)
+        self.setLayout(layout)
+
+    def done(self, *args):
+        title = self.title_edit.text().strip()
+        author = self.author_edit.text().strip()
+        pages = int(self.page_edit.text())
+        name = self.library()
+        libraries[name] = (Book(title, author, pages), *get_book_list(name))
+        return super().done(0)
+
+    def library(self):
+        return self.combo.currentText()
+
+
 class BookListDialog(widgets.QDialog):
     title = "Choose a Book to Update"
 
@@ -133,7 +169,9 @@ class BookListDialog(widgets.QDialog):
 
         for book in get_book_list("Currently Reading"):
             button = widgets.QPushButton(book.title)
-            button.clicked.connect(lambda *_, title_=book.title: self.update_book(title_))
+            button.clicked.connect(
+                lambda *_, title_=book.title: self.update_book(title_)
+            )
             layout.addWidget(button)
 
     def update_book(self, book_title):
