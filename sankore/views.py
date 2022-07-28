@@ -120,7 +120,7 @@ class NewBookDialog(widgets.QDialog):
         pages = int(self.page_edit.text() or "0")
         title, author = self.title_edit.text(), self.author_edit.text()
         if title and author:
-            models.create_book(title, author, pages, self.library())
+            models.create_book(self.library(), title, author, pages)
         return super().done(0)
 
     def library(self):
