@@ -69,7 +69,8 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def edit_book(self):
-        print("Edit an existing book")
+        dialog = EditBookDialog(self)
+        return dialog.exec()
 
     def update_progress(self):
         dialog = BookListDialog(self)
