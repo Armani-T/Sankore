@@ -66,10 +66,7 @@ class HomePage(widgets.QWidget):
 
     def new_book(self):
         dialog = NewBookDialog(self)
-        result = dialog.exec()
-        book_list = models.get_book_list(models.dialog.library())
-        print(*book_list, sep="\n")
-        return result
+        return dialog.exec()
 
     def edit_book(self):
         print("Edit an existing book")
