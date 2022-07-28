@@ -66,7 +66,12 @@ class HomePage(widgets.QWidget):
 
     def new_book(self):
         dialog = NewBookDialog(self)
-        return dialog.exec()
+        result = dialog.exec()
+        library = dialog.library()
+        index = models.get_library_names().index(library)
+        self.combo.setCurrentIndex(index)
+        self.update_table(library)
+        return result
 
     def edit_book(self):
         dialog = EditBookDialog(self)
@@ -98,7 +103,7 @@ class NewBookDialog(widgets.QDialog):
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.combo = widgets.QComboBox()
-        self.combo.addItems(models.get_library_names())
+        self.combo.addItems(models.get_library_names(False))
         self.page_edit.setValidator(
             QRegularExpressionValidator(QRegularExpression(r"\d+"), self)
         )

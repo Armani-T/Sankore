@@ -27,9 +27,15 @@ libraries = {
 get_book_list = lambda name: (
     sum(libraries.values(), ()) if name == ALL_BOOKS else libraries[name]
 )
-get_library_names = lambda: [ALL_BOOKS] + list(libraries.keys())
 
 
 def create_book(lib_name, title, author, pages):
     new_book = Book(title, author, pages)
     libraries[lib_name] = (*get_book_list(lib_name), new_book)
+
+
+def get_library_names(all_=True):
+    names = list(libraries.keys())
+    if all_:
+        names.insert(0, ALL_BOOKS)
+    return names
