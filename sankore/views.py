@@ -1,37 +1,8 @@
-from collections import namedtuple
-
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
-ALL_BOOKS = "All Books"
-
-Book = namedtuple("Book", ("title", "author", "pages"))
-
-libraries = {
-    "To Read": (
-        Book("On The Laws", "Marcus Cicero", 544),
-        Book("History of the Peloponnesian War", "Thucydides", 648),
-    ),
-    "Already Read": (
-        Book("The Gallic War", "Julius Caesar", 470),
-        Book("The Civil War", "Julius Caesar", 368),
-        Book("Meditations", "Marcus Aurelius", 254),
-    ),
-    "Currently Reading": (
-        Book("On The Ideal Orator", "Marcus Cicero", 384),
-        Book("Peace of Mind", "Lucius Seneca", 44),
-    ),
-    "Reading Paused": (
-        Book("Metamorphoses", "Ovid", 723),
-        Book("Aeneid", "Virgil", 442),
-    ),
-}
-
-get_book_list = lambda name: (
-    sum(libraries.values(), ()) if name == ALL_BOOKS else libraries[name]
-)
-get_library_names = lambda: [ALL_BOOKS] + list(libraries.keys())
+import models
 
 
 class Window(widgets.QMainWindow):
@@ -60,7 +31,7 @@ class HomePage(widgets.QWidget):
         super().__init__()
 
         self.combo = widgets.QComboBox()
-        self.combo.addItems(get_library_names())
+        self.combo.addItems(models.get_library_names())
         self.combo.currentTextChanged.connect(self.update_table)
 
         self.table = widgets.QTableWidget()
@@ -96,7 +67,7 @@ class HomePage(widgets.QWidget):
     def new_book(self):
         dialog = NewBookDialog(self)
         result = dialog.exec()
-        book_list = get_book_list(dialog.library())
+        book_list = models.get_book_list(models.dialog.library())
         print(*book_list, sep="\n")
         return result
 
@@ -108,7 +79,7 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def update_table(self, lib_name):
-        book_list = get_book_list(lib_name)
+        book_list = models.get_book_list(lib_name)
         self.table.setColumnCount(3)
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
@@ -129,7 +100,7 @@ class NewBookDialog(widgets.QDialog):
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.combo = widgets.QComboBox()
-        self.combo.addItems(get_library_names())
+        self.combo.addItems(models.get_library_names())
         self.page_edit.setValidator(
             QRegularExpressionValidator(QRegularExpression(r"\d+"), self)
         )
@@ -146,11 +117,10 @@ class NewBookDialog(widgets.QDialog):
         self.setLayout(layout)
 
     def done(self, *args):
-        title = self.title_edit.text().strip()
-        author = self.author_edit.text().strip()
-        pages = int(self.page_edit.text())
-        name = self.library()
-        libraries[name] = (Book(title, author, pages), *get_book_list(name))
+        pages = int(self.page_edit.text() or "0")
+        title, author = self.title_edit.text(), self.author_edit.text()
+        if title and author:
+            models.create_book(title, author, pages, self.library())
         return super().done(0)
 
     def library(self):
@@ -167,7 +137,7 @@ class BookListDialog(widgets.QDialog):
         layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
         self.setLayout(layout)
 
-        for book in get_book_list("Currently Reading"):
+        for book in models.get_book_list("Currently Reading"):
             button = widgets.QPushButton(book.title)
             button.clicked.connect(
                 lambda *_, title_=book.title: self.update_book(title_)
