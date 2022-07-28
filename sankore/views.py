@@ -49,11 +49,11 @@ class Window(widgets.QMainWindow):
         return self.app.exec()
 
     def to_start_page(self):
-        start_page = StartPage()
+        start_page = HomePage()
         self.setCentralWidget(start_page)
 
 
-class StartPage(widgets.QWidget):
+class HomePage(widgets.QWidget):
     columns = ("Title", "Author(s)", "No. of pages")
 
     def __init__(self):
