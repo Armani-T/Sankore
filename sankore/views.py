@@ -60,8 +60,8 @@ class HomePage(widgets.QWidget):
         layout.addWidget(self.table, 1, 0, 8, 8)
         layout.addWidget(new_book_button, 9, 0, 1, 4)
         layout.addWidget(edit_book_button, 9, 4, 1, 4)
-        layout.addWidget(update_button, 0, 8, 1, 2)
-        layout.addWidget(progress_widget, 1, 8, 3, 2)
+        layout.addWidget(update_button, 0, 8, 1, 4)
+        layout.addWidget(progress_widget, 1, 8, 3, 4)
         self.setLayout(layout)
 
     def new_book(self):
