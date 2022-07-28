@@ -46,7 +46,7 @@ class Window(widgets.QMainWindow):
 
     def run(self):
         self.show()
-        self.app.exec()
+        return self.app.exec()
 
     def to_start_page(self):
         start_page = StartPage()
@@ -94,14 +94,18 @@ class StartPage(widgets.QWidget):
         self.setLayout(layout)
 
     def new_book(self):
-        print("Create a new book")
+        dialog = NewBookDialog(self)
+        result = dialog.exec()
+        book_list = get_book_list(dialog.library())
+        print(*book_list, sep="\n")
+        return result
 
     def edit_book(self):
         print("Edit an existing book")
 
     def update_progress(self):
         dialog = BookListDialog(self)
-        dialog.exec()
+        return dialog.exec()
 
     def update_table(self, lib_name):
         book_list = get_book_list(lib_name)
@@ -134,9 +138,7 @@ class BookListDialog(widgets.QDialog):
 
     def update_book(self, book_title):
         dialog = BookUpdateDialog(book_title, self)
-        result = dialog.exec()
-        print(result)
-        return result
+        return dialog.exec()
 
 
 class BookUpdateDialog(widgets.QDialog):
