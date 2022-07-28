@@ -65,7 +65,7 @@ class HomePage(widgets.QWidget):
         self.setLayout(layout)
 
     def new_book(self):
-        dialog = NewBookDialog(self)
+        dialog = NewBook(self)
         result = dialog.exec()
         library = dialog.library()
         index = models.get_library_names().index(library)
@@ -78,7 +78,7 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def update_progress(self):
-        dialog = BookListDialog(self)
+        dialog = BookList(self)
         return dialog.exec()
 
     def update_table(self, lib_name):
@@ -95,7 +95,29 @@ class HomePage(widgets.QWidget):
         self.table.resizeColumnsToContents()
 
 
-class NewBookDialog(widgets.QDialog):
+class BookList(widgets.QDialog):
+    title = "Choose a Book to Update"
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle(self.title)
+        layout = widgets.QVBoxLayout()
+        layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
+        self.setLayout(layout)
+
+        for book in models.get_book_list("Currently Reading"):
+            button = widgets.QPushButton(book.title)
+            button.clicked.connect(
+                lambda *_, title_=book.title: self.update_book(title_)
+            )
+            layout.addWidget(button)
+
+    def update_book(self, title):
+        dialog = UpdateProgress(title, self)
+        return dialog.exec()
+
+
+class NewBook(widgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Add a book")
@@ -130,29 +152,7 @@ class NewBookDialog(widgets.QDialog):
         return self.combo.currentText()
 
 
-class BookListDialog(widgets.QDialog):
-    title = "Choose a Book to Update"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setWindowTitle(self.title)
-        layout = widgets.QVBoxLayout()
-        layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
-        self.setLayout(layout)
-
-        for book in models.get_book_list("Currently Reading"):
-            button = widgets.QPushButton(book.title)
-            button.clicked.connect(
-                lambda *_, title_=book.title: self.update_book(title_)
-            )
-            layout.addWidget(button)
-
-    def update_book(self, book_title):
-        dialog = BookUpdateDialog(book_title, self)
-        return dialog.exec()
-
-
-class BookUpdateDialog(widgets.QDialog):
+class UpdateProgress(widgets.QDialog):
     def __init__(self, book_title, parent):
         super().__init__(parent)
         book_title = book_title.title()
