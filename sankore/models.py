@@ -1,10 +1,10 @@
-from collections import namedtuple
+from typing import Iterable, MutableMapping, NamedTuple
 
-Book = namedtuple("Book", ("title", "author", "pages"))
+Book = NamedTuple("Book", (("title", str), ("author", str), ("pages", int)))
 
 ALL_BOOKS = "All Books"
 
-libraries = {
+LIBRARIES: MutableMapping[str, Iterable[Book]] = {
     "To Read": (
         Book("On The Laws", "Marcus Cicero", 544),
         Book("History of the Peloponnesian War", "Thucydides", 648),
@@ -24,25 +24,25 @@ libraries = {
     ),
 }
 
-get_book_list = lambda name: (
-    sum(libraries.values(), ()) if name == ALL_BOOKS else libraries[name]
-)
 
-
-def create_book(lib_name, title, author, pages):
+def create_book(lib_name: str, title: str, author: str, pages: int) -> None:
     new_book = Book(title, author, pages)
-    libraries[lib_name] = (*get_book_list(lib_name), new_book)
+    LIBRARIES[lib_name] = (*get_book_list(lib_name), new_book)
 
 
-def get_library_names(all_=True):
-    names = list(libraries.keys())
-    if all_:
-        names.insert(0, ALL_BOOKS)
-    return names
-
-
-def get_book(title):
+def get_book(title: str) -> Book:
     for book in get_book_list(ALL_BOOKS):
         if book.title == title:
             return book
     raise ValueError(f'No book with title "{title}" was found.')
+
+
+def get_book_list(name) -> Iterable[Book]:
+    return sum(LIBRARIES.values(), ()) if name == ALL_BOOKS else LIBRARIES[name]
+
+
+def get_library_names(all_: bool = True) -> Iterable[str]:
+    names = list(LIBRARIES.keys())
+    if all_:
+        names.insert(0, ALL_BOOKS)
+    return names
