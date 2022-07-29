@@ -1,4 +1,4 @@
-from PySide6.QtCore import QRegularExpression, Qt
+from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
@@ -78,7 +78,7 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def update_progress(self):
-        dialog = BookList(self)
+        dialog = UpdateProgress(self)
         return dialog.exec()
 
     def update_table(self, lib_name):
@@ -93,28 +93,6 @@ class HomePage(widgets.QWidget):
             self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book.pages)))
 
         self.table.resizeColumnsToContents()
-
-
-class BookList(widgets.QDialog):
-    title = "Choose a Book to Update"
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setWindowTitle(self.title)
-        layout = widgets.QVBoxLayout()
-        layout.addWidget(widgets.QLabel(f"<h2>{self.title}</h2>"))
-        self.setLayout(layout)
-
-        for book in models.get_book_list("Currently Reading"):
-            button = widgets.QPushButton(book.title)
-            button.clicked.connect(
-                lambda *_, title_=book.title: self.update_book(title_)
-            )
-            layout.addWidget(button)
-
-    def update_book(self, title):
-        dialog = UpdateProgress(title, self)
-        return dialog.exec()
 
 
 class NewBook(widgets.QDialog):
@@ -153,26 +131,58 @@ class NewBook(widgets.QDialog):
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, book_title, parent):
+    def __init__(self, parent):
         super().__init__(parent)
-        book_title = book_title.title()
+        self.layout = widgets.QStackedLayout()
+        self.list_widget = self._create_list()
+        self.layout.addWidget(self.list_widget)
+        self.setLayout(self.layout)
+        self.to_list()
 
-        self.button_box = widgets.QDialogButtonBox(
-            widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
+    def _create_list(self):
+        base = widgets.QWidget(self)
+        layout = widgets.QVBoxLayout()
+        base.setWindowTitle("Choose a Book to Update")
+        base.setLayout(layout)
+
+        layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
+        for book in models.get_book_list("Currently Reading"):
+            button = widgets.QPushButton(book.title)
+            button.clicked.connect(
+                lambda *_, title_=book.title: self.to_updater(title_)
+            )
+            layout.addWidget(button)
+
+        return base
+
+    def _create_updater(self, book_title):
+        base = widgets.QWidget(self)
+        base.setWindowTitle(f'Updating "{book_title.title()}"')
+
+        title = widgets.QLabel(f"<h1>{book_title.title()}</h1>")
+        buttons = widgets.QDialogButtonBox(
+            widgets.QDialogButtonBox.Ok | widgets.QDialogButtonBox.Cancel
         )
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
+        buttons.accepted.connect(self.update_progress)
+        buttons.rejected.connect(self.to_list)
 
-        layout = widgets.QGridLayout()
-        title = widgets.QLabel(f"<h1>{book_title}</h1>")
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 1)
-        layout.addWidget(self.button_box)
-        self.setLayout(layout)
-        self.setWindowTitle(f'Updating "{book_title}"')
+        layout = widgets.QVBoxLayout()
+        layout.addWidget(title)
+        layout.addWidget(buttons)
+        base.setLayout(layout)
+        return base
 
-    def accept(self):
-        self.done(True)
+    def update_progress(self):
+        return super().done(0)
 
-    def reject(self):
-        self.done(False)
+    def to_updater(self, title):
+        widget = self._create_updater(title)
+        self.layout.addWidget(widget)
+        self.layout.setCurrentWidget(widget)
+
+    def to_list(self):
+        self.layout.setCurrentWidget(self.list_widget)
+
+
+if __name__ == "__main__":
+    Window().run()
