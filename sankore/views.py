@@ -164,9 +164,13 @@ class UpdateProgress(widgets.QDialog):
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(book.pages)
+        self.slider.setTracking(False)
         self.slider.valueChanged.connect(self.update_editor)
 
         finished_button = widgets.QPushButton("Finished the book")
+        finished_button.clicked.connect(
+            lambda: self.slider.setValue(self.slider.maximum())
+        )
         button_box = widgets.QDialogButtonBox(
             widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
         )
