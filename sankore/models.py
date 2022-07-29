@@ -39,3 +39,10 @@ def get_library_names(all_=True):
     if all_:
         names.insert(0, ALL_BOOKS)
     return names
+
+
+def get_book(title):
+    for book in get_book_list(ALL_BOOKS):
+        if book.title == title:
+            return book
+    raise ValueError(f'No book with title "{title}" was found.')
