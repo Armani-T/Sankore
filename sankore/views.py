@@ -1,8 +1,10 @@
-from PySide6.QtCore import QRegularExpression
+from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
 import models
+
+NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
 class Window(widgets.QMainWindow):
@@ -39,16 +41,16 @@ class HomePage(widgets.QWidget):
         self.update_table(self.combo.currentText())
 
         new_book_button = widgets.QPushButton("New Book")
-        edit_book_button = widgets.QPushButton("Edit Book")
         update_button = widgets.QPushButton("Update Reading Position")
         new_book_button.clicked.connect(self.new_book)
-        edit_book_button.clicked.connect(self.edit_book)
         update_button.clicked.connect(self.update_progress)
 
         progress_widget = widgets.QWidget()
         progress_layout = widgets.QVBoxLayout()
         progress_title = widgets.QLabel("<h2>Monthly Progress</h2>")
+        progress_title.setAlignment(Qt.AlignCenter)
         progress_text = widgets.QLabel("You've completed 4 books this month!")
+        progress_text.setAlignment(Qt.AlignCenter)
         progress_bar = widgets.QProgressBar()
         progress_layout.addWidget(progress_title)
         progress_layout.addWidget(progress_text)
@@ -58,24 +60,19 @@ class HomePage(widgets.QWidget):
         layout = widgets.QGridLayout()
         layout.addWidget(self.combo, 0, 0, 1, 8)
         layout.addWidget(self.table, 1, 0, 8, 8)
-        layout.addWidget(new_book_button, 9, 0, 1, 4)
-        layout.addWidget(edit_book_button, 9, 4, 1, 4)
         layout.addWidget(update_button, 0, 8, 1, 4)
-        layout.addWidget(progress_widget, 1, 8, 3, 4)
+        layout.addWidget(new_book_button, 1, 8, 1, 4)
+        layout.addWidget(progress_widget, 6, 8, 3, 4)
         self.setLayout(layout)
 
     def new_book(self):
         dialog = NewBook(self)
         result = dialog.exec()
         library = dialog.library()
-        index = models.get_library_names().index(library)
+        index = models.get_libraries().index(library)
         self.combo.setCurrentIndex(index)
         self.update_table(library)
         return result
-
-    def edit_book(self):
-        dialog = EditBookDialog(self)
-        return dialog.exec()
 
     def update_progress(self):
         dialog = UpdateProgress(self)
@@ -83,7 +80,7 @@ class HomePage(widgets.QWidget):
 
     def update_table(self, lib_name):
         book_list = models.get_book_list(lib_name)
-        self.table.setColumnCount(3)
+        self.table.setColumnCount(len(self.columns))
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels((None,) * self.table.rowCount())
@@ -103,10 +100,8 @@ class NewBook(widgets.QDialog):
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.combo = widgets.QComboBox()
-        self.combo.addItems(models.get_library_names(False))
-        self.page_edit.setValidator(
-            QRegularExpressionValidator(QRegularExpression(r"\d+"), self)
-        )
+        self.combo.addItems(models.get_libraries(False))
+        self.page_edit.setValidator(NUMBER_VALIDATOR)
 
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.done)

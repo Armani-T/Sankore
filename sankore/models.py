@@ -49,7 +49,6 @@ def get_libraries(all_: bool = True) -> Iterable[str]:
 
 
 def update_book(lib_name: str, old_title: str, new_book: Book) -> None:
-    new_lib = [
+    LIBRARIES[lib_name] = tuple(
         new_book if book.title == old_title else book for book in LIBRARIES[lib_name]
-    ]
-    LIBRARIES[lib_name] = tuple(new_lib)
+    )
