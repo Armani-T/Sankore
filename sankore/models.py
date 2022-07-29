@@ -41,8 +41,15 @@ def get_book_list(name) -> Iterable[Book]:
     return sum(LIBRARIES.values(), ()) if name == ALL_BOOKS else LIBRARIES[name]
 
 
-def get_library_names(all_: bool = True) -> Iterable[str]:
+def get_libraries(all_: bool = True) -> Iterable[str]:
     names = list(LIBRARIES.keys())
     if all_:
         names.insert(0, ALL_BOOKS)
     return names
+
+
+def update_book(lib_name: str, old_title: str, new_book: Book) -> None:
+    new_lib = [
+        new_book if book.title == old_title else book for book in LIBRARIES[lib_name]
+    ]
+    LIBRARIES[lib_name] = tuple(new_lib)

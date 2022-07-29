@@ -31,7 +31,7 @@ class HomePage(widgets.QWidget):
         super().__init__()
 
         self.combo = widgets.QComboBox()
-        self.combo.addItems(models.get_library_names())
+        self.combo.addItems(models.get_libraries())
         self.combo.currentTextChanged.connect(self.update_table)
 
         self.table = widgets.QTableWidget()
