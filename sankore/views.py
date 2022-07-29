@@ -137,7 +137,6 @@ class UpdateProgress(widgets.QDialog):
     def _create_list(self):
         base = widgets.QWidget(self)
         layout = widgets.QVBoxLayout()
-        base.setWindowTitle("Choose a Book to Update")
         base.setLayout(layout)
 
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
@@ -151,19 +150,37 @@ class UpdateProgress(widgets.QDialog):
         return base
 
     def _create_updater(self, book_title):
+        book = models.get_book(book_title)
         base = widgets.QWidget(self)
-        base.setWindowTitle(f'Updating "{book_title.title()}"')
 
-        title = widgets.QLabel(f"<h1>{book_title.title()}</h1>")
-        buttons = widgets.QDialogButtonBox(
-            widgets.QDialogButtonBox.Ok | widgets.QDialogButtonBox.Cancel
+        title = widgets.QLabel(f"<h1>{book.title.title()}</h1>")
+        title.setAlignment(Qt.AlignCenter)
+        left_text = widgets.QLabel("Reached page")
+        self.page_edit = widgets.QLineEdit()
+        right_text = widgets.QLabel(f"out of {book.pages}.")
+        self.page_edit.setValidator(NUMBER_VALIDATOR)
+        self.page_edit.textChanged.connect(self.update_slider)
+
+        self.slider = widgets.QSlider(Qt.Horizontal)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(book.pages)
+        self.slider.valueChanged.connect(self.update_editor)
+
+        finished_button = widgets.QPushButton("Finished the book")
+        button_box = widgets.QDialogButtonBox(
+            widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
         )
-        buttons.accepted.connect(self.update_progress)
-        buttons.rejected.connect(self.to_list)
+        button_box.accepted.connect(self.update_progress)
+        button_box.rejected.connect(self.to_list)
 
-        layout = widgets.QVBoxLayout()
-        layout.addWidget(title)
-        layout.addWidget(buttons)
+        layout = widgets.QGridLayout()
+        layout.addWidget(title, 0, 1, 1, 3)
+        layout.addWidget(left_text, 1, 0, 1, 2)
+        layout.addWidget(self.page_edit, 1, 2, 1, 1)
+        layout.addWidget(right_text, 1, 3, 1, 2)
+        layout.addWidget(self.slider, 2, 1, 1, 3)
+        layout.addWidget(finished_button, 3, 2, 1, 1)
+        layout.addWidget(button_box, 4, 0, 1, 5)
         base.setLayout(layout)
         return base
 
@@ -171,12 +188,22 @@ class UpdateProgress(widgets.QDialog):
         return super().done(0)
 
     def to_updater(self, title):
+        self.setWindowTitle(f'Updating "{title.title()}"')
         widget = self._create_updater(title)
         self.layout.addWidget(widget)
         self.layout.setCurrentWidget(widget)
 
     def to_list(self):
+        self.setWindowTitle("Choose a Book to Update")
         self.layout.setCurrentWidget(self.list_widget)
+
+    def update_editor(self):
+        new_value = str(self.slider.value())
+        self.page_edit.setText(new_value)
+
+    def update_slider(self):
+        new_value = int(self.page_edit.text() or "0")
+        self.slider.setValue(new_value)
 
 
 if __name__ == "__main__":
