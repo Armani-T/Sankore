@@ -1,15 +1,18 @@
 from dataclasses import dataclass
-from typing import Iterable, MutableMapping
+from typing import Iterable, MutableMapping, Optional
 
 ALL_BOOKS = "All Books"
 
 
-@dataclass(frozen=True)
+@dataclass
 class Book:
     title: str
     author: str
     pages: int
     current_page: int = 0
+
+    def __hash__(self):
+        return hash(self.title)
 
 
 LIBRARIES: MutableMapping[str, Iterable[Book]] = {
@@ -39,7 +42,7 @@ def create_book(lib_name: str, new_book: Book) -> None:
 
 def change_library(old_lib: str, new_lib: str, book: Book) -> None:
     LIBRARIES[old_lib] = tuple(item for item in get_books(old_lib) if item != book)
-    LIBRARIES[new_lib] = (*get_books(new_lib), book)
+    create_book(new_lib, book)
 
 
 def get_book(title: str) -> Book:
