@@ -25,8 +25,7 @@ LIBRARIES: MutableMapping[str, Iterable[Book]] = {
 }
 
 
-def create_book(lib_name: str, title: str, author: str, pages: int) -> None:
-    new_book = Book(title, author, pages)
+def create_book(lib_name: str, new_book: Book) -> None:
     LIBRARIES[lib_name] = (*get_book_list(lib_name), new_book)
 
 
