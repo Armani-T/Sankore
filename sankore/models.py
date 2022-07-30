@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, MutableMapping, Optional
+from typing import Iterable, MutableMapping
 
 ALL_BOOKS = "All Books"
 
@@ -14,6 +14,42 @@ class Book:
     def __hash__(self):
         return hash(self.title)
 
+
+@dataclass
+class Library:
+    description: str = ""
+    books: Iterable[Book] = ()
+
+
+already_read = Library(
+    "The books that I haven't read yet but I intend to.",
+    (
+        Book("The Gallic War", "Julius Caesar", 470, 470),
+        Book("The Civil War", "Julius Caesar", 368, 368),
+        Book("Meditations", "Marcus Aurelius", 254, 254),
+    ),
+)
+currently_reading = Library(
+    "The books I am going through right now.",
+    (
+        Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
+        Book("Peace of Mind", "Lucius Seneca", 44, 22),
+    ),
+)
+paused_reading = Library(
+    "Books I stopped reading but that I'll get back to reading later.",
+    (
+        Book("Metamorphoses", "Ovid", 723, 551),
+        Book("Aeneid", "Virgil", 442, 400),
+    ),
+)
+to_read = Library(
+    "The books that I haven't read yet but intend to.",
+    (
+        Book("On The Laws", "Marcus Cicero", 544),
+        Book("History of the Peloponnesian War", "Thucydides", 648),
+    ),
+)
 
 LIBRARIES: MutableMapping[str, Iterable[Book]] = {
     "To Read": (
