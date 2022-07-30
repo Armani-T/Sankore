@@ -29,6 +29,11 @@ def create_book(lib_name: str, new_book: Book) -> None:
     LIBRARIES[lib_name] = (*get_books(lib_name), new_book)
 
 
+def change_library(old_lib: str, new_lib: str, book: Book) -> None:
+    LIBRARIES[old_lib] = tuple(item for item in get_books(old_lib) if item != book)
+    LIBRARIES[new_lib] = (*get_books(new_lib), book)
+
+
 def get_book(title: str) -> Book:
     for book in get_books(ALL_BOOKS):
         if book.title == title:
