@@ -1,8 +1,16 @@
-from typing import Iterable, MutableMapping, NamedTuple
-
-Book = NamedTuple("Book", (("title", str), ("author", str), ("pages", int)))
+from dataclasses import dataclass
+from typing import Iterable, MutableMapping
 
 ALL_BOOKS = "All Books"
+
+
+@dataclass(frozen=True)
+class Book:
+    title: str
+    author: str
+    pages: int
+    current_page: int = 0
+
 
 LIBRARIES: MutableMapping[str, Iterable[Book]] = {
     "To Read": (
@@ -10,13 +18,13 @@ LIBRARIES: MutableMapping[str, Iterable[Book]] = {
         Book("History of the Peloponnesian War", "Thucydides", 648),
     ),
     "Already Read": (
-        Book("The Gallic War", "Julius Caesar", 470),
-        Book("The Civil War", "Julius Caesar", 368),
-        Book("Meditations", "Marcus Aurelius", 254),
+        Book("The Gallic War", "Julius Caesar", 470, 470),
+        Book("The Civil War", "Julius Caesar", 368, 368),
+        Book("Meditations", "Marcus Aurelius", 254, 254),
     ),
     "Currently Reading": (
-        Book("On The Ideal Orator", "Marcus Cicero", 384),
-        Book("Peace of Mind", "Lucius Seneca", 44),
+        Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
+        Book("Peace of Mind", "Lucius Seneca", 44, 22),
     ),
     "Reading Paused": (
         Book("Metamorphoses", "Ovid", 723),
