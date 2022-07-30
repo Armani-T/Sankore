@@ -26,17 +26,17 @@ LIBRARIES: MutableMapping[str, Iterable[Book]] = {
 
 
 def create_book(lib_name: str, new_book: Book) -> None:
-    LIBRARIES[lib_name] = (*get_book_list(lib_name), new_book)
+    LIBRARIES[lib_name] = (*get_books(lib_name), new_book)
 
 
 def get_book(title: str) -> Book:
-    for book in get_book_list(ALL_BOOKS):
+    for book in get_books(ALL_BOOKS):
         if book.title == title:
             return book
     raise ValueError(f'No book with title "{title}" was found.')
 
 
-def get_book_list(name) -> Iterable[Book]:
+def get_books(name) -> Iterable[Book]:
     return sum(LIBRARIES.values(), ()) if name == ALL_BOOKS else LIBRARIES[name]
 
 

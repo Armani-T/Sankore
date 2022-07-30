@@ -79,7 +79,7 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def update_table(self, lib_name):
-        book_list = models.get_book_list(lib_name)
+        book_list = models.get_books(lib_name)
         self.table.setColumnCount(len(self.columns))
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
@@ -140,7 +140,7 @@ class UpdateProgress(widgets.QDialog):
         base.setLayout(layout)
 
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
-        for book in models.get_book_list("Currently Reading"):
+        for book in models.get_books("Currently Reading"):
             button = widgets.QPushButton(book.title)
             button.clicked.connect(
                 lambda *_, title_=book.title: self.to_updater(title_)
@@ -164,8 +164,8 @@ class UpdateProgress(widgets.QDialog):
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(book.pages)
-        self.slider.setTracking(False)
         self.slider.valueChanged.connect(self.update_editor)
+        self.slider.setValue(book.current_page)
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
