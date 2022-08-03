@@ -1,10 +1,10 @@
 from typing import NoReturn
 
-from views import start_ui
+from views import run_ui
 
 
 def main() -> NoReturn:
-    exit_code = start_ui()
+    exit_code = run_ui()
     exit(exit_code)
 
 
