@@ -22,6 +22,9 @@ class Library(Collection[Book]):
     description: str = ""
     books: Collection[Book] = ()
 
+    def insert(self, book: Book):
+        return Library(self.description, (book, *self.books))
+
     def __add__(self, other: "Library") -> "Library":
         return Library(self.description, tuple(chain(self.books, other.books)))
 
@@ -48,14 +51,12 @@ DEFAULT_LIBRARIES: Mapping[str, str] = {
 
 def get_db(db_file: Path) -> Database:
     db = open_shelf(db_file, flag="c", protocol=4)
-    for library in DEFAULT_LIBRARIES:
-        if library not in db:
-            db[library] = Library(DEFAULT_LIBRARIES[library], ())
+    db.setdefault(Library("", ()))
     return db
 
 
 def create_book(db: Database, name: str, new_book: Book) -> None:
-    db[name] = (*get_books(name), new_book)
+    db[name] = db[name].insert(new_book)
 
 
 def change_library(db: Database, old_lib: str, new_lib: str, book: Book) -> None:
