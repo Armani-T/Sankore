@@ -1,5 +1,6 @@
+from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Iterable, MutableMapping
+from itertools import chain
 
 ALL_BOOKS = "All Books"
 
@@ -16,58 +17,52 @@ class Book:
 
 
 @dataclass
-class Library:
+class Library(Collection[Book]):
     description: str = ""
-    books: Iterable[Book] = ()
+    books: Collection[Book] = ()
+
+    def __add__(self, other: "Library") -> "Library":
+        return Library(self.description, tuple(chain(self.books, other.books)))
+
+    def __contains__(self, book):
+        return book in self.books
+
+    def __iter__(self):
+        return iter(self.books)
+
+    def __len__(self):
+        return len(self.books)
 
 
-already_read = Library(
-    "The books that I haven't read yet but I intend to.",
-    (
-        Book("The Gallic War", "Julius Caesar", 470, 470),
-        Book("The Civil War", "Julius Caesar", 368, 368),
-        Book("Meditations", "Marcus Aurelius", 254, 254),
+LIBRARIES = {
+    "To Read": Library(
+        "The books that I haven't read yet but intend to.",
+        (
+            Book("On The Laws", "Marcus Cicero", 544),
+            Book("History of the Peloponnesian War", "Thucydides", 648),
+        ),
     ),
-)
-currently_reading = Library(
-    "The books I am going through right now.",
-    (
-        Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
-        Book("Peace of Mind", "Lucius Seneca", 44, 22),
+    "Already Read": Library(
+        "The books that I haven't read yet but I intend to.",
+        (
+            Book("The Gallic War", "Julius Caesar", 470, 470),
+            Book("The Civil War", "Julius Caesar", 368, 368),
+            Book("Meditations", "Marcus Aurelius", 254, 254),
+        ),
     ),
-)
-paused_reading = Library(
-    "Books I stopped reading but that I'll get back to reading later.",
-    (
-        Book("Metamorphoses", "Ovid", 723, 551),
-        Book("Aeneid", "Virgil", 442, 400),
+    "Currently Reading": Library(
+        "The books I am going through right now.",
+        (
+            Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
+            Book("Peace of Mind", "Lucius Seneca", 44, 22),
+        ),
     ),
-)
-to_read = Library(
-    "The books that I haven't read yet but intend to.",
-    (
-        Book("On The Laws", "Marcus Cicero", 544),
-        Book("History of the Peloponnesian War", "Thucydides", 648),
-    ),
-)
-
-LIBRARIES: MutableMapping[str, Iterable[Book]] = {
-    "To Read": (
-        Book("On The Laws", "Marcus Cicero", 544),
-        Book("History of the Peloponnesian War", "Thucydides", 648),
-    ),
-    "Already Read": (
-        Book("The Gallic War", "Julius Caesar", 470, 470),
-        Book("The Civil War", "Julius Caesar", 368, 368),
-        Book("Meditations", "Marcus Aurelius", 254, 254),
-    ),
-    "Currently Reading": (
-        Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
-        Book("Peace of Mind", "Lucius Seneca", 44, 22),
-    ),
-    "Reading Paused": (
-        Book("Metamorphoses", "Ovid", 723),
-        Book("Aeneid", "Virgil", 442),
+    "Reading Paused": Library(
+        "Books I stopped reading but that I'll get back to reading later.",
+        (
+            Book("Metamorphoses", "Ovid", 723, 551),
+            Book("Aeneid", "Virgil", 442, 400),
+        ),
     ),
 }
 
@@ -88,11 +83,11 @@ def get_book(title: str) -> Book:
     raise ValueError(f'No book with title "{title}" was found.')
 
 
-def get_books(name) -> Iterable[Book]:
-    return sum(LIBRARIES.values(), ()) if name == ALL_BOOKS else LIBRARIES[name]
+def get_books(name) -> Library:
+    return sum(LIBRARIES.values(), Library()) if name == ALL_BOOKS else LIBRARIES[name]
 
 
-def get_libraries(all_: bool = True) -> Iterable[str]:
+def get_libraries(all_: bool = True) -> Collection[str]:
     names = list(LIBRARIES.keys())
     if all_:
         names.insert(0, ALL_BOOKS)
