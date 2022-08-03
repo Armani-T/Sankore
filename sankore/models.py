@@ -1,13 +1,9 @@
-from collections.abc import Collection, MutableMapping
+from collections.abc import Collection
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 from shelve import open as shelve_open
-
-Database = MutableMapping[str, "Library"]
-
-ALL_BOOKS = "All Books"
-PROTOCOL = 4
+from typing import Mapping, MutableMapping
 
 
 @dataclass
@@ -39,43 +35,21 @@ class Library(Collection[Book]):
         return len(self.books)
 
 
-LIBRARIES = {
-    "To Read": Library(
-        "The books that I haven't read yet but intend to.",
-        (
-            Book("On The Laws", "Marcus Cicero", 544),
-            Book("History of the Peloponnesian War", "Thucydides", 648),
-        ),
-    ),
-    "Already Read": Library(
-        "The books that I haven't read yet but I intend to.",
-        (
-            Book("The Gallic War", "Julius Caesar", 470, 470),
-            Book("The Civil War", "Julius Caesar", 368, 368),
-            Book("Meditations", "Marcus Aurelius", 254, 254),
-        ),
-    ),
-    "Currently Reading": Library(
-        "The books I am going through right now.",
-        (
-            Book("On The Ideal Orator", "Marcus Cicero", 384, 21),
-            Book("Peace of Mind", "Lucius Seneca", 44, 22),
-        ),
-    ),
-    "Reading Paused": Library(
-        "Books I stopped reading but that I'll get back to reading later.",
-        (
-            Book("Metamorphoses", "Ovid", 723, 551),
-            Book("Aeneid", "Virgil", 442, 400),
-        ),
-    ),
+Database = MutableMapping[str, "Library"]
+
+ALL_BOOKS = "All Books"
+DEFAULT_LIBRARIES: Mapping[str, str] = {
+    "To Read": "The books that I haven't read yet but intend to.",
+    "Done Reading": "The books I intend to read later.",
+    "Reading Now": "The books I am reading right now.",
+    "Archived": "The books I started but stopped reading.",
 }
 
 
 def get_db(db_file: Path) -> Database:
     open_flag = "w" if db_file.exists() else "n"
-    db = shelve_open(db_file, flag=open_flag, protocol=PROTOCOL)
-    for library in DEFAULT_LIBRARIES.items():
+    db = shelve_open(db_file, flag=open_flag, protocol=4)
+    for library in DEFAULT_LIBRARIES:
         if library not in db:
             db[library] = Library(DEFAULT_LIBRARIES[library], ())
     return db
