@@ -7,25 +7,6 @@ import models
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
-class Window(widgets.QMainWindow):
-    """The main window which holds all the pages in the app."""
-
-    app = widgets.QApplication()
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Sankore")
-        self.to_start_page()
-
-    def run(self):
-        self.show()
-        return self.app.exec()
-
-    def to_start_page(self):
-        start_page = HomePage()
-        self.setCentralWidget(start_page)
-
-
 class HomePage(widgets.QWidget):
     columns = ("Title", "Author(s)", "No. of pages")
 
@@ -164,6 +145,7 @@ class UpdateProgress(widgets.QDialog):
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(book.pages)
+        self.slider.setTracking(False)
         self.slider.valueChanged.connect(self.update_editor)
         self.slider.setValue(book.current_page)
 
@@ -210,5 +192,10 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setValue(new_value)
 
 
-if __name__ == "__main__":
-    Window().run()
+def run_ui(title: str) -> int:
+    app = widgets.QApplication()
+    window = widgets.QMainWindow()
+    window.setWindowTitle(title)
+    window.setCentralWidget(HomePage())
+    window.show()
+    return app.exec()
