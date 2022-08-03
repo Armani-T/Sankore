@@ -7,23 +7,13 @@ import models
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
-class Window(widgets.QMainWindow):
-    """The main window which holds all the pages in the app."""
-
+def start_ui() -> int:
     app = widgets.QApplication()
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Sankore")
-        self.to_start_page()
-
-    def run(self):
-        self.show()
-        return self.app.exec()
-
-    def to_start_page(self):
-        start_page = HomePage()
-        self.setCentralWidget(start_page)
+    window = widgets.QMainWindow()
+    window.setWindowTitle("Sankore")
+    window.setCentralWidget(HomePage())
+    window.show()
+    return app.exec()
 
 
 class HomePage(widgets.QWidget):
@@ -208,7 +198,3 @@ class UpdateProgress(widgets.QDialog):
     def update_slider(self):
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
-
-
-if __name__ == "__main__":
-    Window().run()
