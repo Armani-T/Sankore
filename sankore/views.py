@@ -191,10 +191,10 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setValue(new_value)
 
 
-def run_ui() -> int:
+def run_ui(title: str) -> int:
     app = widgets.QApplication()
     window = widgets.QMainWindow()
-    window.setWindowTitle("Sankore")
+    window.setWindowTitle(title)
     window.setCentralWidget(HomePage())
     window.show()
     return app.exec()
