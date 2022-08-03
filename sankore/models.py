@@ -1,8 +1,13 @@
-from collections.abc import Collection
+from collections.abc import Collection, MutableMapping
 from dataclasses import dataclass
 from itertools import chain
+from pathlib import Path
+from shelve import open as shelve_open
+
+Database = MutableMapping[str, "Library"]
 
 ALL_BOOKS = "All Books"
+PROTOCOL = 4
 
 
 @dataclass
@@ -65,6 +70,15 @@ LIBRARIES = {
         ),
     ),
 }
+
+
+def get_db(db_file: Path) -> Database:
+    open_flag = "w" if db_file.exists() else "n"
+    db = shelve_open(db_file, flag=open_flag, protocol=PROTOCOL)
+    for library in DEFAULT_LIBRARIES.items():
+        if library not in db:
+            db[library] = Library(DEFAULT_LIBRARIES[library], ())
+    return db
 
 
 def create_book(lib_name: str, new_book: Book) -> None:
