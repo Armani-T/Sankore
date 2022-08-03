@@ -7,15 +7,6 @@ import models
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
-def start_ui() -> int:
-    app = widgets.QApplication()
-    window = widgets.QMainWindow()
-    window.setWindowTitle("Sankore")
-    window.setCentralWidget(HomePage())
-    window.show()
-    return app.exec()
-
-
 class HomePage(widgets.QWidget):
     columns = ("Title", "Author(s)", "No. of pages")
 
@@ -198,3 +189,12 @@ class UpdateProgress(widgets.QDialog):
     def update_slider(self):
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
+
+
+def start_ui() -> int:
+    app = widgets.QApplication()
+    window = widgets.QMainWindow()
+    window.setWindowTitle("Sankore")
+    window.setCentralWidget(HomePage())
+    window.show()
+    return app.exec()
