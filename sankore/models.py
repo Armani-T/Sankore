@@ -5,6 +5,8 @@ from shelve import Shelf, open as open_shelf
 
 ALL_BOOKS = "All Books"
 
+Database = Shelf
+
 
 @dataclass
 class Book:
@@ -44,7 +46,7 @@ class Library(Collection[Book]):
         raise KeyError(f'There is no book called "{title}" in this library.')
 
 
-def get_db(db_file: str) -> Shelf:
+def get_db(db_file: str) -> Database:
     db = open_shelf(db_file, flag="c", protocol=4)
     db.setdefault("To Read", Library("The books that I haven't read yet.", ()))
     db.setdefault("Already Read", Library("The books I intend to read later.", ()))
@@ -56,32 +58,32 @@ def get_db(db_file: str) -> Shelf:
     return db
 
 
-def insert_book(db: Shelf, library: str, new_book: Book) -> None:
+def insert_book(db: Database, library: str, new_book: Book) -> None:
     db[library] = db[library].insert(new_book)
 
 
-def find_book(db: Shelf, book_title: str) -> Book:
+def find_book(db: Database, book_title: str) -> Book:
     full_list = list_all_books(db)
     return full_list[book_title]
 
 
-def list_all_books(db: Shelf) -> Library:
+def list_all_books(db: Database) -> Library:
     result = sum(db.values(), Library())
     result.description = "All the books recorded in the library."
     return result
 
 
-def list_books(db: Shelf, name: str) -> Library:
+def list_books(db: Database, name: str) -> Library:
     return list_all_books(db) if name == ALL_BOOKS else db[name]
 
 
-def list_libraries(db: Shelf, all_: bool = True) -> Iterable[str]:
+def list_libraries(db: Database, all_: bool = True) -> Iterable[str]:
     if all_:
         yield ALL_BOOKS
     yield from db.keys()
 
 
-def switch_library(db: Shelf, old_name: str, new_name: str, book: Book) -> None:
+def switch_library(db: Database, old_name: str, new_name: str, book: Book) -> None:
     old_lib = db[old_name]
     db[old_lib] = Library(
         old_lib.description,
@@ -90,7 +92,7 @@ def switch_library(db: Shelf, old_name: str, new_name: str, book: Book) -> None:
     return insert_book(db, new_name, book)
 
 
-def update_book(db: Shelf, name: str, old_title: str, new_book: Book) -> None:
+def update_book(db: Database, name: str, old_title: str, new_book: Book) -> None:
     library = db[name]
     db[name] = Library(
         library.description,
