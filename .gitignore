@@ -22,4 +22,4 @@ tasks.py
 
 # Personal files
 scratch/
-data/
+data.json
