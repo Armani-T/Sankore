@@ -1,9 +1,9 @@
-from collections.abc import Collection
+from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from itertools import chain
-from pathlib import Path
-from shelve import open as open_shelf
-from typing import Mapping, MutableMapping
+from shelve import Shelf, open as open_shelf
+
+ALL_BOOKS = "All Books"
 
 
 @dataclass
@@ -37,50 +37,62 @@ class Library(Collection[Book]):
     def __len__(self):
         return len(self.books)
 
-
-Database = MutableMapping[str, "Library"]
-
-ALL_BOOKS = "All Books"
-DEFAULT_LIBRARIES: Mapping[str, str] = {
-    "To Read": "The books that I haven't read yet but intend to.",
-    "Done Reading": "The books I intend to read later.",
-    "Reading Now": "The books I am reading right now.",
-    "Archived": "The books I started but stopped reading.",
-}
+    def __getitem__(self, title):
+        for book in self.books:
+            if book.title == title:
+                return book
+        raise KeyError(f'There is no book called "{title}" in this library.')
 
 
-def get_db(db_file: Path) -> Database:
+def get_db(db_file: str) -> Shelf:
     db = open_shelf(db_file, flag="c", protocol=4)
-    db.setdefault(Library("", ()))
+    db.setdefault("To Read", Library("The books that I haven't read yet.", ()))
+    db.setdefault("Already Read", Library("The books I intend to read later.", ()))
+    db.setdefault("Reading Now", Library("The books I'm reading right now.", ()))
+    db.setdefault(
+        "Archived",
+        Library("The books I started reading but stopped before finishing.", ()),
+    )
     return db
 
 
-def create_book(db: Database, name: str, new_book: Book) -> None:
-    db[name] = db[name].insert(new_book)
+def insert_book(db: Shelf, library: str, new_book: Book) -> None:
+    db[library] = db[library].insert(new_book)
 
 
-def change_library(db: Database, old_lib: str, new_lib: str, book: Book) -> None:
-    db[old_lib] = tuple(item for item in get_books(old_lib) if item != book)
-    create_book(new_lib, book)
+def find_book(db: Shelf, book_title: str) -> Book:
+    full_list = list_all_books(db)
+    return full_list[book_title]
 
 
-def get_book(db: Database, title: str) -> Book:
-    for book in get_books(db):
-        if book.title == title:
-            return book
-    raise ValueError(f'No book with title "{title}" was found.')
+def list_all_books(db: Shelf) -> Library:
+    result = sum(db.values(), Library())
+    result.description = "All the books recorded in the library."
+    return result
 
 
-def get_books(db: Database, name: str) -> Library:
-    return sum(db.values(), Library()) if name == ALL_BOOKS else db[name]
+def list_books(db: Shelf, name: str) -> Library:
+    return list_all_books(db) if name == ALL_BOOKS else db[name]
 
 
-def get_libraries(db: Database, all_: bool = True) -> Collection[str]:
-    names = list(db.keys())
+def list_libraries(db: Shelf, all_: bool = True) -> Iterable[str]:
     if all_:
-        names.insert(0, ALL_BOOKS)
-    return names
+        yield ALL_BOOKS
+    yield from db.keys()
 
 
-def update_book(db: Database, name: str, old_title: str, new_book: Book) -> None:
-    db[name] = tuple(new_book if book.title == old_title else book for book in db[name])
+def switch_library(db: Shelf, old_name: str, new_name: str, book: Book) -> None:
+    old_lib = db[old_name]
+    db[old_lib] = Library(
+        old_lib.description,
+        [item for item in old_lib.books if item != book],
+    )
+    return insert_book(db, new_name, book)
+
+
+def update_book(db: Shelf, name: str, old_title: str, new_book: Book) -> None:
+    library = db[name]
+    db[name] = Library(
+        library.description,
+        [new_book if book.title == old_title else book for book in db[name]],
+    )
