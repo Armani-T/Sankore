@@ -5,12 +5,12 @@ from models import get_db
 from views import run_ui
 
 APP_NAME = "Sankore"
-DB_FILE = str(Path(__file__).joinpath("../../data.json").resolve(strict=True))
+DATA_FILE = Path(__file__).joinpath("../../data.json").resolve(strict=True)
 
 
 def main() -> NoReturn:
-    db = get_db(DB_FILE)
-    exit_code = run_ui(APP_NAME, db)
+    data = get_data(DATA_FILE)
+    exit_code = run_ui(APP_NAME, data)
     exit(exit_code)
 
 
