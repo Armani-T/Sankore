@@ -1,6 +1,8 @@
 from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from itertools import chain
+from json import loads
+from pathlib import Path
 from shelve import Shelf, open as open_shelf
 
 ALL_BOOKS = "All Books"
@@ -46,16 +48,10 @@ class Library(Collection[Book]):
         raise KeyError(f'There is no book called "{title}" in this library.')
 
 
-def get_db(db_file: str) -> Database:
-    db = open_shelf(db_file, flag="c", protocol=4)
-    db.setdefault("To Read", Library("The books that I haven't read yet.", ()))
-    db.setdefault("Already Read", Library("The books I intend to read later.", ()))
-    db.setdefault("Reading Now", Library("The books I'm reading right now.", ()))
-    db.setdefault(
-        "Archived",
-        Library("The books I started reading but stopped before finishing.", ()),
-    )
-    return db
+def get_data(data_file: Path) -> Iterable[Library]:
+    contents = data_file.read_text("utf8")
+    json = loads(contents)
+    return json["libraries"]
 
 
 def insert_book(db: Database, library: str, new_book: Book) -> None:
