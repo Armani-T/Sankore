@@ -3,52 +3,27 @@ from dataclasses import dataclass
 from itertools import chain
 from json import loads
 from pathlib import Path
-from shelve import Shelf, open as open_shelf
+from shelve import Shelf
+from typing import TypedDict
 
 ALL_BOOKS = "All Books"
 
-Database = Shelf
+Data = dict[str, Library]
 
 
-@dataclass
-class Book:
+class Book(TypedDict):
     title: str
     author: str
     pages: int
-    current_page: int = 0
-
-    def __hash__(self):
-        return hash(self.title)
+    current_page: int
 
 
-@dataclass
-class Library(Collection[Book]):
-    description: str = ""
-    books: Collection[Book] = ()
-
-    def insert(self, book: Book):
-        return Library(self.description, (book, *self.books))
-
-    def __add__(self, other: "Library") -> "Library":
-        return Library(self.description, tuple(chain(self.books, other.books)))
-
-    def __contains__(self, book):
-        return book in self.books
-
-    def __iter__(self):
-        return iter(self.books)
-
-    def __len__(self):
-        return len(self.books)
-
-    def __getitem__(self, title):
-        for book in self.books:
-            if book.title == title:
-                return book
-        raise KeyError(f'There is no book called "{title}" in this library.')
+class Library(TypedDict):
+    description: str
+    books: list[Book]
 
 
-def get_data(data_file: Path) -> Iterable[Library]:
+def get_data(data_file: Path) -> Data:
     contents = data_file.read_text("utf8")
     json = loads(contents)
     return json["libraries"]
