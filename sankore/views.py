@@ -99,10 +99,11 @@ class NewBook(widgets.QDialog):
 
     def done(self, *args):
         exit_code = 1
-        new_book = {
+        new_book: models.Book = {
             "title": self.title_edit.text(),
             "author": self.author_edit.text(),
             "pages": int(self.page_edit.text() or "0"),
+            "current_page": 0,
         }
         if new_book["title"] and new_book["author"] and new_book["author"] != 0:
             models.insert_book(self.data, self.library(), new_book)
@@ -130,9 +131,9 @@ class UpdateProgress(widgets.QDialog):
 
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
         for book in models.list_books(self.data, "Currently Reading"):
-            button = widgets.QPushButton(book.title)
+            button = widgets.QPushButton(book["title"])
             button.clicked.connect(
-                lambda *_, title_=book.title: self.to_updater(title_)
+                lambda *_, title_=book["title"]: self.to_updater(title_)
             )
             layout.addWidget(button)
 
@@ -142,20 +143,20 @@ class UpdateProgress(widgets.QDialog):
         book = models.find_book(self.data, book_title)
         base = widgets.QWidget(self)
 
-        title = widgets.QLabel(f"<h1>{book.title.title()}</h1>")
+        title = widgets.QLabel(f"<h1>{book['title'].title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
         left_text = widgets.QLabel("Reached page")
         self.page_edit = widgets.QLineEdit()
-        right_text = widgets.QLabel(f"out of {book.pages}.")
+        right_text = widgets.QLabel(f"out of {book['pages']}.")
         self.page_edit.setValidator(NUMBER_VALIDATOR)
         self.page_edit.textChanged.connect(self.update_slider)
 
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
-        self.slider.setMaximum(book.pages)
+        self.slider.setMaximum(book["pages"])
         self.slider.setTracking(False)
         self.slider.valueChanged.connect(self.update_editor)
-        self.slider.setValue(book.current_page)
+        self.slider.setValue(book["current_page"])
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
