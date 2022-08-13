@@ -1,4 +1,3 @@
-from itertools import chain
 from json import loads
 from pathlib import Path
 from typing import Iterable, TypedDict
@@ -31,21 +30,16 @@ def insert_book(data: Data, library: str, new_book: Book) -> None:
 
 
 def find_book(data: Data, book_title: str) -> Book:
-    for book in list_all_books(data):
+    for book in list_books(data, ALL_BOOKS):
         if book["title"] == book_title:
             return book
     raise KeyError(f"No book with the title: {book_title}")
 
 
-def list_all_books(data: Data) -> Iterable[Book]:
-    get_books = lambda library: library["books"]
-    book_lists = map(get_books, data.values())
-    return chain(book_lists)
-
-
-def list_books(data: Data, name: str) -> Iterable[Book]:
+def list_books(data: Data, name: str) -> list[Book]:
     if name == ALL_BOOKS:
-        return list_all_books(data)
+        book_lists = map(lambda library: library["books"], data.values())
+        return list(sum(book_lists, []))
     return data[name]["books"]
 
 
