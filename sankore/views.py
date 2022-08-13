@@ -98,13 +98,16 @@ class NewBook(widgets.QDialog):
         self.setLayout(layout)
 
     def done(self, *args):
-        pages = int(self.page_edit.text() or "0")
-        title, author = self.title_edit.text(), self.author_edit.text()
-        if title and author:
-            models.insert_book(
-                self.data, self.library(), models.Book(title, author, pages)
-            )
-        return super().done(0)
+        exit_code = 1
+        new_book = {
+            "title": self.title_edit.text(),
+            "author": self.author_edit.text(),
+            "pages": int(self.page_edit.text() or "0"),
+        }
+        if new_book["title"] and new_book["author"] and new_book["author"] != 0:
+            models.insert_book(self.data, self.library(), new_book)
+            exit_code = 0
+        return super().done(exit_code)
 
     def library(self):
         return self.combo.currentText()
