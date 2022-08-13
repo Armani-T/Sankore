@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
@@ -10,7 +12,7 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 class HomePage(widgets.QWidget):
     columns = ("Title", "Author(s)", "No. of pages")
 
-    def __init__(self, data, parent=None):
+    def __init__(self, data: models.Data, parent: Optional[widgets.QWidget] = None):
         super().__init__(parent)
         self.data = data
 
@@ -47,7 +49,7 @@ class HomePage(widgets.QWidget):
         layout.addWidget(progress_widget, 6, 8, 3, 4)
         self.setLayout(layout)
 
-    def new_book(self):
+    def new_book(self) -> int:
         dialog = NewBook(self.data, self)
         result = dialog.exec()
         library = dialog.library()
@@ -56,11 +58,11 @@ class HomePage(widgets.QWidget):
         self.update_table(library)
         return result
 
-    def update_progress(self):
-        dialog = UpdateProgress(self, self.data)
+    def update_progress(self) -> int:
+        dialog = UpdateProgress(self.data, self)
         return dialog.exec()
 
-    def update_table(self, lib_name):
+    def update_table(self, lib_name: str) -> None:
         book_list = tuple(models.list_books(self.data, lib_name))
         self.table.setColumnCount(len(self.columns))
         self.table.setRowCount(len(book_list))
@@ -75,9 +77,10 @@ class HomePage(widgets.QWidget):
 
 
 class NewBook(widgets.QDialog):
-    def __init__(self, data, parent):
+    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
         self.data = data
+
         self.setWindowTitle("Add a book")
         self.title_edit = widgets.QLineEdit()
         self.author_edit = widgets.QLineEdit()
@@ -97,7 +100,7 @@ class NewBook(widgets.QDialog):
         layout.addRow(save_button)
         self.setLayout(layout)
 
-    def done(self, *args):
+    def done(self, _: object) -> None:
         exit_code = 1
         new_book: models.Book = {
             "title": self.title_edit.text(),
@@ -110,21 +113,21 @@ class NewBook(widgets.QDialog):
             exit_code = 0
         return super().done(exit_code)
 
-    def library(self):
+    def library(self) -> str:
         return self.combo.currentText()
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent, data):
+    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
         self.data = data
-        self.layout = widgets.QStackedLayout()
+        self.layout_ = widgets.QStackedLayout()
         self.list_widget = self._create_list()
-        self.layout.addWidget(self.list_widget)
-        self.setLayout(self.layout)
+        self.layout_.addWidget(self.list_widget)
+        self.setLayout(self.layout_)
         self.to_list()
 
-    def _create_list(self):
+    def _create_list(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
         layout = widgets.QVBoxLayout()
         base.setLayout(layout)
@@ -139,7 +142,7 @@ class UpdateProgress(widgets.QDialog):
 
         return base
 
-    def _create_updater(self, book_title):
+    def _create_updater(self, book_title: str) -> widgets.QWidget:
         book = models.find_book(self.data, book_title)
         base = widgets.QWidget(self)
 
@@ -179,24 +182,24 @@ class UpdateProgress(widgets.QDialog):
         base.setLayout(layout)
         return base
 
-    def update_progress(self):
+    def update_progress(self) -> None:
         return super().done(0)
 
-    def to_updater(self, title):
+    def to_updater(self, title: str) -> None:
         self.setWindowTitle(f'Updating "{title.title()}"')
         widget = self._create_updater(title)
-        self.layout.addWidget(widget)
-        self.layout.setCurrentWidget(widget)
+        self.layout_.addWidget(widget)
+        self.layout_.setCurrentWidget(widget)
 
-    def to_list(self):
+    def to_list(self) -> None:
         self.setWindowTitle("Choose a Book to Update")
-        self.layout.setCurrentWidget(self.list_widget)
+        self.layout_.setCurrentWidget(self.list_widget)
 
-    def update_editor(self):
+    def update_editor(self) -> None:
         new_value = str(self.slider.value())
         self.page_edit.setText(new_value)
 
-    def update_slider(self):
+    def update_slider(self) -> None:
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
 
