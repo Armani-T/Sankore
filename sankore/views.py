@@ -207,10 +207,11 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setValue(new_value)
 
 
-def run_ui(title: str, data: models.Data) -> int:
+def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
     window = widgets.QMainWindow()
+    home_widget = HomePage(data, window)
     window.setWindowTitle(title)
-    window.setCentralWidget(HomePage(data, window))
+    window.setCentralWidget(home_widget)
     window.show()
-    return app.exec()
+    return home_widget.data, app.exec()
