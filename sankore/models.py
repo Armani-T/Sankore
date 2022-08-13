@@ -1,4 +1,4 @@
-from json import loads
+from json import dumps, loads
 from pathlib import Path
 from typing import Iterable, TypedDict
 
@@ -23,6 +23,11 @@ def get_data(data_file: Path) -> Data:
     contents = data_file.read_text("utf8")
     json = loads(contents)
     return json["libraries"]
+
+
+def save_data(data_file: Path, new_data: Data) -> None:
+    json_string = dumps({"libraries": new_data})
+    data_file.write_text(json_string, "utf8")
 
 
 def insert_book(data: Data, library: str, new_book: Book) -> None:
