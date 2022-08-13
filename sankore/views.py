@@ -10,12 +10,12 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 class HomePage(widgets.QWidget):
     columns = ("Title", "Author(s)", "No. of pages")
 
-    def __init__(self, db, parent=None):
+    def __init__(self, data, parent=None):
         super().__init__(parent)
-        self.db = db
+        self.data = data
 
         self.combo = widgets.QComboBox()
-        self.combo.addItems(tuple(models.list_libraries(self.db)))
+        self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_table)
 
         self.table = widgets.QTableWidget()
@@ -48,20 +48,20 @@ class HomePage(widgets.QWidget):
         self.setLayout(layout)
 
     def new_book(self):
-        dialog = NewBook(self.db, self)
+        dialog = NewBook(self.data, self)
         result = dialog.exec()
         library = dialog.library()
-        all_libs = tuple(models.list_libraries(self.db))
+        all_libs = tuple(models.list_libraries(self.data))
         self.combo.setCurrentIndex(all_libs.index(library))
         self.update_table(library)
         return result
 
     def update_progress(self):
-        dialog = UpdateProgress(self, self.db)
+        dialog = UpdateProgress(self, self.data)
         return dialog.exec()
 
     def update_table(self, lib_name):
-        book_list = models.list_books(self.db, lib_name)
+        book_list = models.list_books(self.data, lib_name)
         self.table.setColumnCount(len(self.columns))
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
@@ -75,15 +75,15 @@ class HomePage(widgets.QWidget):
 
 
 class NewBook(widgets.QDialog):
-    def __init__(self, db, parent):
+    def __init__(self, data, parent):
         super().__init__(parent)
-        self.db = db
+        self.data = data
         self.setWindowTitle("Add a book")
         self.title_edit = widgets.QLineEdit()
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.combo = widgets.QComboBox()
-        self.combo.addItems(tuple(models.list_libraries(self.db, False)))
+        self.combo.addItems(tuple(models.list_libraries(self.data, False)))
         self.page_edit.setValidator(NUMBER_VALIDATOR)
 
         save_button = widgets.QPushButton("Add to Books")
@@ -102,7 +102,7 @@ class NewBook(widgets.QDialog):
         title, author = self.title_edit.text(), self.author_edit.text()
         if title and author:
             models.insert_book(
-                self.db, self.library(), models.Book(title, author, pages)
+                self.data, self.library(), models.Book(title, author, pages)
             )
         return super().done(0)
 
@@ -111,9 +111,9 @@ class NewBook(widgets.QDialog):
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent, db):
+    def __init__(self, parent, data):
         super().__init__(parent)
-        self.db = db
+        self.data = data
         self.layout = widgets.QStackedLayout()
         self.list_widget = self._create_list()
         self.layout.addWidget(self.list_widget)
@@ -126,7 +126,7 @@ class UpdateProgress(widgets.QDialog):
         base.setLayout(layout)
 
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
-        for book in models.list_books(self.db, "Currently Reading"):
+        for book in models.list_books(self.data, "Currently Reading"):
             button = widgets.QPushButton(book.title)
             button.clicked.connect(
                 lambda *_, title_=book.title: self.to_updater(title_)
@@ -136,7 +136,7 @@ class UpdateProgress(widgets.QDialog):
         return base
 
     def _create_updater(self, book_title):
-        book = models.find_book(self.db, book_title)
+        book = models.find_book(self.data, book_title)
         base = widgets.QWidget(self)
 
         title = widgets.QLabel(f"<h1>{book.title.title()}</h1>")
@@ -197,10 +197,10 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setValue(new_value)
 
 
-def run_ui(title: str, db: models.Database) -> int:
+def run_ui(title: str, data: models.Data) -> int:
     app = widgets.QApplication()
     window = widgets.QMainWindow()
     window.setWindowTitle(title)
-    window.setCentralWidget(HomePage(db))
+    window.setCentralWidget(HomePage(data, window))
     window.show()
     return app.exec()
