@@ -61,15 +61,15 @@ class HomePage(widgets.QWidget):
         return dialog.exec()
 
     def update_table(self, lib_name):
-        book_list = models.list_books(self.data, lib_name)
+        book_list = tuple(models.list_books(self.data, lib_name))
         self.table.setColumnCount(len(self.columns))
         self.table.setRowCount(len(book_list))
         self.table.setHorizontalHeaderLabels(self.columns)
         self.table.setVerticalHeaderLabels([""] * self.table.rowCount())
         for index, book in enumerate(book_list):
-            self.table.setItem(index, 0, widgets.QTableWidgetItem(book.title))
-            self.table.setItem(index, 1, widgets.QTableWidgetItem(book.author))
-            self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book.pages)))
+            self.table.setItem(index, 0, widgets.QTableWidgetItem(book["title"]))
+            self.table.setItem(index, 1, widgets.QTableWidgetItem(book["author"]))
+            self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book["pages"])))
 
         self.table.resizeColumnsToContents()
 
