@@ -53,6 +53,7 @@ class HomePage(widgets.QWidget):
         dialog = NewBook(self.data, self)
         result = dialog.exec()
         library = dialog.library()
+        self.data = dialog.data
         all_libs = tuple(models.list_libraries(self.data))
         self.combo.setCurrentIndex(all_libs.index(library))
         self.update_table(library)
@@ -60,7 +61,9 @@ class HomePage(widgets.QWidget):
 
     def update_progress(self) -> int:
         dialog = UpdateProgress(self.data, self)
-        return dialog.exec()
+        result = dialog.exec()
+        self.data = dialog.data
+        return result
 
     def update_table(self, lib_name: str) -> None:
         book_list = tuple(models.list_books(self.data, lib_name))
