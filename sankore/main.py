@@ -10,7 +10,7 @@ DATA_FILE = Path(__file__).joinpath("../../data.json").resolve(strict=True)
 
 def main() -> NoReturn:
     DATA_FILE.touch(exist_ok=True)
-    data = get_data(str(DATA_FILE.resolve(strict=True)))
+    data = get_data(DATA_FILE.resolve(strict=True))
     exit_code = run_ui(APP_NAME, data)
     exit(exit_code)
 
