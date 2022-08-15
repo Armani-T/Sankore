@@ -22,3 +22,6 @@ tasks.py
 
 # Personal files
 scratch/
+
+# App Files
+data.json

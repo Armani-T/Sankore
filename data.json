@@ -1,0 +1,20 @@
+{
+    "libraries": {
+        "To Read": {
+            "description": "Books that I want read in the future.",
+            "books": []
+        },
+        "Already Read": {
+            "description": "Books that I've finished reading.",
+            "books": []
+        },
+        "Reading": {
+            "description": "Books that I'm reading right now.",
+            "books": []
+        },
+        "Archived": {
+            "description": "Books that I stopped reading without finishing.",
+            "books": []
+        }
+    }
+}
