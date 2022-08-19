@@ -1,10 +1,22 @@
-from json import dumps, loads
 from pathlib import Path
 from typing import Iterable, TypedDict
-
-ALL_BOOKS = "All Books"
+import json
 
 Data = dict[str, "Library"]
+
+ALL_BOOKS = "All Books"
+DEFAULT_LIBRARIES: Data = {
+    "To Read": {"description": "Books that I want read in the future.", "books": []},
+    "Already Read": {"description": "Books that I've finished reading.", "books": []},
+    "Currently Reading": {
+        "description": "Books that I'm reading right now.",
+        "books": [],
+    },
+    "Archived": {
+        "description": "Books that I stopped reading without finishing.",
+        "books": [],
+    },
+}
 
 
 class Book(TypedDict):
@@ -20,14 +32,17 @@ class Library(TypedDict):
 
 
 def get_data(data_file: Path) -> Data:
-    contents = data_file.read_text("utf8")
-    json = loads(contents)
-    return json["libraries"]
+    try:
+        contents = data_file.read_text("utf8")
+        data = json.loads(contents)
+        return data["libraries"]
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
+        return DEFAULT_LIBRARIES
 
 
 def save_data(data_file: Path, new_data: Data) -> None:
-    json_string = dumps({"libraries": new_data})
-    data_file.write_text(json_string, "utf8")
+    string = json.dumps({"libraries": new_data})
+    data_file.write_text(string, "utf8")
 
 
 def insert_book(data: Data, library: str, new_book: Book) -> None:
