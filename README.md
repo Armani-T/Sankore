@@ -26,15 +26,13 @@ $ python3 sankore
 
 The app should now start running. On start up, it should look like this:
 
-![Sankore Home Page](assets/home-sc.png)
-The home page
+![Home page](assets/home-sc.png)
 
-![Sankore New Book Page](assets/add-book-sc.png)
-Adding a new book
+![Adding a new book](assets/add-book-sc.png)
 
-![Sankore Update Page 1](assets/update-page-sc-1.png)
-![Sankore Update Page 2](assets/update-page-sc-2.png)
-Updating my reading position
+![Updating my reading position](assets/update-page-sc-1.png)
+
+![Updating my reading position](assets/update-page-sc-2.png)
 
 ## Contributing Guide
 
