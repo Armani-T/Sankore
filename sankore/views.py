@@ -108,6 +108,35 @@ class NewBook(widgets.QDialog):
         return self.combo.currentText()
 
 
+class NewLibrary(widgets.QDialog):
+    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+        super().__init__(parent)
+        self.data = data
+
+        self.setWindowTitle("New Library")
+        self.name_edit = widgets.QLineEdit()
+        self.description_edit = widgets.QPlainTextEdit()
+        save_button = widgets.QPushButton("Add to Books")
+        save_button.clicked.connect(self.save)
+
+        layout = widgets.QFormLayout()
+        layout.addRow("Name:", self.name_edit)
+        layout.addRow("Description:", self.description_edit)
+        layout.addRow(save_button)
+        self.setLayout(layout)
+
+    def name(self) -> str:
+        return self.name_edit.text().strip().title()
+
+    def save(self) -> None:
+        new_lib: models.Library = {
+            "description": self.description_edit.toPlainText().strip(),
+            "books": [],
+        }
+        exit_code = models.create_lib(self.data, new_lib) if self.name() else 1
+        return super().done(exit_code)
+
+
 class UpdateProgress(widgets.QDialog):
     def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
