@@ -33,10 +33,10 @@ class HomePage(widgets.QWidget):
 
         layout = widgets.QGridLayout()
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.table, 1, 0, 19, 10)
-        layout.addWidget(update_button, 0, 10, 1, 5)
-        layout.addWidget(new_book_button, 1, 10, 1, 5)
-        layout.addWidget(new_lib_button, 2, 10, 1, 5)
+        layout.addWidget(self.table, 1, 0, 22, 10)
+        layout.addWidget(update_button, 23, 0, 1, 10)
+        layout.addWidget(new_lib_button, 24, 0, 1, 5)
+        layout.addWidget(new_book_button, 24, 5, 1, 5)
         self.setLayout(layout)
 
     def new_book(self) -> int:
