@@ -10,7 +10,7 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
 class HomePage(widgets.QWidget):
-    columns = ("Title", "Author(s)", "No. of pages")
+    columns = ("Title", "Author", "No. of pages")
 
     def __init__(self, data: models.Data, parent: Optional[widgets.QWidget] = None):
         super().__init__(parent)
@@ -82,17 +82,17 @@ class NewBook(widgets.QDialog):
         self.page_edit.setValidator(NUMBER_VALIDATOR)
 
         save_button = widgets.QPushButton("Add to Books")
-        save_button.clicked.connect(self.done)
+        save_button.clicked.connect(self.save)
 
         layout = widgets.QFormLayout()
         layout.addRow("Title:", self.title_edit)
-        layout.addRow("Author(s):", self.author_edit)
+        layout.addRow("Author:", self.author_edit)
         layout.addRow("Number of pages:", self.page_edit)
         layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
         self.setLayout(layout)
 
-    def done(self, _: object) -> None:
+    def save(self) -> None:
         exit_code = 1
         new_book: models.Book = {
             "title": self.title_edit.text(),
