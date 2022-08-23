@@ -6,7 +6,7 @@ Sankore is a small personal project that I built to keep track of my reading hab
 
 ## Installation
 
-First, ensure that you have `python3` on your system and that the version `3.9.0` or above. If it isn't, you can download/update it either from `apt-get` or from [https://python.org/downloads](https://python.org/downloads/). Now that that's out of the way, we can get the app and its' dependencies. You can do this by running:
+First, ensure that you have `python3` on your system and that the version `3.9.0` or above. If it isn't, you can download/update it either from `apt-get` or from <https://python.org/downloads>. Now that that's out of the way, we can get the app and its' dependencies. You can do this by running:
 
 ```bash
 $ git clone https://github.com/Armani-T/Hanno
