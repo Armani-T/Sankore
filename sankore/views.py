@@ -25,8 +25,10 @@ class HomePage(widgets.QWidget):
         self.update_table(self.combo.currentText())
 
         new_book_button = widgets.QPushButton("New Book")
+        new_lib_button = widgets.QPushButton("New Library")
         update_button = widgets.QPushButton("Update Reading Position")
         new_book_button.clicked.connect(self.new_book)
+        new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
         layout = widgets.QGridLayout()
@@ -34,6 +36,7 @@ class HomePage(widgets.QWidget):
         layout.addWidget(self.table, 1, 0, 19, 10)
         layout.addWidget(update_button, 0, 10, 1, 5)
         layout.addWidget(new_book_button, 1, 10, 1, 5)
+        layout.addWidget(new_lib_button, 2, 10, 1, 5)
         self.setLayout(layout)
 
     def new_book(self) -> int:
