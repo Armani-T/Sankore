@@ -1,5 +1,7 @@
 # Python Cruft
 *.py[co]
+.venv/
+venv/
 
 # Editor cruft
 .idea/
