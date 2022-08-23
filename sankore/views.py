@@ -10,7 +10,7 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
 class HomePage(widgets.QWidget):
-    columns = ("Title", "Author(s)", "No. of pages")
+    columns = ("Title", "Author", "No. of pages")
 
     def __init__(self, data: models.Data, parent: Optional[widgets.QWidget] = None):
         super().__init__(parent)
@@ -25,25 +25,34 @@ class HomePage(widgets.QWidget):
         self.update_table(self.combo.currentText())
 
         new_book_button = widgets.QPushButton("New Book")
+        new_lib_button = widgets.QPushButton("New Library")
         update_button = widgets.QPushButton("Update Reading Position")
         new_book_button.clicked.connect(self.new_book)
+        new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
         layout = widgets.QGridLayout()
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.table, 1, 0, 19, 10)
-        layout.addWidget(update_button, 0, 10, 1, 5)
-        layout.addWidget(new_book_button, 1, 10, 1, 5)
+        layout.addWidget(self.table, 1, 0, 22, 10)
+        layout.addWidget(update_button, 23, 0, 1, 10)
+        layout.addWidget(new_lib_button, 24, 0, 1, 5)
+        layout.addWidget(new_book_button, 24, 5, 1, 5)
         self.setLayout(layout)
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
         result = dialog.exec()
-        library = dialog.library()
         self.data = dialog.data
         all_libs = tuple(models.list_libraries(self.data))
-        self.combo.setCurrentIndex(all_libs.index(library))
-        self.update_table(library)
+        self.combo.setCurrentIndex(all_libs.index(dialog.library()))
+        self.update_table(dialog.library())
+        return result
+
+    def new_lib(self) -> int:
+        dialog = NewLibrary(self.data, self)
+        result = dialog.exec()
+        self.data = dialog.data
+        self.combo.addItem(dialog.name())
         return result
 
     def update_progress(self) -> int:
@@ -71,7 +80,7 @@ class NewBook(widgets.QDialog):
         super().__init__(parent)
         self.data = data
 
-        self.setWindowTitle("Add a book")
+        self.setWindowTitle("New Book")
         self.title_edit = widgets.QLineEdit()
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
@@ -80,17 +89,17 @@ class NewBook(widgets.QDialog):
         self.page_edit.setValidator(NUMBER_VALIDATOR)
 
         save_button = widgets.QPushButton("Add to Books")
-        save_button.clicked.connect(self.done)
+        save_button.clicked.connect(self.save)
 
         layout = widgets.QFormLayout()
         layout.addRow("Title:", self.title_edit)
-        layout.addRow("Author(s):", self.author_edit)
+        layout.addRow("Author:", self.author_edit)
         layout.addRow("Number of pages:", self.page_edit)
         layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
         self.setLayout(layout)
 
-    def done(self, _: object) -> None:
+    def save(self) -> None:
         exit_code = 1
         new_book: models.Book = {
             "title": self.title_edit.text(),
@@ -98,13 +107,43 @@ class NewBook(widgets.QDialog):
             "pages": int(self.page_edit.text() or "0"),
             "current_page": 0,
         }
-        if new_book["title"] and new_book["author"] and new_book["author"] != 0:
-            models.insert_book(self.data, self.library(), new_book)
-            exit_code = 0
+        if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
+            exit_code = models.insert_book(self.data, self.library(), new_book)
         return super().done(exit_code)
 
     def library(self) -> str:
         return self.combo.currentText()
+
+
+class NewLibrary(widgets.QDialog):
+    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+        super().__init__(parent)
+        self.data = data
+
+        self.setWindowTitle("New Library")
+        self.name_edit = widgets.QLineEdit()
+        self.description_edit = widgets.QPlainTextEdit()
+        save_button = widgets.QPushButton("Add to Books")
+        save_button.clicked.connect(self.save)
+
+        layout = widgets.QFormLayout()
+        layout.addRow("Name:", self.name_edit)
+        layout.addRow("Description:", self.description_edit)
+        layout.addRow(save_button)
+        self.setLayout(layout)
+
+    def name(self) -> str:
+        return self.name_edit.text().strip().title()
+
+    def save(self) -> None:
+        new_lib: models.Library = {
+            "description": self.description_edit.toPlainText().strip(),
+            "books": [],
+        }
+        exit_code = (
+            models.create_lib(self.data, self.name(), new_lib) if self.name() else 1
+        )
+        return super().done(exit_code)
 
 
 class UpdateProgress(widgets.QDialog):
