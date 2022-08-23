@@ -45,6 +45,11 @@ def save_data(data_file: Path, new_data: Data) -> None:
     data_file.write_text(string, "utf8")
 
 
+def create_lib(data: Data, name: str, new_lib: Library) -> int:
+    data[name] = new_lib
+    return 0
+
+
 def insert_book(data: Data, library: str, new_book: Book) -> int:
     data[library]["books"].append(new_book)
     return 0

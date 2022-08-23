@@ -140,7 +140,9 @@ class NewLibrary(widgets.QDialog):
             "description": self.description_edit.toPlainText().strip(),
             "books": [],
         }
-        exit_code = models.create_lib(self.data, new_lib) if self.name() else 1
+        exit_code = (
+            models.create_lib(self.data, self.name(), new_lib) if self.name() else 1
+        )
         return super().done(exit_code)
 
 
