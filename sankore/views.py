@@ -42,11 +42,10 @@ class HomePage(widgets.QWidget):
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
         result = dialog.exec()
-        library = dialog.library()
         self.data = dialog.data
         all_libs = tuple(models.list_libraries(self.data))
-        self.combo.setCurrentIndex(all_libs.index(library))
-        self.update_table(library)
+        self.combo.setCurrentIndex(all_libs.index(dialog.library()))
+        self.update_table(dialog.library())
         return result
 
     def update_progress(self) -> int:
@@ -74,7 +73,7 @@ class NewBook(widgets.QDialog):
         super().__init__(parent)
         self.data = data
 
-        self.setWindowTitle("Add a book")
+        self.setWindowTitle("New Book")
         self.title_edit = widgets.QLineEdit()
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
@@ -101,9 +100,8 @@ class NewBook(widgets.QDialog):
             "pages": int(self.page_edit.text() or "0"),
             "current_page": 0,
         }
-        if new_book["title"] and new_book["author"] and new_book["author"] != 0:
-            models.insert_book(self.data, self.library(), new_book)
-            exit_code = 0
+        if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
+            exit_code = models.insert_book(self.data, self.library(), new_book)
         return super().done(exit_code)
 
     def library(self) -> str:
