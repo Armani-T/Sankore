@@ -29,24 +29,11 @@ class HomePage(widgets.QWidget):
         new_book_button.clicked.connect(self.new_book)
         update_button.clicked.connect(self.update_progress)
 
-        progress_widget = widgets.QWidget()
-        progress_layout = widgets.QVBoxLayout()
-        progress_title = widgets.QLabel("<h2>Monthly Progress</h2>")
-        progress_title.setAlignment(Qt.AlignCenter)
-        progress_text = widgets.QLabel("You've completed 4 books this month!")
-        progress_text.setAlignment(Qt.AlignCenter)
-        progress_bar = widgets.QProgressBar()
-        progress_layout.addWidget(progress_title)
-        progress_layout.addWidget(progress_text)
-        progress_layout.addWidget(progress_bar)
-        progress_widget.setLayout(progress_layout)
-
         layout = widgets.QGridLayout()
-        layout.addWidget(self.combo, 0, 0, 1, 8)
-        layout.addWidget(self.table, 1, 0, 8, 8)
-        layout.addWidget(update_button, 0, 8, 1, 4)
-        layout.addWidget(new_book_button, 1, 8, 1, 4)
-        layout.addWidget(progress_widget, 6, 8, 3, 4)
+        layout.addWidget(self.combo, 0, 0, 1, 10)
+        layout.addWidget(self.table, 1, 0, 19, 10)
+        layout.addWidget(update_button, 0, 10, 1, 5)
+        layout.addWidget(new_book_button, 1, 10, 1, 5)
         self.setLayout(layout)
 
     def new_book(self) -> int:
