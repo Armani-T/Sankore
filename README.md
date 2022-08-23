@@ -26,13 +26,13 @@ $ python3 sankore
 
 The app should now start running. On start up, it should look like this:
 
-![Home page](assets/home-sc.png)
+![Home page](assets/home.png)
 
-![Adding a new book](assets/add-book-sc.png)
+![Adding a new book](assets/add-book.png)
 
-![Updating my reading position](assets/update-page-sc-1.png)
+![Updating my reading position](assets/update-page-1.png)
 
-![Updating my reading position](assets/update-page-sc-2.png)
+![Updating my reading position](assets/update-page-2.png)
 
 ## Contributing Guide
 
