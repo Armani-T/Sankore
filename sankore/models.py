@@ -46,8 +46,9 @@ def save_data(data_file: Path, new_data: Data) -> None:
 
 
 def create_lib(data: Data, name: str, new_lib: Library) -> int:
-    data[name] = new_lib
-    return 0
+    if name:
+        return 0, {name: new_lib, **data}
+    return 1, data
 
 
 def insert_book(data: Data, library: str, new_book: Book) -> int:
