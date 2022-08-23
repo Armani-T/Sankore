@@ -48,6 +48,13 @@ class HomePage(widgets.QWidget):
         self.update_table(dialog.library())
         return result
 
+    def new_lib(self) -> int:
+        dialog = NewLibrary(self.data, self)
+        result = dialog.exec()
+        self.data = dialog.data
+        self.combo.addItem(dialog.name())
+        return result
+
     def update_progress(self) -> int:
         dialog = UpdateProgress(self.data, self)
         result = dialog.exec()
