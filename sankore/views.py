@@ -31,13 +31,12 @@ class HomePage(widgets.QWidget):
         new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
-        layout = widgets.QGridLayout()
+        layout = widgets.QGridLayout(self)
         layout.addWidget(self.combo, 0, 0, 1, 10)
         layout.addWidget(self.table, 1, 0, 22, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
-        self.setLayout(layout)
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
@@ -108,13 +107,12 @@ class NewBook(widgets.QDialog):
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.save)
 
-        layout = widgets.QFormLayout()
+        layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
         layout.addRow("Number of pages:", self.page_edit)
         layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
-        self.setLayout(layout)
 
     def save(self) -> None:
         exit_code = 1
@@ -143,11 +141,10 @@ class NewLibrary(widgets.QDialog):
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.save)
 
-        layout = widgets.QFormLayout()
+        layout = widgets.QFormLayout(self)
         layout.addRow("Name:", self.name_edit)
         layout.addRow("Description:", self.description_edit)
         layout.addRow(save_button)
-        self.setLayout(layout)
 
     def name(self) -> str:
         return self.name_edit.text().strip().title()
@@ -166,16 +163,14 @@ class UpdateProgress(widgets.QDialog):
     def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
         self.data = data
-        self.layout_ = widgets.QStackedLayout()
+        self.layout_ = widgets.QStackedLayout(self)
         self.list_widget = self._create_list()
         self.layout_.addWidget(self.list_widget)
-        self.setLayout(self.layout_)
         self.to_list()
 
     def _create_list(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
-        layout = widgets.QVBoxLayout()
-        base.setLayout(layout)
+        layout = widgets.QVBoxLayout(base)
 
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
         for book in models.list_books(self.data, "Currently Reading"):
@@ -216,7 +211,7 @@ class UpdateProgress(widgets.QDialog):
         button_box.accepted.connect(self.update_progress)
         button_box.rejected.connect(self.to_list)
 
-        layout = widgets.QGridLayout()
+        layout = widgets.QGridLayout(base)
         layout.addWidget(title, 0, 1, 1, 3)
         layout.addWidget(left_text, 1, 0, 1, 2)
         layout.addWidget(self.page_edit, 1, 2, 1, 1)
@@ -224,7 +219,6 @@ class UpdateProgress(widgets.QDialog):
         layout.addWidget(self.slider, 2, 1, 1, 3)
         layout.addWidget(finished_button, 3, 2, 1, 1)
         layout.addWidget(button_box, 4, 0, 1, 5)
-        base.setLayout(layout)
         return base
 
     def update_progress(self) -> None:
