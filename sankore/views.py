@@ -75,6 +75,23 @@ class HomePage(widgets.QWidget):
         self.table.resizeColumnsToContents()
 
 
+class Card(widgets.QFrame):
+    def __init__(self, book: models.Book, show_progress: bool = False) -> None:
+        super().__init__()
+        layout = widgets.QVBoxLayout(self)
+        title = widgets.QLabel(book["title"].title())
+        layout.addWidget(title, alignment=Qt.AlignCenter)
+        author = widgets.QLabel(book["author"].title())
+        layout.addWidget(author, alignment=Qt.AlignCenter)
+        pages = widgets.QLabel(f"{book['pages']} Pages")
+        layout.addWidget(pages, alignment=Qt.AlignCenter)
+        if show_progress:
+            bar = widgets.QProgressBar()
+            bar.setMaximum(book["pages"])
+            bar.setValue(min(max(0, book["current_page"]), book["pages"]))
+            layout.addWidget(bar, alignment=Qt.AlignCenter)
+
+
 class NewBook(widgets.QDialog):
     def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
