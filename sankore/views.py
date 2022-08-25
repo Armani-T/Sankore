@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Sequence
 
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QRegularExpressionValidator
@@ -72,6 +72,27 @@ class HomePage(widgets.QWidget):
             self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book["pages"])))
 
         self.table.resizeColumnsToContents()
+
+
+class CardLayout(widgets.QWidget):
+    def __init__(self, parent, columns: int = 3) -> None:
+        super().__init__(parent)
+        self.columns = columns - 1
+        self.layout = widgets.QGridLayout(self)
+
+    def populate(self, items: Sequence[models.Book], show_progress: bool = False) -> None:
+        row, col = 0, 0
+        for item in items:
+            card = Card(self, item, show_progress)
+            self.layout.addWidget(card, row * 5, col * 2, 5, 2, Qt.AlignJustify)
+            row, col = ((row + 1), 0) if col >= self.columns else (row, col + 1)
+
+    def clear(self) -> None:
+        child = self.layout.takeAt(0)
+        while child is not None:
+            card = child.widget()
+            card.deleteLater()
+            child = self.layout.takeAt(0)
 
 
 class Card(widgets.QFrame):
