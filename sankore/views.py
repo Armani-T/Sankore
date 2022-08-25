@@ -76,8 +76,8 @@ class HomePage(widgets.QWidget):
 
 
 class Card(widgets.QFrame):
-    def __init__(self, book: models.Book, show_progress: bool = False) -> None:
-        super().__init__()
+    def __init__(self, parent: widgets.QWidget, book: models.Book, show_progress: bool = False) -> None:
+        super().__init__(parent)
         layout = widgets.QVBoxLayout(self)
         title = widgets.QLabel(book["title"].title())
         layout.addWidget(title, alignment=Qt.AlignCenter)
