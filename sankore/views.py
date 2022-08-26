@@ -206,6 +206,9 @@ class UpdateProgress(widgets.QDialog):
         return base
 
     def _create_updater(self) -> widgets.QWidget:
+        if self.selected_book is None:
+            raise TypeError
+
         base = widgets.QWidget(self)
         title = widgets.QLabel(f"<h1>{self.selected_book['title'].title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
@@ -247,11 +250,15 @@ class UpdateProgress(widgets.QDialog):
         self.layout_.setCurrentWidget(self.list_widget)
 
     def to_updater(self, book: models.Book) -> None:
-        self.setWindowTitle(f'Updating "{book["title"].title()}"')
-        self.selected_book = book
-        widget = self._create_updater()
-        self.layout_.addWidget(widget)
-        self.layout_.setCurrentWidget(widget)
+        try:
+            self.selected_book = book
+            widget = self._create_updater()
+        except TypeError:
+            return self.to_list()
+        else:
+            self.setWindowTitle(f'Updating "{book["title"].title()}"')
+            self.layout_.addWidget(widget)
+            self.layout_.setCurrentWidget(widget)
 
     def update_editor(self) -> None:
         new_value = str(self.slider.value())
