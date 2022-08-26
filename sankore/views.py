@@ -42,7 +42,6 @@ class HomePage(widgets.QWidget):
         self.data = dialog.data
         all_libs = tuple(models.list_libraries(self.data))
         self.combo.setCurrentIndex(all_libs.index(dialog.library()))
-        self.update_table(dialog.library())
         return result
 
     def new_lib(self) -> int:
@@ -66,29 +65,40 @@ class HomePage(widgets.QWidget):
 
 
 class CardLayout(widgets.QWidget):
+    horizontal_stretch_factor = 2
+    vertical_stretch_factor = 5
+
     def __init__(self, parent, columns: int = 3) -> None:
         super().__init__(parent)
         self.columns = columns - 1
-        self.layout = widgets.QGridLayout(self)
+        self.layout_ = widgets.QGridLayout(self)
 
-    def populate(self, items: Sequence[models.Book], show_progress: bool = False) -> None:
+    def populate(
+        self, items: Sequence[models.Book], show_progress: bool = False
+    ) -> None:
         row, col = 0, 0
         for item in items:
             card = Card(self, item, show_progress)
-            self.layout.addWidget(card, row, col)
-            row, col = ((row + 1), 0) if col >= self.columns else (row, col + 1)
+            self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
+            row, col = ((row + 1), 0) if col >= self.columns else (row, (col + 1))
 
     def clear(self) -> None:
-        child = self.layout.takeAt(0)
+        child = self.layout_.takeAt(0)
         while child is not None:
             card = child.widget()
             card.deleteLater()
-            child = self.layout.takeAt(0)
+            child = self.layout_.takeAt(0)
 
 
 class Card(widgets.QFrame):
-    def __init__(self, parent: widgets.QWidget, book: models.Book, show_progress: bool = False) -> None:
+    def __init__(
+        self, parent: widgets.QWidget, book: models.Book, show_progress: bool = False
+    ) -> None:
         super().__init__(parent)
+        policy = self.sizePolicy()
+        policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
+        policy.setVerticalPolicy(widgets.QSizePolicy.Minimum)
+        self.setSizePolicy(policy)
         self.setFrameStyle(widgets.QFrame.Panel)
         layout = widgets.QVBoxLayout(self)
         title = widgets.QLabel(book["title"].title())
@@ -98,10 +108,10 @@ class Card(widgets.QFrame):
         pages = widgets.QLabel(f"{book['pages']} Pages")
         layout.addWidget(pages, alignment=Qt.AlignCenter)
         if show_progress:
-            bar = widgets.QProgressBar()
-            bar.setMaximum(book["pages"])
-            bar.setValue(min(max(0, book["current_page"]), book["pages"]))
-            layout.addWidget(bar, alignment=Qt.AlignCenter)
+            progress = widgets.QProgressBar()
+            progress.setMaximum(book["pages"])
+            progress.setValue(min(max(0, book["current_page"]), book["pages"]))
+            layout.addWidget(progress, alignment=Qt.AlignCenter)
 
 
 class NewBook(widgets.QDialog):
