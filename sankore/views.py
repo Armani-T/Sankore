@@ -18,11 +18,9 @@ class HomePage(widgets.QWidget):
 
         self.combo = widgets.QComboBox()
         self.combo.addItems(tuple(models.list_libraries(self.data)))
-        self.combo.currentTextChanged.connect(self.update_table)
-
-        self.table = widgets.QTableWidget()
-        self.table.setSizeAdjustPolicy(widgets.QAbstractScrollArea.AdjustToContents)
-        self.update_table(self.combo.currentText())
+        self.combo.currentTextChanged.connect(self.update_cards)
+        self.card_holder = CardLayout(self)
+        self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
         new_lib_button = widgets.QPushButton("New Library")
@@ -33,7 +31,7 @@ class HomePage(widgets.QWidget):
 
         layout = widgets.QGridLayout(self)
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.table, 1, 0, 22, 10)
+        layout.addWidget(self.card_holder, 1, 0, 22, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
@@ -54,24 +52,17 @@ class HomePage(widgets.QWidget):
         self.combo.addItem(dialog.name())
         return result
 
+    def update_cards(self) -> None:
+        lib_name = self.combo.currentText()
+        book_list = tuple(models.list_books(self.data, lib_name))
+        self.card_holder.clear()
+        self.card_holder.populate(book_list, True)
+
     def update_progress(self) -> int:
         dialog = UpdateProgress(self.data, self)
         result = dialog.exec()
         self.data = dialog.data
         return result
-
-    def update_table(self, lib_name: str) -> None:
-        book_list = tuple(models.list_books(self.data, lib_name))
-        self.table.setColumnCount(len(self.columns))
-        self.table.setRowCount(len(book_list))
-        self.table.setHorizontalHeaderLabels(self.columns)
-        self.table.setVerticalHeaderLabels([""] * self.table.rowCount())
-        for index, book in enumerate(book_list):
-            self.table.setItem(index, 0, widgets.QTableWidgetItem(book["title"]))
-            self.table.setItem(index, 1, widgets.QTableWidgetItem(book["author"]))
-            self.table.setItem(index, 2, widgets.QTableWidgetItem(str(book["pages"])))
-
-        self.table.resizeColumnsToContents()
 
 
 class CardLayout(widgets.QWidget):
