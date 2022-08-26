@@ -45,7 +45,7 @@ def save_data(data_file: Path, new_data: Data) -> None:
     data_file.write_text(string, "utf8")
 
 
-def create_lib(data: Data, name: str, new_lib: Library) -> int:
+def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
     if name:
         return 0, {name: new_lib, **data}
     return 1, data
