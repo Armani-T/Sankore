@@ -61,8 +61,9 @@ class HomePage(widgets.QWidget):
         lib_name = "Currently Reading"
         dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
         result = dialog.exec()
-        if not result:
-            new_book = {**dialog.selected_book, "current_page": dialog.value()}
+        new_book: Optional[models.Book] = dialog.selected_book
+        if new_book is not None and not result:
+            new_book["current_page"] = dialog.value()
             models.update_book(self.data, lib_name, new_book["title"], new_book)
         return result
 
