@@ -186,9 +186,10 @@ class NewLibrary(widgets.QDialog):
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+    def __init__(self, parent: widgets.QWidget, books: Sequence[models.Book]) -> None:
         super().__init__(parent)
-        self.data = data
+        self.books: Sequence[models.Book] = books
+        self.selected_book: Optional[models.Book] = None
         self.layout_ = widgets.QStackedLayout(self)
         self.list_widget = self._create_list()
         self.layout_.addWidget(self.list_widget)
@@ -197,35 +198,29 @@ class UpdateProgress(widgets.QDialog):
     def _create_list(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
         layout = widgets.QVBoxLayout(base)
-
         layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
-        for book in models.list_books(self.data, "Currently Reading"):
+        for book in self.books:
             button = widgets.QPushButton(book["title"])
-            button.clicked.connect(
-                lambda *_, title_=book["title"]: self.to_updater(title_)
-            )
+            button.clicked.connect(lambda *_, book_=book: self.to_updater(book_))
             layout.addWidget(button)
-
         return base
 
-    def _create_updater(self, book_title: str) -> widgets.QWidget:
-        book = models.find_book(self.data, book_title)
+    def _create_updater(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
-
-        title = widgets.QLabel(f"<h1>{book['title'].title()}</h1>")
+        title = widgets.QLabel(f"<h1>{self.selected_book['title'].title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
         left_text = widgets.QLabel("Reached page")
         self.page_edit = widgets.QLineEdit()
-        right_text = widgets.QLabel(f"out of {book['pages']}.")
+        right_text = widgets.QLabel(f"out of {self.selected_book['pages']}.")
         self.page_edit.setValidator(NUMBER_VALIDATOR)
         self.page_edit.textChanged.connect(self.update_slider)
 
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
-        self.slider.setMaximum(book["pages"])
+        self.slider.setMaximum(self.selected_book["pages"])
         self.slider.setTracking(False)
         self.slider.valueChanged.connect(self.update_editor)
-        self.slider.setValue(book["current_page"])
+        self.slider.setValue(self.selected_book["current_page"])
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
@@ -234,7 +229,7 @@ class UpdateProgress(widgets.QDialog):
         button_box = widgets.QDialogButtonBox(
             widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
         )
-        button_box.accepted.connect(self.update_progress)
+        button_box.accepted.connect(lambda: self.done(0))
         button_box.rejected.connect(self.to_list)
 
         layout = widgets.QGridLayout(base)
@@ -247,18 +242,16 @@ class UpdateProgress(widgets.QDialog):
         layout.addWidget(button_box, 4, 0, 1, 5)
         return base
 
-    def update_progress(self) -> None:
-        return super().done(0)
-
-    def to_updater(self, title: str) -> None:
-        self.setWindowTitle(f'Updating "{title.title()}"')
-        widget = self._create_updater(title)
-        self.layout_.addWidget(widget)
-        self.layout_.setCurrentWidget(widget)
-
     def to_list(self) -> None:
         self.setWindowTitle("Choose a Book to Update")
         self.layout_.setCurrentWidget(self.list_widget)
+
+    def to_updater(self, book: models.Book) -> None:
+        self.setWindowTitle(f'Updating "{book["title"].title()}"')
+        self.selected_book = book
+        widget = self._create_updater()
+        self.layout_.addWidget(widget)
+        self.layout_.setCurrentWidget(widget)
 
     def update_editor(self) -> None:
         new_value = str(self.slider.value())
@@ -267,6 +260,9 @@ class UpdateProgress(widgets.QDialog):
     def update_slider(self) -> None:
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
+
+    def value(self) -> int:
+        return self.slider.value()
 
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
