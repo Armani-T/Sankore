@@ -75,7 +75,7 @@ class CardLayout(widgets.QWidget):
         row, col = 0, 0
         for item in items:
             card = Card(self, item, show_progress)
-            self.layout.addWidget(card, row * 5, col * 2, 5, 2, Qt.AlignJustify)
+            self.layout.addWidget(card, row, col)
             row, col = ((row + 1), 0) if col >= self.columns else (row, col + 1)
 
     def clear(self) -> None:
