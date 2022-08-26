@@ -56,13 +56,6 @@ def insert_book(data: Data, library: str, new_book: Book) -> int:
     return 0
 
 
-def find_book(data: Data, book_title: str) -> Book:
-    for book in list_books(data, ALL_BOOKS):
-        if book["title"] == book_title:
-            return book
-    raise KeyError(f"No book with the title: {book_title}")
-
-
 def list_books(data: Data, name: str) -> list[Book]:
     if name == ALL_BOOKS:
         book_lists = map(lambda library: library["books"], data.values())
