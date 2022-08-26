@@ -58,9 +58,12 @@ class HomePage(widgets.QWidget):
         self.card_holder.populate(book_list, True)
 
     def update_progress(self) -> int:
-        dialog = UpdateProgress(self.data, self)
+        lib_name = "Currently Reading"
+        dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
         result = dialog.exec()
-        self.data = dialog.data
+        if not result:
+            new_book = {**dialog.selected_book, "current_page": dialog.value()}
+            models.update_book(self.data, lib_name, new_book["title"], new_book)
         return result
 
 
