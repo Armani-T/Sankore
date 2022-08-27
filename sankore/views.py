@@ -42,6 +42,7 @@ class HomePage(widgets.QWidget):
         self.data = dialog.data
         all_libs = tuple(models.list_libraries(self.data))
         self.combo.setCurrentIndex(all_libs.index(dialog.library()))
+        self.update_cards()
         return result
 
     def new_lib(self) -> int:
@@ -53,7 +54,7 @@ class HomePage(widgets.QWidget):
 
     def update_cards(self) -> None:
         lib_name = self.combo.currentText()
-        book_list = tuple(models.list_books(self.data, lib_name))
+        book_list = list(models.list_books(self.data, lib_name))
         self.card_holder.clear()
         self.card_holder.populate(book_list, True)
 
@@ -61,10 +62,11 @@ class HomePage(widgets.QWidget):
         lib_name = "Currently Reading"
         dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
         result = dialog.exec()
-        new_book: Optional[models.Book] = dialog.selected_book
+        new_book = dialog.selected_book
         if new_book is not None and not result:
             new_book["current_page"] = dialog.value()
             models.update_book(self.data, lib_name, new_book["title"], new_book)
+        self.update_cards()
         return result
 
 
@@ -99,7 +101,7 @@ class Card(widgets.QFrame):
         super().__init__(parent)
         policy = self.sizePolicy()
         policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
-        policy.setVerticalPolicy(widgets.QSizePolicy.Minimum)
+        policy.setVerticalPolicy(widgets.QSizePolicy.Maximum)
         self.setSizePolicy(policy)
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
