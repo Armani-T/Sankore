@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Optional
 
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QRegularExpressionValidator
@@ -12,7 +12,7 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 class HomePage(widgets.QWidget):
     columns = ("Title", "Author", "No. of pages")
 
-    def __init__(self, data: models.Data, parent: Optional[widgets.QWidget] = None):
+    def __init__(self, parent: widgets.QWidget, data: models.Data):
         super().__init__(parent)
         self.data = data
 
@@ -77,9 +77,7 @@ class CardLayout(widgets.QWidget):
         self.columns = columns - 1
         self.layout_ = widgets.QGridLayout(self)
 
-    def populate(
-        self, items: Sequence[models.Book], show_progress: bool = False
-    ) -> None:
+    def populate(self, items: list[models.Book], show_progress: bool = False) -> None:
         row, col = 0, 0
         for item in items:
             card = Card(self, item, show_progress)
@@ -187,9 +185,9 @@ class NewLibrary(widgets.QDialog):
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, books: Sequence[models.Book]) -> None:
+    def __init__(self, parent: widgets.QWidget, books: list[models.Book]) -> None:
         super().__init__(parent)
-        self.books: Sequence[models.Book] = books
+        self.books: list[models.Book] = books
         self.selected_book: Optional[models.Book] = None
         self.layout_ = widgets.QStackedLayout(self)
         self.list_widget = self._create_list()
@@ -276,7 +274,7 @@ class UpdateProgress(widgets.QDialog):
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
     window = widgets.QMainWindow()
-    home_widget = HomePage(data, window)
+    home_widget = HomePage(window, data)
     window.setWindowTitle(title)
     window.setCentralWidget(home_widget)
     window.show()
