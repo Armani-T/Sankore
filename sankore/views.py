@@ -101,7 +101,7 @@ class Card(widgets.QFrame):
         policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
         policy.setVerticalPolicy(widgets.QSizePolicy.Minimum)
         self.setSizePolicy(policy)
-        self.setFrameStyle(widgets.QFrame.Panel)
+        self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title = widgets.QLabel(book["title"].title())
         layout.addWidget(title, alignment=Qt.AlignCenter)
