@@ -123,8 +123,15 @@ class Card(widgets.QFrame):
             progress.setValue(min(max(0, book["current_page"]), book["pages"]))
             layout.addWidget(progress, alignment=Qt.AlignLeft)
 
-    def edit(self) -> None:
-        ...
+    def edit(self) -> int:
+        dialog = EditBook(self, self.book)
+        result = dialog.exec()
+        new_book = dialog.updated_book()
+        parent = self.parent()
+        name = models.find_library(parent.data, self.book)
+        models.update_book(parent.data, name, new_book["title"], new_book)
+        parent.update_view()
+        return result
 
 
 class NewBook(widgets.QDialog):
