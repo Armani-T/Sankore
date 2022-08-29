@@ -19,7 +19,7 @@ class HomePage(widgets.QWidget):
         self.combo = widgets.QComboBox()
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
-        self.card_holder = CardLayout(self)
+        self.card_holder = CardLayout(self, self.data)
         self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
@@ -53,10 +53,8 @@ class HomePage(widgets.QWidget):
         return result
 
     def update_cards(self) -> None:
-        lib_name = self.combo.currentText()
-        book_list = list(models.list_books(self.data, lib_name))
         self.card_holder.clear()
-        self.card_holder.populate(book_list, True)
+        self.card_holder.populate(self.combo.currentText(), True)
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
@@ -74,17 +72,17 @@ class CardLayout(widgets.QWidget):
     horizontal_stretch_factor = 2
     vertical_stretch_factor = 5
 
-    def __init__(self, parent, columns: int = 3) -> None:
+    def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
         super().__init__(parent)
-        self.columns = columns - 1
+        self.data = data
         self.layout_ = widgets.QGridLayout(self)
 
-    def populate(self, items: list[models.Book], show_progress: bool = False) -> None:
+    def populate(self, library: str, show_progress: bool = False) -> None:
         row, col = 0, 0
-        for item in items:
+        for item in models.list_books(self.data, library):
             card = Card(self, item, show_progress)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
-            row, col = ((row + 1), 0) if col >= self.columns else (row, (col + 1))
+            row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
     def clear(self) -> None:
         child = self.layout_.takeAt(0)
