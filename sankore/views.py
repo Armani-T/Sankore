@@ -53,8 +53,7 @@ class HomePage(widgets.QWidget):
         return result
 
     def update_cards(self) -> None:
-        self.card_holder.clear()
-        self.card_holder.populate(self.combo.currentText(), True)
+        self.card_holder.update_view(self.combo.currentText())
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
@@ -74,22 +73,27 @@ class CardLayout(widgets.QWidget):
 
     def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
         super().__init__(parent)
+        self.current_library: str = models.ALL_BOOKS
         self.data = data
         self.layout_ = widgets.QGridLayout(self)
 
     def populate(self, library: str, show_progress: bool = False) -> None:
+        self.current_library = library
         row, col = 0, 0
-        for item in models.list_books(self.data, library):
+        for item in models.list_books(self.data, self.current_library):
             card = Card(self, item, show_progress)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
     def clear(self) -> None:
-        child = self.layout_.takeAt(0)
-        while child is not None:
+        while (child := self.layout_.takeAt(0)) is not None:
             card = child.widget()
             card.deleteLater()
-            child = self.layout_.takeAt(0)
+
+    def update_view(self, library: Optional[str] = None) -> None:
+        self.current_library = library or self.current_library
+        self.clear()
+        self.populate(self.current_library)
 
 
 class Card(widgets.QFrame):
@@ -162,7 +166,7 @@ class NewBook(widgets.QDialog):
         new_book: models.Book = {
             "title": self.title_edit.text(),
             "author": self.author_edit.text(),
-            "pages": int(self.page_edit.text() or "0"),
+            "pages": int(self.page_edit.text() or "1"),
             "current_page": 0,
         }
         if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
