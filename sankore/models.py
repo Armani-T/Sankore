@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, TypedDict
+from typing import Iterable, Optional, TypedDict
 import json
 
 Data = dict[str, "Library"]
@@ -49,6 +49,13 @@ def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
     if name:
         return 0, {name: new_lib, **data}
     return 1, data
+
+
+def find_library(data: Data, book: Book) -> Optional[str]:
+    for name in list_libraries(data, False):
+        if book in data[name]["books"]:
+            return name
+    return None
 
 
 def insert_book(data: Data, library: str, new_book: Book) -> int:
