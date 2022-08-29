@@ -94,9 +94,10 @@ class CardLayout(widgets.QWidget):
 
 class Card(widgets.QFrame):
     def __init__(
-        self, parent: widgets.QWidget, book: models.Book, show_progress: bool = False
+        self, parent: CardLayout, book: models.Book, show_progress: bool = False
     ) -> None:
         super().__init__(parent)
+        self.book = book
         policy = self.sizePolicy()
         policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
         policy.setVerticalPolicy(widgets.QSizePolicy.Maximum)
