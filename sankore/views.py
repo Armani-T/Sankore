@@ -105,8 +105,15 @@ class Card(widgets.QFrame):
         self.setSizePolicy(policy)
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
+
+        title_layout = widgets.QHBoxLayout()
         title = widgets.QLabel(book["title"].title())
-        layout.addWidget(title, alignment=Qt.AlignCenter)
+        edit_button = widgets.QToolButton()
+        edit_button.clicked.connect(self.edit)
+        title_layout.addWidget(title, alignment=Qt.AlignLeft)
+        title_layout.addWidget(edit_button, alignment=Qt.AlignRight)
+        layout.addLayout(title_layout)
+
         author = widgets.QLabel(book["author"].title())
         layout.addWidget(author, alignment=Qt.AlignCenter)
         pages = widgets.QLabel(f"{book['pages']} Pages")
@@ -116,6 +123,9 @@ class Card(widgets.QFrame):
             progress.setMaximum(book["pages"])
             progress.setValue(min(max(0, book["current_page"]), book["pages"]))
             layout.addWidget(progress, alignment=Qt.AlignCenter)
+
+    def edit(self) -> None:
+        ...
 
 
 class NewBook(widgets.QDialog):
