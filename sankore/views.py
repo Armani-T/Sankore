@@ -115,14 +115,14 @@ class Card(widgets.QFrame):
         layout.addLayout(title_layout)
 
         author = widgets.QLabel(book["author"].title())
-        layout.addWidget(author, alignment=Qt.AlignCenter)
+        layout.addWidget(author, alignment=Qt.AlignLeft)
         pages = widgets.QLabel(f"{book['pages']} Pages")
-        layout.addWidget(pages, alignment=Qt.AlignCenter)
+        layout.addWidget(pages, alignment=Qt.AlignLeft)
         if show_progress:
             progress = widgets.QProgressBar()
             progress.setMaximum(book["pages"])
             progress.setValue(min(max(0, book["current_page"]), book["pages"]))
-            layout.addWidget(progress, alignment=Qt.AlignCenter)
+            layout.addWidget(progress, alignment=Qt.AlignLeft)
 
     def edit(self) -> None:
         ...
