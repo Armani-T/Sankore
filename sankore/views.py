@@ -173,6 +173,39 @@ class NewBook(widgets.QDialog):
         return self.combo.currentText()
 
 
+# TODO: Add a way to change the library too.
+class EditBook(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+        super().__init__(parent)
+        self.book = book
+
+        self.setWindowTitle(f'Editing "{book["title"]}"')
+        self.title_edit = widgets.QLineEdit()
+        self.title_edit.setText(book["title"])
+        self.author_edit = widgets.QLineEdit()
+        self.author_edit.setText(book["author"])
+        self.page_edit = widgets.QLineEdit()
+        self.page_edit.setValidator(NUMBER_VALIDATOR)
+        self.page_edit.setText(str(book["pages"]))
+
+        save_button = widgets.QPushButton("Update")
+        save_button.clicked.connect(lambda: self.done(0))
+
+        layout = widgets.QFormLayout(self)
+        layout.addRow("Title:", self.title_edit)
+        layout.addRow("Author:", self.author_edit)
+        layout.addRow("Number of pages:", self.page_edit)
+        layout.addRow(save_button)
+
+    def updated_book(self) -> models.Book:
+        return {
+            "title": self.title_edit.text() or self.book["title"],
+            "author": self.author_edit.text() or self.book["author"],
+            "pages": int(self.page_edit.text()) or self.book["pages"],
+            "current_page": self.book["current_page"],
+        }
+
+
 class NewLibrary(widgets.QDialog):
     def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
         super().__init__(parent)
