@@ -130,13 +130,15 @@ class Card(widgets.QFrame):
     def edit(self) -> int:
         dialog = EditBook(self, self.book)
         result = dialog.exec()
-        if not result:
-            new_book = dialog.updated_book()
-            parent = self.parent()
-            name = models.find_library(parent.data, self.book)
-        models.update_book(parent.data, name, new_book["title"], new_book)
+        if result:
+            return result
+
+        parent: CardLayout = self.parent()
+        new_book = dialog.updated_book()
+        lib_name = models.find_library(parent.data, self.book)
+        models.update_book(parent.data, self.book, new_book, lib_name)
         parent.update_view()
-        return result
+        return 0
 
 
 class NewBook(widgets.QDialog):
