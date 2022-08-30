@@ -76,6 +76,13 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
     yield from data.keys()
 
 
-def update_book(data: Data, name: str, old_title: str, new_book: Book) -> None:
-    replace = lambda book: new_book if book["title"] == old_title else book
-    data[name]["books"] = list(map(replace, data[name]["books"]))
+def update_book(
+    data: Data,
+    old_book: Book,
+    new_book: Book,
+    old_lib: str,
+    new_lib: Optional[str] = None,
+) -> None:
+    new_lib = new_lib or old_lib
+    data[old_lib]["books"].remove(old_book)
+    data[new_lib]["books"].append(new_book)
