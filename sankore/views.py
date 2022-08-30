@@ -59,10 +59,13 @@ class HomePage(widgets.QWidget):
         lib_name = "Currently Reading"
         dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
         result = dialog.exec()
-        new_book = dialog.selected_book
-        if new_book is not None and not result:
-            new_book["current_page"] = dialog.value()
-            models.update_book(self.data, lib_name, new_book["title"], new_book)
+        if result == 0 and dialog.selected_book is not None:
+            models.update_book(
+                self.data,
+                dialog.selected_book,
+                {**dialog.selected_book, "current_page": dialog.value()},
+                lib_name,
+            )
         self.update_cards()
         return result
 
