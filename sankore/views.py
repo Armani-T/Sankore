@@ -158,7 +158,7 @@ class NewBook(widgets.QDialog):
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
-        layout.addRow("Number of pages:", self.page_edit)
+        layout.addRow("No. of pages:", self.page_edit)
         layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
 
@@ -199,7 +199,7 @@ class EditBook(widgets.QDialog):
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
-        layout.addRow("Number of pages:", self.page_edit)
+        layout.addRow("No. of pages:", self.page_edit)
         layout.addRow(save_button)
 
     def updated_book(self) -> models.Book:
