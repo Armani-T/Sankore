@@ -10,8 +10,6 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
 class HomePage(widgets.QWidget):
-    columns = ("Title", "Author", "No. of pages")
-
     def __init__(self, parent: widgets.QWidget, data: models.Data):
         super().__init__(parent)
         self.data = data
