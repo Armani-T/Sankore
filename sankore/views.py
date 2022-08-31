@@ -69,9 +69,6 @@ class HomePage(widgets.QWidget):
 
 
 class CardView(widgets.QWidget):
-    horizontal_stretch_factor = 2
-    vertical_stretch_factor = 5
-
     def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
         super().__init__(parent)
         self.current_library: str = models.ALL_BOOKS
