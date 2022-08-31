@@ -19,7 +19,7 @@ class HomePage(widgets.QWidget):
         self.combo = widgets.QComboBox()
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
-        self.card_holder = CardLayout(self, self.data)
+        self.card_holder = CardView(self, self.data)
         self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
@@ -70,7 +70,7 @@ class HomePage(widgets.QWidget):
         return result
 
 
-class CardLayout(widgets.QWidget):
+class CardView(widgets.QWidget):
     horizontal_stretch_factor = 2
     vertical_stretch_factor = 5
 
@@ -101,7 +101,7 @@ class CardLayout(widgets.QWidget):
 
 class Card(widgets.QFrame):
     def __init__(
-        self, parent: CardLayout, book: models.Book, show_progress: bool = False
+        self, parent: CardView, book: models.Book, show_progress: bool = False
     ) -> None:
         super().__init__(parent)
         self.book = book
@@ -136,7 +136,7 @@ class Card(widgets.QFrame):
         if result:
             return result
 
-        parent: CardLayout = self.parent()
+        parent: CardView = self.parent()
         new_book = dialog.updated_book()
         lib_name = models.find_library(parent.data, self.book)
         models.update_book(parent.data, self.book, new_book, lib_name)
