@@ -9,15 +9,18 @@ import models
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
-class HomePage(widgets.QWidget):
-    def __init__(self, parent: widgets.QWidget, data: models.Data):
-        super().__init__(parent)
+class Home(widgets.QMainWindow):
+    def __init__(self, title: str, data: models.Data):
+        super().__init__()
+        self.setWindowTitle(title)
         self.data = data
+        self.base = widgets.QWidget(self)
+        self.setCentralWidget(self.base)
 
-        self.combo = widgets.QComboBox()
+        self.combo = widgets.QComboBox(self.base)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
-        self.card_holder = CardView(self, self.data)
+        self.card_holder = CardView(self.base, self.data)
         self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
@@ -27,7 +30,7 @@ class HomePage(widgets.QWidget):
         new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
-        layout = widgets.QGridLayout(self)
+        layout = widgets.QGridLayout(self.base)
         layout.addWidget(self.combo, 0, 0, 1, 10)
         layout.addWidget(self.card_holder, 1, 0, 22, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
@@ -329,9 +332,7 @@ class UpdateProgress(widgets.QDialog):
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
-    window = widgets.QMainWindow()
-    home_widget = HomePage(window, data)
-    window.setWindowTitle(title)
-    window.setCentralWidget(home_widget)
+    window = Home(title, data)
     window.show()
-    return home_widget.data, app.exec()
+    exit_status = app.exec()
+    return window.data, exit_status
