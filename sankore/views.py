@@ -20,7 +20,11 @@ class Home(widgets.QMainWindow):
         self.combo = widgets.QComboBox(self.base)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
-        self.card_holder = CardView(self.base, self.data)
+
+        scroll_area = widgets.QScrollArea(self.base)
+        self.card_view = CardView(scroll_area, self.data)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.card_view)
         self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
@@ -32,7 +36,7 @@ class Home(widgets.QMainWindow):
 
         layout = widgets.QGridLayout(self.base)
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.card_holder, 1, 0, 22, 10)
+        layout.addWidget(scroll_area, 1, 0, 22, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
@@ -54,7 +58,7 @@ class Home(widgets.QMainWindow):
         return result
 
     def update_cards(self) -> None:
-        self.card_holder.update_view(self.combo.currentText())
+        self.card_view.update_view(self.combo.currentText())
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
@@ -76,6 +80,10 @@ class CardView(widgets.QWidget):
         super().__init__(parent)
         self.current_library: str = models.ALL_BOOKS
         self.data = data
+        self.setSizePolicy(
+            widgets.QSizePolicy.Minimum,
+            widgets.QSizePolicy.MinimumExpanding,
+        )
         self.layout_ = widgets.QGridLayout(self)
 
     def populate(self, library: str, show_progress: bool = False) -> None:
@@ -316,6 +324,7 @@ class UpdateProgress(widgets.QDialog):
             self.setWindowTitle(f'Updating "{book["title"].title()}"')
             self.layout_.addWidget(widget)
             self.layout_.setCurrentWidget(widget)
+            return None
 
     def update_editor(self) -> None:
         new_value = str(self.slider.value())
