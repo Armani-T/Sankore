@@ -1,8 +1,8 @@
 # Sankore
 
-> What if I had a private GoodReads?
+> What if you had a personal GoodReads?
 
-Sankore is a small personal project that I built to keep track of my reading habits. It keeps track of the books I have and which ones I'm reading now. Since it works offline, I prefer it to GoodReads. All the data is stored in a JSON file so syncing it is easily accessible anywhere and makes syncing a breeze.
+Sankore is a small personal project that I built to keep track of my reading habits. It keeps track of the books I have and which ones I'm reading now. Since it works offline, I prefer it to GoodReads. All the data is stored in a JSON file so syncing it's easily accessible anywhere and makes syncing a breeze.
 
 ## Installation
 
@@ -19,8 +19,8 @@ $ pip install -r requirements.txt
 First, navigate to wherever you clones the repo to. Then, you `cd` into the `Sankore/` folder and from there you can run the app using `python3`. Here is how the process would look like:
 
 ```bash
-$ cd cloned/repo/location  # replace this with the real path to the repo
-$ cd Sankore  # note the capital "S"
+$ cd cloned/repo/location  # replace this with the real path to the repo.
+$ cd Sankore  # note the capital letter.
 $ python3 sankore
 ```
 
@@ -28,11 +28,13 @@ The app should now start running. On start up, it should look like this:
 
 ![Home page](assets/home.png)
 
-![Adding a new book](assets/add-book.png)
+![New book page](assets/new-book.png)
 
-![Updating my reading position](assets/update-page-1.png)
+![New library page](assets/new-book.png)
 
-![Updating my reading position](assets/update-page-2.png)
+![Update page part 1/2](assets/update-1.png)
+
+![Update page part 2/2](assets/update-2.png)
 
 ## Contributing Guide
 
