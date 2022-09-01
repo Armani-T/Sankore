@@ -103,19 +103,18 @@ class Card(widgets.QFrame):
     ) -> None:
         super().__init__(parent)
         self.book = book
-        policy = self.sizePolicy()
-        policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
-        policy.setVerticalPolicy(widgets.QSizePolicy.Maximum)
-        self.setSizePolicy(policy)
+        self.setSizePolicy(
+            widgets.QSizePolicy.MinimumExpanding,
+            widgets.QSizePolicy.MinimumExpanding,
+        )
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
-
         title_layout = widgets.QHBoxLayout()
         title = widgets.QLabel(book["title"].title())
-        edit_button = widgets.QToolButton()
-        edit_button.clicked.connect(self.edit)
+        tool_button = widgets.QToolButton()
+        tool_button.clicked.connect(self.edit)
         title_layout.addWidget(title, alignment=Qt.AlignLeft)
-        title_layout.addWidget(edit_button, alignment=Qt.AlignRight)
+        title_layout.addWidget(tool_button, alignment=Qt.AlignRight)
         layout.addLayout(title_layout)
 
         author = widgets.QLabel(book["author"].title())
