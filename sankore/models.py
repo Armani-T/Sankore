@@ -21,11 +21,6 @@ DEFAULT_LIBRARIES: Data = {
         "description": "Books that I'm reading right now.",
         "page_tracking": True,
     },
-    "Archived": {
-        "books": [],
-        "description": "Books that I stopped reading without finishing.",
-        "page_tracking": True,
-    },
 }
 
 
