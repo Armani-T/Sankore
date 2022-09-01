@@ -30,7 +30,7 @@ The app should now start running. On start up, it should look like this:
 
 ![New book page](assets/new-book.png)
 
-![New library page](assets/new-book.png)
+![New library page](assets/new-library.png)
 
 ![Update page part 1/2](assets/update-1.png)
 
