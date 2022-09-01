@@ -9,17 +9,22 @@ import models
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 
 
-class HomePage(widgets.QWidget):
-    columns = ("Title", "Author", "No. of pages")
-
-    def __init__(self, parent: widgets.QWidget, data: models.Data):
-        super().__init__(parent)
+class Home(widgets.QMainWindow):
+    def __init__(self, title: str, data: models.Data):
+        super().__init__()
+        self.setWindowTitle(title)
         self.data = data
+        self.base = widgets.QWidget(self)
+        self.setCentralWidget(self.base)
 
-        self.combo = widgets.QComboBox()
+        self.combo = widgets.QComboBox(self.base)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
-        self.card_holder = CardLayout(self, self.data)
+
+        scroll_area = widgets.QScrollArea(self.base)
+        self.card_view = CardView(scroll_area, self.data)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.card_view)
         self.update_cards()
 
         new_book_button = widgets.QPushButton("New Book")
@@ -29,9 +34,9 @@ class HomePage(widgets.QWidget):
         new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
-        layout = widgets.QGridLayout(self)
+        layout = widgets.QGridLayout(self.base)
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.card_holder, 1, 0, 22, 10)
+        layout.addWidget(scroll_area, 1, 0, 22, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
@@ -53,7 +58,7 @@ class HomePage(widgets.QWidget):
         return result
 
     def update_cards(self) -> None:
-        self.card_holder.update_view(self.combo.currentText())
+        self.card_view.update_view(self.combo.currentText())
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
@@ -70,14 +75,15 @@ class HomePage(widgets.QWidget):
         return result
 
 
-class CardLayout(widgets.QWidget):
-    horizontal_stretch_factor = 2
-    vertical_stretch_factor = 5
-
+class CardView(widgets.QWidget):
     def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
         super().__init__(parent)
         self.current_library: str = models.ALL_BOOKS
         self.data = data
+        self.setSizePolicy(
+            widgets.QSizePolicy.Minimum,
+            widgets.QSizePolicy.MinimumExpanding,
+        )
         self.layout_ = widgets.QGridLayout(self)
 
     def populate(self, library: str, show_progress: bool = False) -> None:
@@ -101,23 +107,22 @@ class CardLayout(widgets.QWidget):
 
 class Card(widgets.QFrame):
     def __init__(
-        self, parent: CardLayout, book: models.Book, show_progress: bool = False
+        self, parent: CardView, book: models.Book, show_progress: bool = False
     ) -> None:
         super().__init__(parent)
         self.book = book
-        policy = self.sizePolicy()
-        policy.setHorizontalPolicy(widgets.QSizePolicy.Minimum)
-        policy.setVerticalPolicy(widgets.QSizePolicy.Maximum)
-        self.setSizePolicy(policy)
+        self.setSizePolicy(
+            widgets.QSizePolicy.MinimumExpanding,
+            widgets.QSizePolicy.MinimumExpanding,
+        )
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
-
         title_layout = widgets.QHBoxLayout()
         title = widgets.QLabel(book["title"].title())
-        edit_button = widgets.QToolButton()
-        edit_button.clicked.connect(self.edit)
+        tool_button = widgets.QToolButton()
+        tool_button.clicked.connect(self.edit)
         title_layout.addWidget(title, alignment=Qt.AlignLeft)
-        title_layout.addWidget(edit_button, alignment=Qt.AlignRight)
+        title_layout.addWidget(tool_button, alignment=Qt.AlignRight)
         layout.addLayout(title_layout)
 
         author = widgets.QLabel(book["author"].title())
@@ -136,7 +141,7 @@ class Card(widgets.QFrame):
         if result:
             return result
 
-        parent: CardLayout = self.parent()
+        parent: CardView = self.parent()
         new_book = dialog.updated_book()
         lib_name = models.find_library(parent.data, self.book)
         models.update_book(parent.data, self.book, new_book, lib_name)
@@ -319,6 +324,7 @@ class UpdateProgress(widgets.QDialog):
             self.setWindowTitle(f'Updating "{book["title"].title()}"')
             self.layout_.addWidget(widget)
             self.layout_.setCurrentWidget(widget)
+            return None
 
     def update_editor(self) -> None:
         new_value = str(self.slider.value())
@@ -334,9 +340,7 @@ class UpdateProgress(widgets.QDialog):
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
-    window = widgets.QMainWindow()
-    home_widget = HomePage(window, data)
-    window.setWindowTitle(title)
-    window.setCentralWidget(home_widget)
+    window = Home(title, data)
     window.show()
-    return home_widget.data, app.exec()
+    exit_status = app.exec()
+    return window.data, exit_status
