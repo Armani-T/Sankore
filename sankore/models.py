@@ -1,20 +1,25 @@
 from pathlib import Path
-from typing import Iterable, TypedDict
+from typing import Iterable, Optional, TypedDict
 import json
 
 Data = dict[str, "Library"]
 
 ALL_BOOKS = "All Books"
 DEFAULT_LIBRARIES: Data = {
-    "To Read": {"description": "Books that I want read in the future.", "books": []},
-    "Already Read": {"description": "Books that I've finished reading.", "books": []},
-    "Currently Reading": {
-        "description": "Books that I'm reading right now.",
+    "To Read": {
         "books": [],
+        "description": "Books that I want read in the future.",
+        "page_tracking": False,
     },
-    "Archived": {
-        "description": "Books that I stopped reading without finishing.",
+    "Already Read": {
         "books": [],
+        "description": "Books that I've finished reading.",
+        "page_tracking": False,
+    },
+    "Currently Reading": {
+        "books": [],
+        "description": "Books that I'm reading right now.",
+        "page_tracking": True,
     },
 }
 
@@ -27,8 +32,9 @@ class Book(TypedDict):
 
 
 class Library(TypedDict):
-    description: str
     books: list[Book]
+    description: str
+    page_tracking: bool
 
 
 def get_data(data_file: Path) -> Data:
@@ -45,21 +51,22 @@ def save_data(data_file: Path, new_data: Data) -> None:
     data_file.write_text(string, "utf8")
 
 
-def create_lib(data: Data, name: str, new_lib: Library) -> int:
-    data[name] = new_lib
-    return 0
+def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
+    if name:
+        return 0, {name: new_lib, **data}
+    return 1, data
+
+
+def find_library(data: Data, book: Book) -> Optional[str]:
+    for name in list_libraries(data, False):
+        if book in data[name]["books"]:
+            return name
+    return None
 
 
 def insert_book(data: Data, library: str, new_book: Book) -> int:
     data[library]["books"].append(new_book)
     return 0
-
-
-def find_book(data: Data, book_title: str) -> Book:
-    for book in list_books(data, ALL_BOOKS):
-        if book["title"] == book_title:
-            return book
-    raise KeyError(f"No book with the title: {book_title}")
 
 
 def list_books(data: Data, name: str) -> list[Book]:
@@ -75,6 +82,13 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
     yield from data.keys()
 
 
-def update_book(data: Data, name: str, old_title: str, new_book: Book) -> None:
-    replace = lambda book: new_book if book.title == old_title else book
-    data[name]["books"] = list(map(replace, data[name]["books"]))
+def update_book(
+    data: Data,
+    old_book: Book,
+    new_book: Book,
+    old_lib: str,
+    new_lib: Optional[str] = None,
+) -> None:
+    new_lib = new_lib or old_lib
+    data[old_lib]["books"].remove(old_book)
+    data[new_lib]["books"].append(new_book)
