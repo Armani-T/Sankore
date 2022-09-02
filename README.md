@@ -45,11 +45,13 @@ To get the app running, navigate to the `Sankore/` folder and run `python3 sanko
 
 ![Home page](assets/home.png)
 
-![Adding a new book](assets/add-book.png)
+![Adding a new book](assets/new-book.png)
 
-![Updating my reading position](assets/update-page-1.png)
+![Adding a new library](assets/new-library.png)
 
-![Updating my reading position](assets/update-page-2.png)
+![Updating my reading position](assets/update-1.png)
+
+![Updating my reading position](assets/update-2.png)
 
 ## Contributing
 
