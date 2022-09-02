@@ -86,9 +86,13 @@ class CardView(widgets.QWidget):
         )
         self.layout_ = widgets.QGridLayout(self)
 
-    def populate(self, library: str, show_progress: bool = False) -> None:
+    def populate(self, library: str) -> None:
         self.current_library = library
         row, col = 0, 0
+        show_progress = (
+            self.current_library != models.ALL_BOOKS
+            and self.data[self.current_library]["page_tracking"]
+        )
         for item in models.list_books(self.data, self.current_library):
             card = Card(self, item, show_progress)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
