@@ -179,8 +179,10 @@ class NewBook(widgets.QDialog):
     def save(self) -> None:
         pages = int(self.page_edit.text() or "1")
         current_page = (
-            pages if self.library() == "Already Read"
-            else 1 if self.data[self.library()]["page_tracking"]
+            pages
+            if self.library() == "Already Read"
+            else 1
+            if self.data[self.library()]["page_tracking"]
             else 0
         )
         new_book: models.Book = {
