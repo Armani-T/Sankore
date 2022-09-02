@@ -16,15 +16,19 @@ $ pip install -r requirements.txt
 
 ## Usage
 
-First, navigate to wherever you clones the repo to. Then, you `cd` into the `Sankore/` folder and from there you can run the app using `python3`. Here is how the process would look like:
-
 ```bash
-$ cd cloned/repo/location  # replace this with the real path to the repo
-$ cd Sankore  # note the capital "S"
-$ python3 sankore
+$ git clone https://github.com/Armani-T/Sankore
+$ cd Sankore
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install -r requirements.txt  # see note below.
 ```
 
-The app should now start running. On start up, it should look like this:
+If you are downloading to work on the code, then replace `requirements.txt` with `requirements-dev.txt` to get all the essential development packages.
+
+To get the app running, navigate to the `Sankore/` folder and run `python3 sankore`. On start up, the app will look like the first picture below.
+
+## Screenshots
 
 ![Home page](assets/home.png)
 
