@@ -177,16 +177,22 @@ class NewBook(widgets.QDialog):
         layout.addRow(save_button)
 
     def save(self) -> None:
-        exit_code = 1
+        pages = int(self.page_edit.text() or "1")
+        current_page = (
+            pages if self.library() == "Already Read"
+            else 1 if self.data[self.library()]["page_tracking"]
+            else 0
+        )
         new_book: models.Book = {
-            "title": self.title_edit.text(),
-            "author": self.author_edit.text(),
-            "pages": int(self.page_edit.text() or "1"),
-            "current_page": 0,
+            "title": self.title_edit.text().strip(),
+            "author": self.author_edit.text().strip(),
+            "pages": pages,
+            "current_page": current_page,
         }
         if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
-            exit_code = models.insert_book(self.data, self.library(), new_book)
-        return super().done(exit_code)
+            models.insert_book(self.data, self.library(), new_book)
+            return super().done(0)
+        return super().done(1)
 
     def library(self) -> str:
         return self.combo.currentText()
