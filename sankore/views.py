@@ -86,9 +86,13 @@ class CardView(widgets.QWidget):
         )
         self.layout_ = widgets.QGridLayout(self)
 
-    def populate(self, library: str, show_progress: bool = False) -> None:
+    def populate(self, library: str) -> None:
         self.current_library = library
         row, col = 0, 0
+        show_progress = (
+            self.current_library != models.ALL_BOOKS
+            and self.data[self.current_library]["page_tracking"]
+        )
         for item in models.list_books(self.data, self.current_library):
             card = Card(self, item, show_progress)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
@@ -173,16 +177,24 @@ class NewBook(widgets.QDialog):
         layout.addRow(save_button)
 
     def save(self) -> None:
-        exit_code = 1
+        pages = int(self.page_edit.text() or "1")
+        current_page = (
+            pages
+            if self.library() == "Already Read"
+            else 1
+            if self.data[self.library()]["page_tracking"]
+            else 0
+        )
         new_book: models.Book = {
-            "title": self.title_edit.text(),
-            "author": self.author_edit.text(),
-            "pages": int(self.page_edit.text() or "1"),
-            "current_page": 0,
+            "title": self.title_edit.text().strip(),
+            "author": self.author_edit.text().strip(),
+            "pages": pages,
+            "current_page": current_page,
         }
         if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
-            exit_code = models.insert_book(self.data, self.library(), new_book)
-        return super().done(exit_code)
+            models.insert_book(self.data, self.library(), new_book)
+            return super().done(0)
+        return super().done(1)
 
     def library(self) -> str:
         return self.combo.currentText()
