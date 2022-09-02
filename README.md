@@ -38,7 +38,7 @@ The app should now start running. On start up, it should look like this:
 
 Please use GitHub issues for any bug reports or feature requests.
 
-1. Create your branch by forking `develop`.
+1. Create your branch by forking `origin/main`.
 2. Fix the bug/Create the feature.
 3. Push your changes.
 4. Open a pull request.
