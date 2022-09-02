@@ -21,6 +21,7 @@ class Home(widgets.QMainWindow):
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
 
+        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         scroll_area = widgets.QScrollArea(self.base)
         self.card_view = CardView(scroll_area, self.data)
         scroll_area.setWidgetResizable(True)
@@ -36,7 +37,8 @@ class Home(widgets.QMainWindow):
 
         layout = widgets.QGridLayout(self.base)
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(scroll_area, 1, 0, 22, 10)
+        layout.addWidget(self.description_label, 1, 0, 1, 10)
+        layout.addWidget(scroll_area, 2, 0, 21, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
