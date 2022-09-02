@@ -60,7 +60,13 @@ class Home(widgets.QMainWindow):
         return result
 
     def update_cards(self) -> None:
-        self.card_view.update_view(self.combo.currentText())
+        lib_name = self.combo.currentText()
+        self.card_view.update_view(lib_name)
+        if lib_name in self.data:
+            self.description_label.setText(self.data[lib_name]["description"])
+            self.description_label.show()
+        else:
+            self.description_label.hide()
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
