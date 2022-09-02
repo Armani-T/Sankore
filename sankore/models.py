@@ -6,15 +6,20 @@ Data = dict[str, "Library"]
 
 ALL_BOOKS = "All Books"
 DEFAULT_LIBRARIES: Data = {
-    "To Read": {"description": "Books that I want read in the future.", "books": []},
-    "Already Read": {"description": "Books that I've finished reading.", "books": []},
-    "Currently Reading": {
-        "description": "Books that I'm reading right now.",
+    "To Read": {
         "books": [],
+        "description": "Books that I want read in the future.",
+        "page_tracking": False,
     },
-    "Archived": {
-        "description": "Books that I stopped reading without finishing.",
+    "Already Read": {
         "books": [],
+        "description": "Books that I've finished reading.",
+        "page_tracking": False,
+    },
+    "Currently Reading": {
+        "books": [],
+        "description": "Books that I'm reading right now.",
+        "page_tracking": True,
     },
 }
 
@@ -27,8 +32,9 @@ class Book(TypedDict):
 
 
 class Library(TypedDict):
-    description: str
     books: list[Book]
+    description: str
+    page_tracking: bool
 
 
 def get_data(data_file: Path) -> Data:
