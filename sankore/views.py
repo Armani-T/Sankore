@@ -21,6 +21,7 @@ class Home(widgets.QMainWindow):
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
 
+        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         scroll_area = widgets.QScrollArea(self.base)
         self.card_view = CardView(scroll_area, self.data)
         scroll_area.setWidgetResizable(True)
@@ -36,7 +37,8 @@ class Home(widgets.QMainWindow):
 
         layout = widgets.QGridLayout(self.base)
         layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(scroll_area, 1, 0, 22, 10)
+        layout.addWidget(self.description_label, 1, 0, 1, 10)
+        layout.addWidget(scroll_area, 2, 0, 21, 10)
         layout.addWidget(update_button, 23, 0, 1, 10)
         layout.addWidget(new_lib_button, 24, 0, 1, 5)
         layout.addWidget(new_book_button, 24, 5, 1, 5)
@@ -58,7 +60,13 @@ class Home(widgets.QMainWindow):
         return result
 
     def update_cards(self) -> None:
-        self.card_view.update_view(self.combo.currentText())
+        lib_name = self.combo.currentText()
+        self.card_view.update_view(lib_name)
+        if lib_name in self.data:
+            self.description_label.setText(self.data[lib_name]["description"])
+            self.description_label.show()
+        else:
+            self.description_label.hide()
 
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
