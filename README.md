@@ -1,8 +1,21 @@
+
 # Sankore
 
-> What if I had a private GoodReads?
+> What if I had a personal GoodReads?
 
-Sankore is a small personal project that I built to keep track of my reading habits. It keeps track of the books I have and which ones I'm reading now. Since it works offline, I prefer it to GoodReads. All the data is stored in a JSON file so syncing it is easily accessible anywhere and makes syncing a breeze.
+Sankore is a reading habit tracker. It records the books that you've read, the ones you're reading right now and which ones you want to read. It is completely offline and all your data is stored locally so you don't need to worry about an Internet connection.
+
+I built it as a replacement to GoodReads since that requires a network connection to run and all my data is stuck on their servers. In contrast, Sankore uses a simple JSON file to record all your data. This makes it very easy to transfer between machines and back up to wherever you want.
+
+## Features
+
+- [X] User-defined libraries
+- [ ] A rating system for finished books
+- [ ] A tagging system
+- [ ] A quotation store
+- [ ] Multiple reads through the book
+- [ ] Reading goals and challenges
+- [ ] Priority sorting for unread books
 
 ## Installation
 
@@ -24,7 +37,7 @@ $ source .venv/bin/activate
 $ pip install -r requirements.txt  # see note below.
 ```
 
-If you are downloading to work on the code, then replace `requirements.txt` with `requirements-dev.txt` to get all the essential development packages.
+**NOTE:** If you want to work on the code, replace `requirements.txt` with `requirements-dev.txt` to get all the development dependencies I use.
 
 To get the app running, navigate to the `Sankore/` folder and run `python3 sankore`. On start up, the app will look like the first picture below.
 
@@ -38,14 +51,18 @@ To get the app running, navigate to the `Sankore/` folder and run `python3 sanko
 
 ![Updating my reading position](assets/update-page-2.png)
 
-## Contributing Guide
+## Contributing
 
-Please use GitHub issues for any bug reports or feature requests.
+Please use GitHub issues to make any bug reports or feature requests.
 
 1. Create your branch by forking `origin/main`.
 2. Fix the bug/Create the feature.
 3. Push your changes.
 4. Open a pull request.
+
+`black` is the code formatter used throughout the codebase, you should run it on your code before pushing it.
+
+Commit messages and pull requests must have a title. A description can be included if the title alone isn't self-explanatory or isn't clear enough. The title should be in the active voice like a command.
 
 ## Meta
 
