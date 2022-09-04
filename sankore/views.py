@@ -71,6 +71,15 @@ class Home(widgets.QMainWindow):
         self.combo.addItem(dialog.name())
         return result
 
+    def show_about(self) -> int:
+        about_text = ASSETS["about_file"].read_text()
+        dialog = widgets.QDialog(self)
+        about_label = widgets.QLabel(dialog)
+        about_label.setAlignment(Qt.AlignCenter)
+        about_label.setTextFormat(Qt.MarkdownText)
+        about_label.setText(about_text)
+        return dialog.exec()
+
     def update_cards(self) -> None:
         lib_name = self.combo.currentText()
         self.card_view.update_view(lib_name)
