@@ -8,19 +8,22 @@ from PySide6 import QtWidgets as widgets
 import models
 
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
+asset_rel_paths: dict[str, str] = {
+    "app_icon": "/../../assets/app-icon.png",
+}
+ASSETS: dict[str, Path] = {
+    name: str(Path(__file__ + path).resolve()) for name, path in asset_rel_paths.items()
+}
 
 
 class Home(widgets.QMainWindow):
-    def __init__(self, title: str, icon_path: Path, data: models.Data):
+    def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
         self.setWindowTitle(title)
-        self.setWindowIcon(QIcon(QPixmap(str(icon_path))))
+        self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
         self.data = data
         self.base = widgets.QWidget(self)
         self.setCentralWidget(self.base)
-
-        menu_bar = widgets.QMenuBar(self)
-        menu_bar.addAction
 
         self.combo = widgets.QComboBox(self.base)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
@@ -363,9 +366,9 @@ class UpdateProgress(widgets.QDialog):
         return self.slider.value()
 
 
-def run_ui(title: str, icon_path: Path, data: models.Data) -> tuple[models.Data, int]:
+def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
-    window = Home(title, icon_path, data)
+    window = Home(title, data)
     window.show()
     exit_status = app.exec()
     return window.data, exit_status

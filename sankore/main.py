@@ -6,13 +6,12 @@ from models import get_data, save_data
 from views import run_ui
 
 APP_NAME = "Sankore"
-APP_ICON_FILE = Path(__file__).joinpath("../../assets/app-icon.png").resolve()
 DATA_FILE = Path(__file__).joinpath("../../data.json").resolve()
 
 
 def main() -> NoReturn:
     DATA_FILE.touch(exist_ok=True)
-    updated_data, exit_code = run_ui(APP_NAME, APP_ICON_FILE, get_data(DATA_FILE))
+    updated_data, exit_code = run_ui(APP_NAME, get_data(DATA_FILE))
     save_data(DATA_FILE, updated_data)
     exit(exit_code)
 
