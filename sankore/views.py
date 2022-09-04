@@ -7,29 +7,33 @@ from PySide6 import QtWidgets as widgets
 
 import models
 
+BASE_ASSET_PATH = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
-asset_rel_paths: dict[str, str] = {
-    "app_icon": "/../../assets/app-icon.png",
-}
 ASSETS: dict[str, Path] = {
-    name: str(Path(__file__ + path).resolve()) for name, path in asset_rel_paths.items()
+    "app_icon": BASE_ASSET_PATH / "app-icon.png",
+    "about_file": BASE_ASSET_PATH / "about.md",
 }
 
 
 class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
-        self.setWindowTitle(title)
-        self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
         self.data = data
+
         self.base = widgets.QWidget(self)
         self.setCentralWidget(self.base)
+        self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
+        self.setWindowTitle(title)
+
+        about_menu = self.menuBar().addMenu("About")
+        about_action = about_menu.addAction("About")
+        about_action.triggered.connect(self.show_about)
 
         self.combo = widgets.QComboBox(self.base)
+        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
 
-        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         scroll_area = widgets.QScrollArea(self.base)
         self.card_view = CardView(scroll_area, self.data)
         scroll_area.setWidgetResizable(True)
