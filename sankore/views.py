@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QRegularExpression, Qt
+from PySide6.QtCore import QCoreApplication, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
@@ -22,6 +22,7 @@ class Home(widgets.QMainWindow):
 
         self.base = widgets.QWidget(self)
         self.setCentralWidget(self.base)
+        QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
         self.setWindowTitle(title)
 
@@ -84,9 +85,11 @@ class Home(widgets.QMainWindow):
         lib_name = self.combo.currentText()
         self.card_view.update_view(lib_name)
         if lib_name in self.data:
+            self.setWindowTitle(f"Sankore - {lib_name}")
             self.description_label.setText(self.data[lib_name]["description"])
             self.description_label.show()
         else:
+            self.setWindowTitle("Sankore")
             self.description_label.hide()
 
     def update_progress(self) -> int:
