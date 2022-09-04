@@ -174,15 +174,14 @@ class Card(widgets.QFrame):
     def edit(self) -> int:
         dialog = EditBook(self, self.book)
         result = dialog.exec()
-        if result:
-            return result
-
-        parent: CardView = self.parent()
-        new_book = dialog.updated_book()
-        lib_name = models.find_library(parent.data, self.book)
-        models.update_book(parent.data, self.book, new_book, lib_name)
-        parent.update_view()
-        return 0
+        if not result and dialog.save_edits:
+            parent: CardView = self.parent()
+            new_book = dialog.updated_book()
+            lib_name = models.find_library(parent.data, self.book)
+            models.update_book(parent.data, self.book, new_book, lib_name)
+            parent.update_view()
+            return 0
+        return result
 
 
 class NewBook(widgets.QDialog):
@@ -237,6 +236,7 @@ class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
         self.book = book
+        self.save_edits = False
 
         self.setWindowTitle(f'Editing "{book["title"]}"')
         self.title_edit = widgets.QLineEdit()
@@ -248,13 +248,17 @@ class EditBook(widgets.QDialog):
         self.page_edit.setText(str(book["pages"]))
 
         save_button = widgets.QPushButton("Update")
-        save_button.clicked.connect(lambda: self.done(0))
+        save_button.clicked.connect(self._save)
 
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
         layout.addRow("No. of pages:", self.page_edit)
         layout.addRow(save_button)
+
+    def _save(self) -> None:
+        self.save_edits = True
+        return super().done(0)
 
     def updated_book(self) -> models.Book:
         return {
