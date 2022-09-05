@@ -47,6 +47,21 @@ class Home(widgets.QMainWindow):
         layout.addWidget(new_book_button, 24, 0, 1, 3)
         layout.addWidget(new_lib_button, 24, 3, 1, 3)
 
+    def create_tab(self, lib_name: str) -> widgets.QWidget:
+        tab_base = widgets.QWidget(self.base)
+        layout = widgets.QVBoxLayout(tab_base)
+        if lib_name in self.data:
+            layout.addWidget(widgets.QLabel(self.data[lib_name]["description"]))
+
+        scroll_area = widgets.QScrollArea(tab_base)
+        card_view = CardView(scroll_area, self.data)
+        card_view.update_view(lib_name)
+        scroll_area.setWidget(card_view)
+        scroll_area.setAlignment(Qt.AlignTop)
+        scroll_area.setWidgetResizable(True)
+        layout.addWidget(scroll_area)
+        return tab_base
+
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
         result = dialog.exec()
