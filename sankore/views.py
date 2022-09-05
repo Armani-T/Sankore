@@ -87,17 +87,6 @@ class Home(widgets.QMainWindow):
         about_label.setText(about_text)
         return dialog.exec()
 
-    def update_cards(self) -> None:
-        lib_name = self.combo.currentText()
-        self.card_view.update_view(lib_name)
-        if lib_name in self.data:
-            self.setWindowTitle(f"Sankore - {lib_name}")
-            self.description_label.setText(self.data[lib_name]["description"])
-            self.description_label.show()
-        else:
-            self.setWindowTitle("Sankore")
-            self.description_label.hide()
-
     def update_progress(self) -> int:
         lib_name = "Currently Reading"
         dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
