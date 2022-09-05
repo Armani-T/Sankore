@@ -20,19 +20,19 @@ class Home(widgets.QMainWindow):
         super().__init__()
         self.data = data
 
-        self.base = widgets.QWidget(self)
-        self.setCentralWidget(self.base)
+        base = widgets.QWidget(self)
         QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
+        self.setCentralWidget(base)
         self.setWindowTitle(title)
 
         about_menu = self.menuBar().addMenu("About")
         about_action = about_menu.addAction("About")
         about_action.triggered.connect(self.show_about)
 
-        self.tabs = widgets.QTabWidget(self.base)
+        self.tabs = widgets.QTabWidget(base)
         for lib_name in models.list_libraries(self.data, False):
-            self.tabs.addTab(self.create_tab(lib_name), lib_name)
+            self.tabs.addTab(self.create_tab_page(lib_name), lib_name)
 
         new_book_button = widgets.QPushButton("New Book")
         new_lib_button = widgets.QPushButton("New Library")
@@ -41,26 +41,20 @@ class Home(widgets.QMainWindow):
         new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
 
-        layout = widgets.QGridLayout(self.base)
-        layout.addWidget(tab_section, 0, 0, 22, 6)
+        layout = widgets.QGridLayout(base)
+        layout.addWidget(self.tabs, 0, 0, 22, 6)
         layout.addWidget(update_button, 23, 0, 1, 6)
         layout.addWidget(new_book_button, 24, 0, 1, 3)
         layout.addWidget(new_lib_button, 24, 3, 1, 3)
 
-    def create_tab(self, lib_name: str) -> widgets.QWidget:
-        tab_base = widgets.QWidget(self.base)
-        layout = widgets.QVBoxLayout(tab_base)
-        if lib_name in self.data:
-            layout.addWidget(widgets.QLabel(self.data[lib_name]["description"]))
-
-        scroll_area = widgets.QScrollArea(tab_base)
+    def create_tab_page(self, lib_name: str) -> widgets.QWidget:
+        scroll_area = widgets.QScrollArea(self.tabs)
         card_view = CardView(scroll_area, self.data)
         card_view.update_view(lib_name)
         scroll_area.setWidget(card_view)
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
-        layout.addWidget(scroll_area)
-        return tab_base
+        return scroll_area
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
@@ -75,7 +69,8 @@ class Home(widgets.QMainWindow):
         dialog = NewLibrary(self.data, self)
         result = dialog.exec()
         self.data = dialog.data
-        self.combo.addItem(dialog.name())
+        name = dialog.name()
+        self.tabs.addTab(self.create_tab(name), name)
         return result
 
     def show_about(self) -> int:
