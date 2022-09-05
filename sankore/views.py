@@ -1,27 +1,40 @@
+from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QRegularExpression, Qt
-from PySide6.QtGui import QRegularExpressionValidator
+from PySide6.QtCore import QCoreApplication, QRegularExpression, Qt
+from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
 import models
 
+BASE_ASSET_PATH = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
+ASSETS: dict[str, Path] = {
+    "app_icon": BASE_ASSET_PATH / "app-icon.png",
+    "about_file": BASE_ASSET_PATH / "about.md",
+}
 
 
 class Home(widgets.QMainWindow):
-    def __init__(self, title: str, data: models.Data):
+    def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
-        self.setWindowTitle(title)
         self.data = data
+
         self.base = widgets.QWidget(self)
         self.setCentralWidget(self.base)
+        QCoreApplication.setApplicationName("Sankore")
+        self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
+        self.setWindowTitle(title)
+
+        about_menu = self.menuBar().addMenu("About")
+        about_action = about_menu.addAction("About")
+        about_action.triggered.connect(self.show_about)
 
         self.combo = widgets.QComboBox(self.base)
+        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         self.combo.addItems(tuple(models.list_libraries(self.data)))
         self.combo.currentTextChanged.connect(self.update_cards)
 
-        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
         scroll_area = widgets.QScrollArea(self.base)
         self.card_view = CardView(scroll_area, self.data)
         scroll_area.setWidgetResizable(True)
@@ -59,13 +72,24 @@ class Home(widgets.QMainWindow):
         self.combo.addItem(dialog.name())
         return result
 
+    def show_about(self) -> int:
+        about_text = ASSETS["about_file"].read_text()
+        dialog = widgets.QDialog(self)
+        about_label = widgets.QLabel(dialog)
+        about_label.setAlignment(Qt.AlignCenter)
+        about_label.setTextFormat(Qt.MarkdownText)
+        about_label.setText(about_text)
+        return dialog.exec()
+
     def update_cards(self) -> None:
         lib_name = self.combo.currentText()
         self.card_view.update_view(lib_name)
         if lib_name in self.data:
+            self.setWindowTitle(f"Sankore - {lib_name}")
             self.description_label.setText(self.data[lib_name]["description"])
             self.description_label.show()
         else:
+            self.setWindowTitle("Sankore")
             self.description_label.hide()
 
     def update_progress(self) -> int:
@@ -150,15 +174,14 @@ class Card(widgets.QFrame):
     def edit(self) -> int:
         dialog = EditBook(self, self.book)
         result = dialog.exec()
-        if result:
-            return result
-
-        parent: CardView = self.parent()
-        new_book = dialog.updated_book()
-        lib_name = models.find_library(parent.data, self.book)
-        models.update_book(parent.data, self.book, new_book, lib_name)
-        parent.update_view()
-        return 0
+        if not result and dialog.save_edits:
+            parent: CardView = self.parent()
+            new_book = dialog.updated_book()
+            lib_name = models.find_library(parent.data, self.book)
+            models.update_book(parent.data, self.book, new_book, lib_name)
+            parent.update_view()
+            return 0
+        return result
 
 
 class NewBook(widgets.QDialog):
@@ -213,6 +236,7 @@ class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
         self.book = book
+        self.save_edits = False
 
         self.setWindowTitle(f'Editing "{book["title"]}"')
         self.title_edit = widgets.QLineEdit()
@@ -224,13 +248,17 @@ class EditBook(widgets.QDialog):
         self.page_edit.setText(str(book["pages"]))
 
         save_button = widgets.QPushButton("Update")
-        save_button.clicked.connect(lambda: self.done(0))
+        save_button.clicked.connect(self._save)
 
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
         layout.addRow("No. of pages:", self.page_edit)
         layout.addRow(save_button)
+
+    def _save(self) -> None:
+        self.save_edits = True
+        return super().done(0)
 
     def updated_book(self) -> models.Book:
         return {

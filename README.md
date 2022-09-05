@@ -1,5 +1,6 @@
-
 # Sankore
+
+[![Python 3](https://pyup.io/repos/github/Armani-T/Sankore/python-3-shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![Updates](https://pyup.io/repos/github/Armani-T/Sankore/shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![MIT License](https://shields.io/github/license/Armani-T/Sankore)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
 
 > What if I had a personal GoodReads?
 
