@@ -7,11 +7,11 @@ from PySide6 import QtWidgets as widgets
 
 import models
 
-BASE_ASSET_PATH = Path(__file__).joinpath("../../assets").resolve()
+ASSET_FOLDER = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 ASSETS: dict[str, Path] = {
-    "app_icon": BASE_ASSET_PATH / "app-icon.png",
-    "about_file": BASE_ASSET_PATH / "about.md",
+    "app_icon": ASSET_FOLDER / "app-icon.png",
+    "about_file": ASSET_FOLDER / "about.md",
 }
 
 
@@ -20,32 +20,38 @@ class Home(widgets.QMainWindow):
         super().__init__()
         self.data = data
 
-        base = widgets.QWidget(self)
+        self.tabs = widgets.QTabWidget(self)
         QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
-        self.setCentralWidget(base)
+        self.setCentralWidget(self.tabs)
         self.setWindowTitle(title)
 
+        new_menu = self.menuBar().addMenu("New")
         about_menu = self.menuBar().addMenu("About")
+        new_book_action = new_menu.addAction("New Book")
+        new_lib_action = new_menu.addAction("New Library")
         about_action = about_menu.addAction("About")
+        new_book_action.triggered.connect(self.new_book)
+        new_lib_action.triggered.connect(self.new_lib)
         about_action.triggered.connect(self.show_about)
 
-        self.tabs = widgets.QTabWidget(base)
         for lib_name in models.list_libraries(self.data, False):
-            self.tabs.addTab(self.create_tab_page(lib_name), lib_name)
+            page = (
+                self.create_currently_reading()
+                if lib_name == "Currently Reading"
+                else self.create_tab_page(lib_name)
+            )
+            self.tabs.addTab(page, lib_name)
 
-        new_book_button = widgets.QPushButton("New Book")
-        new_lib_button = widgets.QPushButton("New Library")
+    def create_currently_reading(self) -> widgets.QWidget:
+        base = widgets.QWidget(self)
+        layout = widgets.QVBoxLayout(base)
+        cards = self.create_tab_page("Currently Reading")
         update_button = widgets.QPushButton("Update Reading Position")
-        new_book_button.clicked.connect(self.new_book)
-        new_lib_button.clicked.connect(self.new_lib)
         update_button.clicked.connect(self.update_progress)
-
-        layout = widgets.QGridLayout(base)
-        layout.addWidget(self.tabs, 0, 0, 22, 6)
-        layout.addWidget(update_button, 23, 0, 1, 6)
-        layout.addWidget(new_book_button, 24, 0, 1, 3)
-        layout.addWidget(new_lib_button, 24, 3, 1, 3)
+        layout.addWidget(cards)
+        layout.addWidget(update_button)
+        return base
 
     def create_tab_page(self, lib_name: str) -> widgets.QWidget:
         scroll_area = widgets.QScrollArea(self.tabs)
