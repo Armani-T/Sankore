@@ -30,16 +30,9 @@ class Home(widgets.QMainWindow):
         about_action = about_menu.addAction("About")
         about_action.triggered.connect(self.show_about)
 
-        self.combo = widgets.QComboBox(self.base)
-        self.description_label = widgets.QLabel("", alignment=Qt.AlignCenter)
-        self.combo.addItems(tuple(models.list_libraries(self.data)))
-        self.combo.currentTextChanged.connect(self.update_cards)
-
-        scroll_area = widgets.QScrollArea(self.base)
-        self.card_view = CardView(scroll_area, self.data)
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.card_view)
-        self.update_cards()
+        self.tabs = widgets.QTabWidget(self.base)
+        for lib_name in models.list_libraries(self.data, False):
+            self.tabs.addTab(self.create_tab(lib_name), lib_name)
 
         new_book_button = widgets.QPushButton("New Book")
         new_lib_button = widgets.QPushButton("New Library")
@@ -49,12 +42,10 @@ class Home(widgets.QMainWindow):
         update_button.clicked.connect(self.update_progress)
 
         layout = widgets.QGridLayout(self.base)
-        layout.addWidget(self.combo, 0, 0, 1, 10)
-        layout.addWidget(self.description_label, 1, 0, 1, 10)
-        layout.addWidget(scroll_area, 2, 0, 21, 10)
-        layout.addWidget(update_button, 23, 0, 1, 10)
-        layout.addWidget(new_lib_button, 24, 0, 1, 5)
-        layout.addWidget(new_book_button, 24, 5, 1, 5)
+        layout.addWidget(tab_section, 0, 0, 22, 6)
+        layout.addWidget(update_button, 23, 0, 1, 6)
+        layout.addWidget(new_book_button, 24, 0, 1, 3)
+        layout.addWidget(new_lib_button, 24, 3, 1, 3)
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
