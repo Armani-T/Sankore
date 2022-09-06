@@ -19,6 +19,7 @@ class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
         self.data = data
+        self.libraries = sorted(models.list_libraries(data, False))
 
         self.tabs = widgets.QTabWidget(self)
         QCoreApplication.setApplicationName("Sankore")
@@ -35,13 +36,13 @@ class Home(widgets.QMainWindow):
         new_lib_action.triggered.connect(self.new_lib)
         about_action.triggered.connect(self.show_about)
 
-        for lib_name in models.list_libraries(self.data, False):
+        for name in self.libraries:
             page = (
                 self.create_currently_reading()
-                if lib_name == "Currently Reading"
-                else self.create_tab_page(lib_name)
+                if name == "Currently Reading"
+                else self.create_tab_page(name)
             )
-            self.tabs.addTab(page, lib_name)
+            self.tabs.addTab(page, name)
 
     def create_currently_reading(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
@@ -76,7 +77,9 @@ class Home(widgets.QMainWindow):
         result = dialog.exec()
         self.data = dialog.data
         name = dialog.name()
-        self.tabs.addTab(self.create_tab(name), name)
+        self.libraries = sorted((*self.libraries, name))
+        tab_index = self.libraries.index(name)
+        self.tabs.insertTab(tab_index, self.create_tab_page(name), name)
         return result
 
     def show_about(self) -> int:
@@ -106,7 +109,7 @@ class Home(widgets.QMainWindow):
 class CardView(widgets.QWidget):
     def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
         super().__init__(parent)
-        self.current_library: str = models.ALL_BOOKS
+        self.library: str = models.ALL_BOOKS
         self.data = data
         self.setSizePolicy(
             widgets.QSizePolicy.Minimum,
@@ -115,14 +118,18 @@ class CardView(widgets.QWidget):
         self.layout_ = widgets.QGridLayout(self)
 
     def populate(self, library: str) -> None:
-        self.current_library = library
+        self.library = library
         row, col = 0, 0
         show_progress = (
-            self.current_library != models.ALL_BOOKS
-            and self.data[self.current_library]["page_tracking"]
+            self.library != models.ALL_BOOKS
+            and self.data[self.library]["page_tracking"]
         )
-        for item in models.list_books(self.data, self.current_library):
-            card = Card(self, item, show_progress)
+        books = sorted(
+            models.list_books(self.data, self.library),
+            key=lambda book: book["title"],
+        )
+        for book in books:
+            card = Card(self, book, show_progress)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
@@ -132,9 +139,9 @@ class CardView(widgets.QWidget):
             card.deleteLater()
 
     def update_view(self, library: Optional[str] = None) -> None:
-        self.current_library = library or self.current_library
+        self.library = library if library is None else self.library
         self.clear()
-        self.populate(self.current_library)
+        self.populate(self.library)
 
 
 class Card(widgets.QFrame):
