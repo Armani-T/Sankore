@@ -227,6 +227,40 @@ class NewBook(widgets.QDialog):
         return self.combo.currentText()
 
 
+class NewLibrary(widgets.QDialog):
+    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+        super().__init__(parent)
+        self.data = data
+
+        self.setWindowTitle("New Library")
+        self.name_edit = widgets.QLineEdit(self)
+        self.description_edit = widgets.QPlainTextEdit(self)
+        self.page_tracking = widgets.QCheckBox(self)
+        save_button = widgets.QPushButton("Add to Books")
+        save_button.clicked.connect(self.save)
+
+        layout = widgets.QFormLayout(self)
+        layout.addRow("Name:", self.name_edit)
+        layout.addRow("Description:", self.description_edit)
+        layout.addRow("Page Tracking:", self.page_tracking)
+        layout.addRow(save_button)
+
+    def name(self) -> str:
+        return self.name_edit.text().strip().title()
+
+    def save(self) -> None:
+        exit_code = 0
+        new_lib: models.Library = {
+            "description": self.description_edit.toPlainText().strip(),
+            "books": [],
+            "page_tracking": self.page_tracking.isChecked(),
+        }
+        if name := self.name():
+            exit_code, new_data = models.create_lib(self.data, name, new_lib)
+            self.data = new_data
+        return super().done(exit_code)
+
+
 # TODO: Add a way to change the library too.
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
@@ -263,35 +297,6 @@ class EditBook(widgets.QDialog):
             "pages": int(self.page_edit.text()) or self.book["pages"],
             "current_page": self.book["current_page"],
         }
-
-
-class NewLibrary(widgets.QDialog):
-    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
-        super().__init__(parent)
-        self.data = data
-
-        self.setWindowTitle("New Library")
-        self.name_edit = widgets.QLineEdit()
-        self.description_edit = widgets.QPlainTextEdit()
-        save_button = widgets.QPushButton("Add to Books")
-        save_button.clicked.connect(self.save)
-
-        layout = widgets.QFormLayout(self)
-        layout.addRow("Name:", self.name_edit)
-        layout.addRow("Description:", self.description_edit)
-        layout.addRow(save_button)
-
-    def name(self) -> str:
-        return self.name_edit.text().strip().title()
-
-    def save(self) -> None:
-        new_lib: models.Library = {
-            "description": self.description_edit.toPlainText().strip(),
-            "books": [],
-        }
-        exit_code, new_data = models.create_lib(self.data, self.name(), new_lib)
-        self.data = new_data
-        return super().done(exit_code)
 
 
 class UpdateProgress(widgets.QDialog):
