@@ -20,6 +20,7 @@ class Home(widgets.QMainWindow):
         super().__init__()
         self.data = data
         self.libraries = sorted(models.list_libraries(data, False))
+        self.pages = {}
 
         self.tabs = widgets.QTabWidget(self)
         QCoreApplication.setApplicationName("Sankore")
@@ -37,12 +38,12 @@ class Home(widgets.QMainWindow):
         about_action.triggered.connect(self.show_about)
 
         for name in self.libraries:
-            page = (
+            self.pages[name] = (
                 self.create_currently_reading()
                 if name == "Currently Reading"
                 else self.create_tab_page(name)
             )
-            self.tabs.addTab(page, name)
+            self.tabs.addTab(self.pages[name], name)
 
     def create_currently_reading(self) -> widgets.QWidget:
         base = widgets.QWidget(self)
@@ -102,7 +103,7 @@ class Home(widgets.QMainWindow):
                 {**dialog.selected_book, "current_page": dialog.value()},
                 lib_name,
             )
-        self.update_cards()
+        self.pages[name].update_view()
         return result
 
 
