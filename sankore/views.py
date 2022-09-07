@@ -79,23 +79,9 @@ class Home(widgets.QMainWindow):
         about_label.setText(about_text)
         return dialog.exec()
 
-    def update_progress(self) -> int:
-        lib_name = "Currently Reading"
-        dialog = UpdateProgress(self, models.list_books(self.data, lib_name))
-        result = dialog.exec()
-        if result == 0 and dialog.selected_book is not None:
-            models.update_book(
-                self.data,
-                dialog.selected_book,
-                {**dialog.selected_book, "current_page": dialog.value()},
-                lib_name,
-            )
-        self.pages[lib_name].update_view()
-        return result
-
 
 class CardView(widgets.QWidget):
-    def __init__(self, parent: widgets.QWidget, data: models.Data) -> None:
+    def __init__(self, parent: Home, data: models.Data) -> None:
         super().__init__(parent)
         self.library: str = models.ALL_BOOKS
         self.data = data
@@ -129,6 +115,17 @@ class CardView(widgets.QWidget):
         self.library = library or self.library
         self.clear()
         self.populate()
+
+    def update_progress(self, book: models.Book) -> int:
+        lib_name = "Currently Reading"
+        dialog = UpdateProgress(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            updated_book = {**book, "current_page": dialog.value()}
+            models.update_book(self.data, book, updated_book, lib_name)
+            pages = self.parent().pages
+            pages[lib_name].update_view()
+        return exit_code
 
 
 class Card(widgets.QFrame):
