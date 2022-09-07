@@ -104,7 +104,7 @@ class Home(widgets.QMainWindow):
                 {**dialog.selected_book, "current_page": dialog.value()},
                 lib_name,
             )
-        self.pages[name].update_view()
+        self.pages[lib_name].update_view()
         return result
 
 
