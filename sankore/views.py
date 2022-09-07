@@ -39,11 +39,7 @@ class Home(widgets.QMainWindow):
         about_action.triggered.connect(self.show_about)
 
         for name in self.libraries:
-            self.pages[name] = (
-                self.create_currently_reading()
-                if name == "Currently Reading"
-                else self.create_tab_page(name)
-            )
+            self.pages[name] = self.create_tab_page(name)
             self.tabs.addTab(self.pages[name], name)
 
     def create_currently_reading(self) -> widgets.QWidget:
@@ -119,8 +115,7 @@ class CardView(widgets.QWidget):
         )
         self.layout_ = widgets.QGridLayout(self)
 
-    def populate(self, library: str) -> None:
-        self.library = library
+    def populate(self) -> None:
         row, col = 0, 0
         show_progress = (
             self.library != models.ALL_BOOKS
@@ -141,9 +136,9 @@ class CardView(widgets.QWidget):
             card.deleteLater()
 
     def update_view(self, library: Optional[str] = None) -> None:
-        self.library = library if library is None else self.library
+        self.library = library or self.library
         self.clear()
-        self.populate(self.library)
+        self.populate()
 
 
 class Card(widgets.QFrame):
