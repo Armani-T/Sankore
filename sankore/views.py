@@ -162,7 +162,11 @@ class Card(widgets.QFrame):
             progress.setValue(min(max(0, book["current_page"]), book["pages"]))
             layout.addWidget(progress, alignment=Qt.AlignLeft)
 
-    def edit(self) -> int:
+    def delete_(self) -> None:
+        # TODO: Implement this function.
+        ...
+
+    def edit_(self) -> int:
         dialog = EditBook(self, self.book)
         result = dialog.exec()
         if not result and dialog.save_edits:
@@ -178,13 +182,17 @@ class Card(widgets.QFrame):
         menu = widgets.QMenu(self)
         if self.show_progress:
             update_action = menu.addAction("Update reading progress")
-            update_action.triggered.connect(self.update_progress)
+            update_action.triggered.connect(self.update_)
 
         edit_action = menu.addAction("Edit")
-        edit_action.triggered.connect(self.edit)
+        edit_action.triggered.connect(self.edit_)
         delete_action = menu.addAction("Delete")
         delete_action.triggered.connect(self.delete_)
         return menu
+
+    def update_(self) -> None:
+        parent = self.parent()
+        return parent.update_progress(self.book)
 
 
 class NewBook(widgets.QDialog):
