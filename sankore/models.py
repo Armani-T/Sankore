@@ -92,3 +92,7 @@ def update_book(
     new_lib = new_lib or old_lib
     data[old_lib]["books"].remove(old_book)
     data[new_lib]["books"].append(new_book)
+
+
+def delete_book(data: Data, book: Book, library: str) -> None:
+    data[library]["books"].remove(book)
