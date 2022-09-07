@@ -12,6 +12,7 @@ NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 ASSETS: dict[str, Path] = {
     "app_icon": ASSET_FOLDER / "app-icon.png",
     "about_file": ASSET_FOLDER / "about.md",
+    "menu_icon": ASSET_FOLDER / "menu-icon.png",
 }
 
 
