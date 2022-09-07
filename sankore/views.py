@@ -152,6 +152,7 @@ class Card(widgets.QFrame):
     ) -> None:
         super().__init__(parent)
         self.book = book
+        self.show_progress = show_progress
         self.setSizePolicy(
             widgets.QSizePolicy.MinimumExpanding,
             widgets.QSizePolicy.MinimumExpanding,
@@ -173,7 +174,7 @@ class Card(widgets.QFrame):
         layout.addWidget(author, alignment=Qt.AlignLeft)
         pages = widgets.QLabel(f"{book['pages']} Pages")
         layout.addWidget(pages, alignment=Qt.AlignLeft)
-        if show_progress:
+        if self.show_progress:
             progress = widgets.QProgressBar()
             progress.setMaximum(book["pages"])
             progress.setValue(min(max(0, book["current_page"]), book["pages"]))
@@ -190,6 +191,18 @@ class Card(widgets.QFrame):
             parent.update_view()
             return 0
         return result
+
+    def setup_menu(self) -> widgets.QMenu:
+        menu = widgets.QMenu(self)
+        if self.show_progress:
+            update_action = menu.addAction("Update reading progress")
+            update_action.triggered.connect(self.update_progress)
+
+        edit_action = menu.addAction("Edit")
+        edit_action.triggered.connect(self.edit)
+        delete_action = menu.addAction("Delete")
+        delete_action.triggered.connect(self.delete_)
+        return menu
 
 
 class NewBook(widgets.QDialog):
