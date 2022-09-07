@@ -42,19 +42,9 @@ class Home(widgets.QMainWindow):
             self.pages[name] = self.create_tab_page(name)
             self.tabs.addTab(self.pages[name], name)
 
-    def create_currently_reading(self) -> widgets.QWidget:
-        base = widgets.QWidget(self)
-        layout = widgets.QVBoxLayout(base)
-        cards = self.create_tab_page("Currently Reading")
-        update_button = widgets.QPushButton("Update Reading Position")
-        update_button.clicked.connect(self.update_progress)
-        layout.addWidget(cards)
-        layout.addWidget(update_button)
-        return base
-
     def create_tab_page(self, lib_name: str) -> widgets.QWidget:
         scroll_area = widgets.QScrollArea(self.tabs)
-        card_view = CardView(scroll_area, self.data)
+        card_view = CardView(self, self.data)
         card_view.update_view(lib_name)
         scroll_area.setWidget(card_view)
         scroll_area.setAlignment(Qt.AlignTop)
