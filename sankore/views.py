@@ -311,65 +311,46 @@ class EditBook(widgets.QDialog):
         return super().done(0)
 
     def updated_book(self) -> models.Book:
+        pages = int(self.page_edit.text())
         return {
-            "title": self.title_edit.text() or self.book["title"],
-            "author": self.author_edit.text() or self.book["author"],
-            "pages": int(self.page_edit.text()) or self.book["pages"],
-            "current_page": self.book["current_page"],
+            "title": self.title_edit.text(),
+            "author": self.author_edit.text(),
+            "pages": pages,
+            "current_page": min(self.book["current_page"], pages),
         }
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, books: list[models.Book]) -> None:
+    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
-        self.books: list[models.Book] = books
-        self.selected_book: Optional[models.Book] = None
-        self.layout_ = widgets.QStackedLayout(self)
-        self.list_widget = self._create_list()
-        self.layout_.addWidget(self.list_widget)
-        self.to_list()
+        self.save_changes = False
 
-    def _create_list(self) -> widgets.QWidget:
-        base = widgets.QWidget(self)
-        layout = widgets.QVBoxLayout(base)
-        layout.addWidget(widgets.QLabel("<h1>Choose a Book to Update</h1>"))
-        for book in self.books:
-            button = widgets.QPushButton(book["title"])
-            button.clicked.connect(lambda *_, book_=book: self.to_updater(book_))
-            layout.addWidget(button)
-        return base
-
-    def _create_updater(self) -> widgets.QWidget:
-        if self.selected_book is None:
-            raise TypeError
-
-        base = widgets.QWidget(self)
-        title = widgets.QLabel(f"<h1>{self.selected_book['title'].title()}</h1>")
+        title = widgets.QLabel(f"<h1>{book['title'].title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
         left_text = widgets.QLabel("Reached page")
+        left_text.setAlignment(Qt.AlignRight)
         self.page_edit = widgets.QLineEdit()
-        right_text = widgets.QLabel(f"out of {self.selected_book['pages']}.")
         self.page_edit.setValidator(NUMBER_VALIDATOR)
         self.page_edit.textChanged.connect(self.update_slider)
+        right_text = widgets.QLabel(f"out of {book['pages']}.")
+        right_text.setAlignment(Qt.AlignLeft)
 
         self.slider = widgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
-        self.slider.setMaximum(self.selected_book["pages"])
+        self.slider.setMaximum(book["pages"])
         self.slider.setTracking(False)
-        self.slider.valueChanged.connect(self.update_editor)
-        self.slider.setValue(self.selected_book["current_page"])
+        self.slider.valueChanged.connect(self.update_edit)
+        self.slider.setValue(book["current_page"])
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
             lambda: self.slider.setValue(self.slider.maximum())
         )
-        button_box = widgets.QDialogButtonBox(
-            widgets.QDialogButtonBox.Save | widgets.QDialogButtonBox.Cancel
-        )
-        button_box.accepted.connect(lambda: self.done(0))
-        button_box.rejected.connect(self.to_list)
+        button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        button_box.accepted.connect(self.save_)
+        button_box.rejected.connect(lambda: self.done(1))
 
-        layout = widgets.QGridLayout(base)
+        layout = widgets.QGridLayout(self)
         layout.addWidget(title, 0, 1, 1, 3)
         layout.addWidget(left_text, 1, 0, 1, 2)
         layout.addWidget(self.page_edit, 1, 2, 1, 1)
@@ -377,25 +358,12 @@ class UpdateProgress(widgets.QDialog):
         layout.addWidget(self.slider, 2, 1, 1, 3)
         layout.addWidget(finished_button, 3, 2, 1, 1)
         layout.addWidget(button_box, 4, 0, 1, 5)
-        return base
 
-    def to_list(self) -> None:
-        self.setWindowTitle("Choose a Book to Update")
-        self.layout_.setCurrentWidget(self.list_widget)
+    def save_(self) -> None:
+        self.save_changes = True
+        return super().done(0)
 
-    def to_updater(self, book: models.Book) -> None:
-        try:
-            self.selected_book = book
-            widget = self._create_updater()
-        except TypeError:
-            return self.to_list()
-        else:
-            self.setWindowTitle(f'Updating "{book["title"].title()}"')
-            self.layout_.addWidget(widget)
-            self.layout_.setCurrentWidget(widget)
-            return None
-
-    def update_editor(self) -> None:
+    def update_edit(self) -> None:
         new_value = str(self.slider.value())
         self.page_edit.setText(new_value)
 
