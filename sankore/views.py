@@ -370,6 +370,37 @@ class UpdateProgress(widgets.QDialog):
         return self.slider.value()
 
 
+class AreYouSure(widgets.QDialog):
+    def __init__(
+        self, parent: widgets.QWidget, data: models.Data, book: models.Book
+    ) -> None:
+        super().__init__(parent)
+        self.data = data
+        self.book = book
+
+        label = widgets.QLabel(
+            f"Are you sure you want to delete {book['title'].title()}?",
+            alignment=Qt.AlignCenter,
+        )
+        button_box = widgets.QDialogButtonBox(
+            widgets.QDialogButtonBox.Yes | widgets.QDialogButtonBox.No
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(label)
+        layout.addWidget(button_box)
+
+    def accept(self) -> None:
+        lib_name = models.find_library(self.data, self.book)
+        self.data = models.delete_book(self.data, self.book, lib_name)
+        return super().done(0)
+
+    def reject(self) -> None:
+        return super().done(1)
+
+
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
     window = Home(title, data)
