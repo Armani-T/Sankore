@@ -397,7 +397,7 @@ class AreYouSure(widgets.QDialog):
 
     def accept(self) -> None:
         lib_name = models.find_library(self.data, self.book)
-        self.data = models.delete_book(self.data, self.book, lib_name)
+        self.data = models.remove_book(self.data, self.book, lib_name)
         return super().done(0)
 
     def reject(self) -> None:

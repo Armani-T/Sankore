@@ -72,9 +72,9 @@ def insert_book(data: Data, library: str, new_book: Book) -> Data:
 
 
 def list_books(data: Data, lib_name: str) -> Iterable[Book]:
-    if name == ALL_BOOKS:
+    if lib_name == ALL_BOOKS:
         return chain(map(lambda library: library["books"], data.values()))
-    if name in data:
+    if lib_name in data:
         return data[lib_name]["books"]
     return ()
 
@@ -93,7 +93,7 @@ def update_book(
     new_lib: Optional[str] = None,
 ) -> Data:
     new_lib = new_lib or old_lib
-    data = delete_book(data, old_book, old_lib)
+    data = remove_book(data, old_book, old_lib)
     return insert_book(data, new_lib, new_book)
 
 
