@@ -1,3 +1,4 @@
+from itertools import chain
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, TypedDict
 import json
@@ -70,11 +71,12 @@ def insert_book(data: Data, library: str, new_book: Book) -> Data:
     return {**data, library: new_library}
 
 
-def list_books(data: Data, name: str) -> list[Book]:
+def list_books(data: Data, lib_name: str) -> Iterable[Book]:
     if name == ALL_BOOKS:
-        book_lists = map(lambda library: library["books"], data.values())
-        return list(sum(book_lists, []))
-    return data[name]["books"]
+        return chain(map(lambda library: library["books"], data.values()))
+    if name in data:
+        return data[lib_name]["books"]
+    return ()
 
 
 def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
