@@ -366,11 +366,10 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setValue(new_value)
 
     def updated(self) -> models.Book:
-        return {**book, "current_page": dialog.value()}
+        return {**self.book, "current_page": self.value()}
 
     def value(self) -> int:
         return self.slider.value()
-
 
 
 class AreYouSure(widgets.QDialog):
