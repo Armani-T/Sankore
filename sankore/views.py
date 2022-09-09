@@ -56,8 +56,6 @@ class Home(widgets.QMainWindow):
         dialog = NewBook(self.data, self)
         result = dialog.exec()
         self.data = dialog.data
-        all_libs = tuple(models.list_libraries(self.data))
-        self.combo.setCurrentIndex(all_libs.index(dialog.library()))
         self.update_cards()
         return result
 
@@ -67,8 +65,6 @@ class Home(widgets.QMainWindow):
         self.data = dialog.data
         name = dialog.name()
         self.libraries = sorted((*self.libraries, name))
-        tab_index = self.libraries.index(name)
-        self.tabs.insertTab(tab_index, self.create_tab_page(name), name)
         return result
 
     def show_about(self) -> int:
