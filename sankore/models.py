@@ -64,9 +64,10 @@ def find_library(data: Data, book: Book) -> Optional[str]:
     return None
 
 
-def insert_book(data: Data, library: str, new_book: Book) -> int:
-    data[library]["books"].append(new_book)
-    return 0
+def insert_book(data: Data, library: str, new_book: Book) -> Data:
+    old_books = data[library]["books"]
+    new_library = {**data[library], "books": (*old_books, new_book)}
+    return {**data, library: new_library}
 
 
 def list_books(data: Data, name: str) -> list[Book]:
