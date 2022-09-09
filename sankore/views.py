@@ -118,13 +118,12 @@ class CardView(widgets.QWidget):
         self.populate()
 
     def update_progress(self, book: models.Book) -> int:
-        lib_name = "Currently Reading"
+        lib_name = models.find_library(self.data, book)
         dialog = UpdateProgress(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            updated_book = {**book, "current_page": dialog.value()}
-            models.update_book(self.data, book, updated_book, lib_name)
-            self.pages[lib_name].update_view()
+            self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
+            self.update_view(lib_name)
         return exit_code
 
 
@@ -326,7 +325,7 @@ class UpdateProgress(widgets.QDialog):
         left_text.setAlignment(Qt.AlignRight)
         self.page_edit = widgets.QLineEdit()
         self.page_edit.setValidator(NUMBER_VALIDATOR)
-        self.page_edit.textChanged.connect(self.update_slider)
+        self.page_edit.textChanged.connect(self._update_slider)
         right_text = widgets.QLabel(f"out of {book['pages']}.")
         right_text.setAlignment(Qt.AlignLeft)
 
@@ -334,7 +333,7 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setMinimum(0)
         self.slider.setMaximum(book["pages"])
         self.slider.setTracking(False)
-        self.slider.valueChanged.connect(self.update_edit)
+        self.slider.valueChanged.connect(self._update_edit)
         self.slider.setValue(book["current_page"])
 
         finished_button = widgets.QPushButton("Finished the book")
@@ -358,16 +357,20 @@ class UpdateProgress(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def update_edit(self) -> None:
+    def _update_edit(self) -> None:
         new_value = str(self.slider.value())
         self.page_edit.setText(new_value)
 
-    def update_slider(self) -> None:
+    def _update_slider(self) -> None:
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
 
+    def updated(self) -> models.Book:
+        return {**book, "current_page": dialog.value()}
+
     def value(self) -> int:
         return self.slider.value()
+
 
 
 class AreYouSure(widgets.QDialog):
