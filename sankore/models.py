@@ -1,5 +1,6 @@
+from itertools import chain
 from pathlib import Path
-from typing import Iterable, Optional, TypedDict
+from typing import Iterable, Optional, Sequence, TypedDict
 import json
 
 Data = dict[str, "Library"]
@@ -32,7 +33,7 @@ class Book(TypedDict):
 
 
 class Library(TypedDict):
-    books: list[Book]
+    books: Sequence[Book]
     description: str
     page_tracking: bool
 
@@ -64,16 +65,18 @@ def find_library(data: Data, book: Book) -> Optional[str]:
     return None
 
 
-def insert_book(data: Data, library: str, new_book: Book) -> int:
-    data[library]["books"].append(new_book)
-    return 0
+def insert_book(data: Data, library: str, new_book: Book) -> Data:
+    old_books = data[library]["books"]
+    new_library = {**data[library], "books": (*old_books, new_book)}
+    return {**data, library: new_library}
 
 
-def list_books(data: Data, name: str) -> list[Book]:
-    if name == ALL_BOOKS:
-        book_lists = map(lambda library: library["books"], data.values())
-        return list(sum(book_lists, []))
-    return data[name]["books"]
+def list_books(data: Data, lib_name: str) -> Iterable[Book]:
+    if lib_name == ALL_BOOKS:
+        return chain(map(lambda library: library["books"], data.values()))
+    if lib_name in data:
+        return data[lib_name]["books"]
+    return ()
 
 
 def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
@@ -88,7 +91,13 @@ def update_book(
     new_book: Book,
     old_lib: str,
     new_lib: Optional[str] = None,
-) -> None:
+) -> Data:
     new_lib = new_lib or old_lib
-    data[old_lib]["books"].remove(old_book)
-    data[new_lib]["books"].append(new_book)
+    data = remove_book(data, old_book, old_lib)
+    return insert_book(data, new_lib, new_book)
+
+
+def remove_book(data: Data, target_book: Book, library: str) -> Data:
+    new_books = [book for book in data[library]["books"] if book != target_book]
+    new_library = {**data[library], "books": new_books}
+    return {**data, library: new_library}
