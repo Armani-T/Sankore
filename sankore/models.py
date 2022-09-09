@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Optional, TypedDict
+from typing import Iterable, Optional, Sequence, TypedDict
 import json
 
 Data = dict[str, "Library"]
@@ -32,7 +32,7 @@ class Book(TypedDict):
 
 
 class Library(TypedDict):
-    books: list[Book]
+    books: Sequence[Book]
     description: str
     page_tracking: bool
 
