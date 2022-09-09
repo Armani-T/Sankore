@@ -39,17 +39,18 @@ class Home(widgets.QMainWindow):
         about_action.triggered.connect(self.show_about)
 
         for name in self.libraries:
-            self.pages[name] = self.create_tab_page(name)
-            self.tabs.addTab(self.pages[name], name)
+            page, card_view = self.create_tab_page(name)
+            self.pages[name] = card_view
+            self.tabs.addTab(page, name)
 
-    def create_tab_page(self, lib_name: str) -> widgets.QWidget:
+    def create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
         card_view = CardView(self, self.data)
         card_view.update_view(lib_name)
         scroll_area.setWidget(card_view)
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
-        return scroll_area
+        return scroll_area, card_view
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
