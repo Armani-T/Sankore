@@ -1,6 +1,6 @@
 # Sankore
 
-[![Python 3](https://pyup.io/repos/github/Armani-T/Sankore/python-3-shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![Updates](https://pyup.io/repos/github/Armani-T/Sankore/shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![MIT License](https://shields.io/github/license/Armani-T/Sankore)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE)
+[![Python 3](https://pyup.io/repos/github/Armani-T/Sankore/python-3-shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![Updates](https://pyup.io/repos/github/Armani-T/Sankore/shield.svg)](https://pyup.io/repos/github/Armani-T/Sankore/) [![MIT License](https://shields.io/github/license/Armani-T/Sankore)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 > What if I had a personal GoodReads?
 
