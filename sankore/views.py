@@ -56,7 +56,10 @@ class Home(widgets.QMainWindow):
         dialog = NewBook(self.data, self)
         result = dialog.exec()
         self.data = dialog.data
-        self.update_cards()
+        lib_name = dialog.library()
+        card_view = self.pages[lib_name]
+        card_view.data = self.data
+        card_view.update_view(lib_name)
         return result
 
     def new_lib(self) -> int:
@@ -172,8 +175,9 @@ class Card(widgets.QFrame):
             parent: CardView = self.parent()
             new_book = dialog.updated_book()
             lib_name = models.find_library(parent.data, self.book)
-            models.update_book(parent.data, self.book, new_book, lib_name)
-            parent.update_view()
+            self.data = models.update_book(parent.data, self.book, new_book, lib_name)
+            parent.data = self.data
+            parent.update_view(lib_name)
             return 0
         return result
 
@@ -233,7 +237,7 @@ class NewBook(widgets.QDialog):
             "current_page": current_page,
         }
         if new_book["title"] and new_book["author"] and new_book["pages"] != 0:
-            models.insert_book(self.data, self.library(), new_book)
+            self.data = models.insert_book(self.data, self.library(), new_book)
             return super().done(0)
         return super().done(1)
 
@@ -318,6 +322,7 @@ class UpdateProgress(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
         self.save_changes = False
+        self.book = book
 
         title = widgets.QLabel(f"<h1>{book['title'].title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
