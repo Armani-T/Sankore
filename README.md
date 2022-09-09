@@ -50,9 +50,7 @@ To get the app running, navigate to the `Sankore/` folder and run `python3 sanko
 
 ![Adding a new library](assets/new-library.png)
 
-![Updating my reading position](assets/update-1.png)
-
-![Updating my reading position](assets/update-2.png)
+![Updating my reading position](assets/update.png)
 
 ## Contributing
 
