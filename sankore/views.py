@@ -45,7 +45,7 @@ class Home(widgets.QMainWindow):
 
     def create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
-        card_view = CardView(self, self.data)
+        card_view = CardView(self)
         card_view.update_view(lib_name)
         scroll_area.setWidget(card_view)
         scroll_area.setAlignment(Qt.AlignTop)
@@ -81,15 +81,22 @@ class Home(widgets.QMainWindow):
 
 
 class CardView(widgets.QWidget):
-    def __init__(self, parent: Home, data: models.Data) -> None:
+    def __init__(self, parent: Home) -> None:
         super().__init__(parent)
-        self.data = data
-        self.pages = parent.pages
+        self.home = parent
         self.setSizePolicy(
             widgets.QSizePolicy.Minimum,
             widgets.QSizePolicy.Fixed,
         )
         self.layout_ = widgets.QGridLayout(self, alignment=Qt.AlignTop)
+
+    @property
+    def data(self):
+        return self.home.data
+
+    @data.setter
+    def data(self, new_data):
+        self.home.data = new_data
 
     def populate(self) -> None:
         row, col = 0, 0
@@ -113,7 +120,10 @@ class CardView(widgets.QWidget):
 
     def delete_book(self, book: models.Book) -> int:
         dialog = AreYouSure(self, self.data, book)
-        return dialog.exec()
+        result = dialog.exec()
+        self.data = dialog.data
+        self.update_view()
+        return result
 
     def update_view(self, library: Optional[str] = None) -> None:
         self.library = library or self.library
