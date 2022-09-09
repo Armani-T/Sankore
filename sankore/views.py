@@ -108,6 +108,10 @@ class CardView(widgets.QWidget):
             card = child.widget()
             card.deleteLater()
 
+    def delete_book(self, book: models.Book) -> int:
+        dialog = AreYouSure(self, self.data, book)
+        return dialog.exec()
+
     def update_view(self, library: Optional[str] = None) -> None:
         self.library = library or self.library
         self.clear()
