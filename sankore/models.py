@@ -97,5 +97,7 @@ def update_book(
     data[new_lib]["books"].append(new_book)
 
 
-def delete_book(data: Data, book: Book, library: str) -> None:
-    data[library]["books"].remove(book)
+def remove_book(data: Data, target_book: Book, library: str) -> Data:
+    new_books = [book for book in data[library]["books"] if book != target_book]
+    new_library = {**data[library], "books": new_books}
+    return {**data, library: new_library}
