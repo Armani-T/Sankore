@@ -163,8 +163,8 @@ class Card(widgets.QFrame):
             layout.addWidget(progress, alignment=Qt.AlignLeft)
 
     def delete_(self) -> None:
-        # TODO: Implement this function.
-        ...
+        parent = self.parent()
+        return parent.delete_book(self.book)
 
     def edit_(self) -> int:
         dialog = EditBook(self, self.book)
