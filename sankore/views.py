@@ -83,13 +83,13 @@ class Home(widgets.QMainWindow):
 class CardView(widgets.QWidget):
     def __init__(self, parent: Home, data: models.Data) -> None:
         super().__init__(parent)
-        self.library: str = models.ALL_BOOKS
         self.data = data
+        self.pages = parent.pages
         self.setSizePolicy(
             widgets.QSizePolicy.Minimum,
-            widgets.QSizePolicy.MinimumExpanding,
+            widgets.QSizePolicy.Fixed,
         )
-        self.layout_ = widgets.QGridLayout(self)
+        self.layout_ = widgets.QGridLayout(self, alignment=Qt.AlignTop)
 
     def populate(self) -> None:
         row, col = 0, 0
@@ -123,8 +123,7 @@ class CardView(widgets.QWidget):
         if dialog.save_changes:
             updated_book = {**book, "current_page": dialog.value()}
             models.update_book(self.data, book, updated_book, lib_name)
-            pages = self.parent().pages
-            pages[lib_name].update_view()
+            self.pages[lib_name].update_view()
         return exit_code
 
 
