@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, TypedDict
@@ -25,17 +26,19 @@ DEFAULT_LIBRARIES: Data = {
 }
 
 
-class Book(TypedDict):
+@dataclass(frozen=True, slots=True, unsafe_hash=True)
+class Book:
     title: str
     author: str
     pages: int
     current_page: int
 
 
-class Library(TypedDict):
+@dataclass(frozen=True, slots=True)
+class Library:
     books: Sequence[Book]
     description: str
-    page_tracking: bool
+    page_tracking: bool = False
 
 
 def get_data(data_file: Path) -> Data:
