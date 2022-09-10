@@ -70,23 +70,27 @@ def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
 
 
 def find_library(data: Data, book: Book) -> Optional[str]:
-    for name in list_libraries(data, False):
-        if book in data[name]["books"]:
-            return name
+    for lib_name in list_libraries(data, False):
+        if book in data[lib_name].books:
+            return lib_name
     return None
 
 
-def insert_book(data: Data, library: str, new_book: Book) -> Data:
-    old_books = data[library]["books"]
-    new_library = {**data[library], "books": (*old_books, new_book)}
-    return {**data, library: new_library}
+def insert_book(data: Data, lib_name: str, new_book: Book) -> Data:
+    old_lib = data[lib_name]
+    new_lib = Library(
+        books=(*old_lib.books, new_book),
+        description=old_lib.description,
+        page_tracking=old_lib.page_tracking,
+    )
+    return {**data, lib_name: new_lib}
 
 
 def list_books(data: Data, lib_name: str) -> Iterable[Book]:
     if lib_name == ALL_BOOKS:
-        return chain(map(lambda library: library["books"], data.values()))
+        return chain(map(lambda library: library.books, data.values()))
     if lib_name in data:
-        return data[lib_name]["books"]
+        return data[lib_name].books
     return ()
 
 
@@ -108,7 +112,11 @@ def update_book(
     return insert_book(data, new_lib, new_book)
 
 
-def remove_book(data: Data, target_book: Book, library: str) -> Data:
-    new_books = [book for book in data[library]["books"] if book != target_book]
-    new_library = {**data[library], "books": new_books}
-    return {**data, library: new_library}
+def remove_book(data: Data, target_book: Book, lib_name: str) -> Data:
+    old_lib = data[lib_name]
+    new_library = Library(
+        books=filter(lambda book: book != target_book, old_lib.books),
+        description=old_lib.description,
+        page_tracking=old_lib.page_tracking,
+    )
+    return {**data, lib_name: new_library}
