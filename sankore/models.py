@@ -26,7 +26,7 @@ DEFAULT_LIBRARIES: Data = {
 }
 
 
-@dataclass(frozen=True, slots=True, unsafe_hash=True)
+@dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Book:
     title: str
     author: str
@@ -34,7 +34,7 @@ class Book:
     current_page: int
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Library:
     books: Sequence[Book]
     description: str
@@ -45,13 +45,13 @@ def get_data(data_file: Path) -> Data:
     try:
         contents = data_file.read_text("utf8")
         data = json.loads(contents)
-        return data["libraries"]
+        return _prepare_json(data)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         return DEFAULT_LIBRARIES
 
 
 def save_data(data_file: Path, new_data: Data) -> None:
-    string = json.dumps({"libraries": new_data})
+    string = _prepare_for_storage(new_data)
     data_file.write_text(string, "utf8")
 
 
