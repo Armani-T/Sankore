@@ -6,25 +6,6 @@ import json
 
 Data = dict[str, "Library"]
 
-ALL_BOOKS = "All Books"
-DEFAULT_LIBRARIES: Data = {
-    "To Read": {
-        "books": [],
-        "description": "Books that I want read in the future.",
-        "page_tracking": False,
-    },
-    "Already Read": {
-        "books": [],
-        "description": "Books that I've finished reading.",
-        "page_tracking": False,
-    },
-    "Currently Reading": {
-        "books": [],
-        "description": "Books that I'm reading right now.",
-        "page_tracking": True,
-    },
-}
-
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Book:
@@ -39,6 +20,18 @@ class Library:
     books: Sequence[Book]
     description: str
     page_tracking: bool = False
+
+
+ALL_BOOKS = "All Books"
+DEFAULT_LIBRARIES: Data = {
+    "To Read": Library(books=(), description="Books that I want read in the future."),
+    "Already Read": Library(books=(), description="Books that I've finished reading."),
+    "Currently Reading": Library(
+        books=(),
+        description="Books that I'm reading right now.",
+        page_tracking=True,
+    ),
+}
 
 
 def _prepare_json(json: dict[str, Any]) -> Data:
