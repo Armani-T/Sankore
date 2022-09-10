@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Callable, Iterable, Optional, Sequence
 import json
 
 Data = dict[str, "Library"]
@@ -33,18 +33,27 @@ DEFAULT_LIBRARIES: Data = {
     ),
 }
 
+to_dict: Callable[[Book], dict[str, Any]] = lambda book: {
+    "title": book.title,
+    "author": book.author,
+    "pages": book.pages,
+    "current_page": book.current_page
+}
 
-def _prepare_json(json: dict[str, Any]) -> Data:
+
+def _prepare_json(json_data: dict[str, Any]) -> Data:
     format_lib = lambda lib_json: Library(
-        books=map(lambda book_json: Book(**book_json), lib_json),
+        books=[Book(**book_json) for book_json in lib_json],
         description=lib_json["description"],
         page_tracking=lib_json["page_tracking"],
     )
-    return {name: format_lib(library) for name, library in json["libraries"].items()}
+    return {
+        name: format_lib(library) for name, library in json_data["libraries"].items()
+    }
 
 
-def _prepare_string(data: Data) -> dict[str, Any]:
-    lib_to_dict = lambda lib: {**lib.asdict(), "books": map(Book.asdict, lib.books)}
+def _prepare_string(data: Data) -> str:
+    lib_to_dict = lambda lib: {**lib.asdict(), "books": map(to_dict, lib.books)}
     dict_data = {name: lib_to_dict(library) for name, library in data.items()}
     return json.dumps({"libraries": dict_data})
 
@@ -115,7 +124,7 @@ def update_book(
 def remove_book(data: Data, target_book: Book, lib_name: str) -> Data:
     old_lib = data[lib_name]
     new_library = Library(
-        books=filter(lambda book: book != target_book, old_lib.books),
+        books=[book for book in old_lib.books if book != target_book],
         description=old_lib.description,
         page_tracking=old_lib.page_tracking,
     )
