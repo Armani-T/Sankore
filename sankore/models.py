@@ -37,7 +37,7 @@ to_dict: Callable[[Book], dict[str, Any]] = lambda book: {
     "title": book.title,
     "author": book.author,
     "pages": book.pages,
-    "current_page": book.current_page
+    "current_page": book.current_page,
 }
 
 
