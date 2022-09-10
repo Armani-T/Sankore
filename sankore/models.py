@@ -26,10 +26,11 @@ DEFAULT_LIBRARIES: Data = {
 
 
 class Book(TypedDict):
-    title: str
     author: str
-    pages: int
     current_page: int
+    pages: int
+    title: str
+    rating: int
 
 
 class Library(TypedDict):
