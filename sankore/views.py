@@ -11,8 +11,11 @@ ASSET_FOLDER = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
 ASSETS: dict[str, Path] = {
     "app_icon": ASSET_FOLDER / "app-icon.png",
-    "about_file": ASSET_FOLDER / "about.md",
+    "about": ASSET_FOLDER / "about.md",
+    "bookmark_icon": ASSET_FOLDER / "bookmark.png",
+    "edit_icon": ASSET_FOLDER / "edit.png",
     "menu_icon": ASSET_FOLDER / "menu-icon.png",
+    "trash_icon": ASSET_FOLDER / "trash.png",
 }
 
 
@@ -71,7 +74,7 @@ class Home(widgets.QMainWindow):
         return result
 
     def show_about(self) -> int:
-        about_text = ASSETS["about_file"].read_text()
+        about_text = ASSETS["about"].read_text()
         dialog = widgets.QDialog(self)
         about_label = widgets.QLabel(dialog)
         about_label.setAlignment(Qt.AlignCenter)
