@@ -50,6 +50,12 @@ def _prepare_json(json: dict[str, Any]) -> Data:
     return {name: format_lib(library) for name, library in json["libraries"].items()}
 
 
+def _prepare_string(data: Data) -> dict[str, Any]:
+    lib_to_dict = lambda lib: {**lib.asdict(), "books": map(Book.asdict, lib.books)}
+    dict_data = {name: lib_to_dict(library) for name, library in data.items()}
+    return json.dumps({"libraries": dict_data})
+
+
 def get_data(data_file: Path) -> Data:
     try:
         contents = data_file.read_text("utf8")
@@ -60,7 +66,7 @@ def get_data(data_file: Path) -> Data:
 
 
 def save_data(data_file: Path, new_data: Data) -> None:
-    string = _prepare_for_storage(new_data)
+    string = _prepare_string(new_data)
     data_file.write_text(string, "utf8")
 
 
