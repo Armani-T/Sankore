@@ -23,7 +23,7 @@ class Library:
 
 
 ALL_BOOKS = "All Books"
-DEFAULT_LIBRARIES: Data = {
+DEFAULT_DATA: Data = {
     "To Read": Library(books=(), description="Books that I want read in the future."),
     "Already Read": Library(books=(), description="Books that I've finished reading."),
     "Currently Reading": Library(
@@ -43,7 +43,7 @@ to_dict: Callable[[Book], dict[str, Any]] = lambda book: {
 
 def _prepare_json(json_data: dict[str, Any]) -> Data:
     format_lib = lambda lib_json: Library(
-        books=[Book(**book_json) for book_json in lib_json],
+        books=[Book(**book_json) for book_json in lib_json["books"]],
         description=lib_json["description"],
         page_tracking=lib_json["page_tracking"],
     )
@@ -53,7 +53,11 @@ def _prepare_json(json_data: dict[str, Any]) -> Data:
 
 
 def _prepare_string(data: Data) -> str:
-    lib_to_dict = lambda lib: {**lib.asdict(), "books": map(to_dict, lib.books)}
+    lib_to_dict = lambda lib: {
+        "books": (to_dict(book) for book in lib.books),
+        "description": lib.description,
+        "page_tracking": lib.page_tracking
+    }
     dict_data = {name: lib_to_dict(library) for name, library in data.items()}
     return json.dumps({"libraries": dict_data})
 
@@ -64,7 +68,7 @@ def get_data(data_file: Path) -> Data:
         data = json.loads(contents)
         return _prepare_json(data)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return DEFAULT_LIBRARIES
+        return DEFAULT_DATA
 
 
 def save_data(data_file: Path, new_data: Data) -> None:
