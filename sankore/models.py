@@ -97,7 +97,7 @@ def insert_book(data: Data, lib_name: str, new_book: Book) -> Data:
 
 def list_books(data: Data, lib_name: str) -> Iterable[Book]:
     if lib_name == ALL_BOOKS:
-        return chain(map(lambda library: library.books, data.values()))
+        return chain(*[library.books for library in data.values()])
     if lib_name in data:
         return data[lib_name].books
     return ()
