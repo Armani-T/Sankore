@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, Optional, Sequence, TypedDict
+from typing import Any, Iterable, Optional, Sequence
 import json
 
 Data = dict[str, "Library"]
@@ -39,6 +39,15 @@ class Library:
     books: Sequence[Book]
     description: str
     page_tracking: bool = False
+
+
+def _prepare_json(json: dict[str, Any]) -> Data:
+    format_lib = lambda lib_json: Library(
+        books=map(lambda book_json: Book(**book_json), lib_json),
+        description=lib_json["description"],
+        page_tracking=lib_json["page_tracking"],
+    )
+    return {name: format_lib(library) for name, library in json["libraries"].items()}
 
 
 def get_data(data_file: Path) -> Data:
