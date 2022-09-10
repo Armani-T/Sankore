@@ -197,12 +197,16 @@ class Card(widgets.QFrame):
     def setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
         if self.show_progress:
-            update_action = menu.addAction("Update reading progress")
+            update_icon = QIcon(QPixmap(ASSETS["bookmark_icon"]))
+            update_action = menu.addAction(update_icon, "Update reading progress")
             update_action.triggered.connect(self.update_)
+            menu.addSeparator()
 
-        edit_action = menu.addAction("Edit")
+        edit_icon = QIcon(QPixmap(ASSETS["edit_icon"]))
+        edit_action = menu.addAction(edit_icon, "Edit")
         edit_action.triggered.connect(self.edit_)
-        delete_action = menu.addAction("Delete")
+        delete_icon = QIcon(QPixmap(ASSETS["trash_icon"]))
+        delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_)
         return menu
 
