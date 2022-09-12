@@ -129,11 +129,13 @@ class CardView(widgets.QWidget):
             card.deleteLater()
 
     def delete_book(self, book: models.Book) -> int:
-        dialog = AreYouSure(self, self.data, book)
-        result = dialog.exec()
-        self.data = dialog.data
-        self.update_view()
-        return result
+        dialog = AreYouSure(self, book.title)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            lib_name = models.find_library(self.data, book)
+            self.data = models.remove_book(self.data, book, lib_name)
+            self.update_view(lib_name)
+        return exit_code
 
     def update_view(self, lib_name: Optional[str] = None) -> None:
         self.lib_name = lib_name or self.lib_name
@@ -141,10 +143,10 @@ class CardView(widgets.QWidget):
         self.populate()
 
     def update_progress(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.data, book)
         dialog = UpdateProgress(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes:
+            lib_name = models.find_library(self.data, book)
             self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
             self.update_view(lib_name)
         return exit_code
@@ -438,15 +440,12 @@ class UpdateProgress(widgets.QDialog):
 
 class AreYouSure(widgets.QDialog):
     # noinspection PyArgumentList
-    def __init__(
-        self, parent: widgets.QWidget, data: models.Data, book: models.Book
-    ) -> None:
+    def __init__(self, parent: widgets.QWidget, book_title: str) -> None:
         super().__init__(parent)
-        self.data = data
-        self.book = book
+        self.save_changes = False
 
         label = widgets.QLabel(
-            f"Are you sure you want to delete {book.title.title()}?",
+            f"Are you sure you want to delete <em>{book_title.title()}</em>?",
             alignment=Qt.AlignCenter,
         )
         button_box = widgets.QDialogButtonBox(
@@ -460,11 +459,11 @@ class AreYouSure(widgets.QDialog):
         layout.addWidget(button_box)
 
     def accept(self) -> None:
-        lib_name = models.find_library(self.data, self.book)
-        self.data = models.remove_book(self.data, self.book, lib_name)
+        self.save_changes = True
         return super().done(0)
 
     def reject(self) -> None:
+        self.save_changes = False
         return super().done(1)
 
 
