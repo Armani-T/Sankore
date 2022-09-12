@@ -206,18 +206,15 @@ class Card(widgets.QFrame):
         parent = self.parent()
         return parent.delete_book(self.book)
 
-    def edit_(self) -> int:
+    def edit_(self) -> None:
         dialog = EditBook(self, self.book)
         result = dialog.exec()
         if not result and dialog.save_edits:
             parent: CardView = self.parent()
             new_book = dialog.updated_book()
             lib_name = models.find_library(parent.data, self.book)
-            parent = self.parent()
             parent.data = models.update_book(parent.data, self.book, new_book, lib_name)
             parent.update_view(lib_name)
-            return 0
-        return result
 
     def setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
