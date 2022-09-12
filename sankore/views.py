@@ -18,7 +18,7 @@ ASSETS: dict[str, Path] = {
     "bookmark_icon": ASSET_FOLDER / "bookmark.png",
     "edit_icon": ASSET_FOLDER / "edit.png",
     "empty_star": ASSET_FOLDER / "star-outline.png",
-    "filled_star": ASSET_FOLDER / "star-filled.png",
+    "full_star": ASSET_FOLDER / "star-filled.png",
     "half_star": ASSET_FOLDER / "star-half.png",
     "menu_icon": ASSET_FOLDER / "menu-icon.png",
     "trash_icon": ASSET_FOLDER / "trash.png",
@@ -189,12 +189,12 @@ class Card(widgets.QFrame):
 
         if self.show_rating:
             empty_star = QPixmap(ASSETS["empty_star"])
-            filled_star = QPixmap(ASSETS["filled_star"])
+            full_star = QPixmap(ASSETS["full_star"])
             rating_bar = widgets.QWidget(self)
             bar_layout = widgets.QHBoxLayout(rating_bar)
             stars = normalise(book.rating, 5, 1)
             for index in range(1, 6):
-                icon = empty_star if index > stars else filled_star
+                icon = empty_star if index > stars else full_star
                 bar_layout.addWidget(widgets.QLabel(pixmap=icon))
             layout.addWidget(rating_bar)
         if self.show_progress:
@@ -402,7 +402,6 @@ class UpdateProgress(widgets.QDialog):
         # noinspection PyTypeChecker
         button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
         button_box.accepted.connect(self.save_)
-        button_box.rejected.connect(lambda: self.done(1))
 
         layout = widgets.QGridLayout(self)
         layout.addWidget(title, 0, 1, 1, 3)
@@ -465,6 +464,63 @@ class AreYouSure(widgets.QDialog):
     def reject(self) -> None:
         self.save_changes = False
         return super().done(1)
+
+
+class RateBook(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+        self.book = book
+        self.current_rating = book.rating
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(
+            widgets.QLabel(
+                f"How would you rate <em>{book.title.title()}</em> by "
+                f"<em>{book.author.title()}</em>?"
+            )
+        )
+
+        self.stars = self.create_stars()
+        self.update_stars()
+        star_layout = widgets.QHBoxLayout()
+        layout.addLayout(star_layout)
+        for star in self.stars:
+            star_layout.addWidget(star)
+
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
+        layout.addWidget(save_button)
+
+    def accept(self):
+        self.save_changes = True
+        return super().done(0)
+
+    def create_stars(self):
+        stars = []
+        for index in range(1, 6):
+            star = widgets.QToolButton(self)
+            star.triggered.connect(lambda index_=index: self.update_stars(index_))
+            star.setAutoRaise(True)
+            stars.append(star)
+        return stars
+
+    def update_stars(self, rating: Optional[int] = None):
+        self.current_rating = self.current_rating if rating is None else rating
+        empty_star = QIcon(QPixmap(ASSETS["empty_star"]))
+        full_star = QIcon(QPixmap(ASSETS["full_star"]))
+        rating = normalise(self.book.rating, 5, 1)
+        for index, star in enumerate(self.stars, start=1):
+            star.setIcon(empty_star if index > rating else full_star)
+
+    def updated(self):
+        return models.Book(
+            title=self.book.title,
+            author=self.book.author,
+            pages=self.book.pages,
+            current_page=self.book.current_page,
+            rating=self.current_rating,
+        )
 
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
