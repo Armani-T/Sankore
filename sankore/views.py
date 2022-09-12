@@ -8,7 +8,7 @@ from PySide6 import QtWidgets as widgets
 
 import models
 
-normalise = lambda value, maximum: min(max(0, value), maximum)
+normalise = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
 
 ASSET_FOLDER = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
