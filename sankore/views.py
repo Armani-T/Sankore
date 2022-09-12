@@ -137,6 +137,15 @@ class CardView(widgets.QWidget):
             self.update_view(lib_name)
         return exit_code
 
+    def rate_book(self, book: models.Book) -> int:
+        dialog = RateBook(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            lib_name = models.find_library(self.data, book)
+            self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
+            self.update_view(lib_name)
+        return exit_code
+
     def update_view(self, lib_name: Optional[str] = None) -> None:
         self.lib_name = lib_name or self.lib_name
         self.clear()
