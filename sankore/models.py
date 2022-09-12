@@ -15,6 +15,15 @@ class Book:
     current_page: int
     rating: int
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "title": self.title,
+            "author": self.author,
+            "pages": self.pages,
+            "current_page": self.current_page,
+            "rating": self.rating,
+        }
+
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Library:
@@ -34,13 +43,6 @@ DEFAULT_DATA: Data = {
     ),
 }
 
-to_dict: Callable[[Book], dict[str, Any]] = lambda book: {
-    "title": book.title,
-    "author": book.author,
-    "pages": book.pages,
-    "current_page": book.current_page,
-}
-
 
 def _prepare_json(json_data: dict[str, Any]) -> Data:
     format_lib = lambda lib_json: Library(
@@ -55,7 +57,7 @@ def _prepare_json(json_data: dict[str, Any]) -> Data:
 
 def _prepare_string(data: Data) -> str:
     lib_to_dict = lambda lib: {
-        "books": (to_dict(book) for book in lib.books),
+        "books": [book.to_dict() for book in lib.books],
         "description": lib.description,
         "page_tracking": lib.page_tracking,
     }

@@ -259,6 +259,7 @@ class NewBook(widgets.QDialog):
             author=self.author_edit.text().strip(),
             pages=pages,
             current_page=current_page,
+            ratings=1,
         )
         if new_book.title and new_book.author and new_book.pages != 0:
             self.data = models.insert_book(self.data, self.library(), new_book)
@@ -339,6 +340,7 @@ class EditBook(widgets.QDialog):
             author=self.author_edit.text(),
             pages=pages,
             current_page=min(self.book.current_page, pages),
+            ratings=self.book.rating,
         )
 
 
@@ -401,6 +403,7 @@ class UpdateProgress(widgets.QDialog):
             author=self.book.author,
             pages=self.book.pages,
             current_page=self.value(),
+            rating=self.book.rating,
         )
 
     def value(self) -> int:
