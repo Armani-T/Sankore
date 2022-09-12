@@ -13,6 +13,7 @@ class Book:
     author: str
     pages: int
     current_page: int
+    rating: int
 
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
@@ -56,7 +57,7 @@ def _prepare_string(data: Data) -> str:
     lib_to_dict = lambda lib: {
         "books": (to_dict(book) for book in lib.books),
         "description": lib.description,
-        "page_tracking": lib.page_tracking
+        "page_tracking": lib.page_tracking,
     }
     dict_data = {name: lib_to_dict(library) for name, library in data.items()}
     return json.dumps({"libraries": dict_data})
