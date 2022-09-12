@@ -218,16 +218,25 @@ class Card(widgets.QFrame):
             parent.data = models.update_book(parent.data, self.book, new_book, lib_name)
             parent.update_view(lib_name)
 
+    def rate_(self) -> None:
+        parent = self.parent()
+        return parent.rate_book(self.book)
+
     def update_(self) -> None:
         parent = self.parent()
         return parent.update_progress(self.book)
 
     def setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
+        if self.show_rating:
+            rating_icon = QIcon(QPixmap(ASSETS["half_star"]))
+            rating_action = menu.addAction(rating_icon, "Rate")
+            rating_action.triggered.connect(self.rate_)
         if self.show_progress:
             update_icon = QIcon(QPixmap(ASSETS["bookmark_icon"]))
             update_action = menu.addAction(update_icon, "Update reading progress")
             update_action.triggered.connect(self.update_)
+        if self.show_rating or self.show_progress:
             menu.addSeparator()
 
         edit_icon = QIcon(QPixmap(ASSETS["edit_icon"]))
