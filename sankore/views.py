@@ -111,6 +111,7 @@ class CardView(widgets.QWidget):
 
     def populate(self) -> None:
         row, col = 0, 0
+        show_rating = self.lib_name == "Already Read"
         show_progress = (
             self.lib_name != models.ALL_BOOKS and self.data[self.lib_name].page_tracking
         )
@@ -118,7 +119,7 @@ class CardView(widgets.QWidget):
             models.list_books(self.data, self.lib_name), key=attrgetter("title")
         )
         for book in books:
-            card = Card(self, book, show_progress)
+            card = Card(self, book, show_progress, show_rating)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
@@ -193,7 +194,7 @@ class Card(widgets.QFrame):
             for index in range(1, 6):
                 icon = empty_star if index > stars else filled_star
                 bar_layout.addWidget(widgets.QLabel(pixmap=icon))
-            layout.addWidget(rating_bar, alignment=Qt.AlignLeft)
+            layout.addWidget(rating_bar)
         if self.show_progress:
             layout.addWidget(
                 widgets.QProgressBar(
@@ -236,7 +237,6 @@ class Card(widgets.QFrame):
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_)
         return menu
-
 
 
 class NewBook(widgets.QDialog):
