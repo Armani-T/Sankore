@@ -507,20 +507,19 @@ class RateBook(widgets.QDialog):
 
     def create_stars(self):
         stars = []
-        for index in range(1, 6):
+        for i in range(1, 6):
             star = widgets.QToolButton(self)
-            star.triggered.connect(lambda index_=index: self.update_stars(index_))
+            star.clicked.connect(lambda *, index=i: self.update_stars(index))
             star.setAutoRaise(True)
             stars.append(star)
         return stars
 
     def update_stars(self, rating: Optional[int] = None):
-        self.current_rating = self.current_rating if rating is None else rating
+        self.current_rating = normalise(self.current_rating if rating is None else rating, 5, 1)
         empty_star = QIcon(QPixmap(ASSETS["empty_star"]))
         full_star = QIcon(QPixmap(ASSETS["full_star"]))
-        rating = normalise(self.book.rating, 5, 1)
         for index, star in enumerate(self.stars, start=1):
-            star.setIcon(empty_star if index > rating else full_star)
+            star.setIcon(empty_star if index > self.current_rating else full_star)
 
     def updated(self):
         return models.Book(
