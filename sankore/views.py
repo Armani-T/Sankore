@@ -160,6 +160,7 @@ class Card(widgets.QFrame):
         super().__init__(parent)
         self.book = book
         self.show_progress = show_progress
+        self.show_rating = show_rating
         self.setSizePolicy(
             widgets.QSizePolicy.MinimumExpanding,
             widgets.QSizePolicy.MinimumExpanding,
@@ -183,7 +184,7 @@ class Card(widgets.QFrame):
         pages = widgets.QLabel(f"{book.pages} Pages")
         layout.addWidget(pages, alignment=Qt.AlignLeft)
 
-        if show_rating:
+        if self.show_rating:
             empty_star = QPixmap(ASSETS["empty_star"])
             filled_star = QPixmap(ASSETS["filled_star"])
             rating_bar = widgets.QWidget(self)
@@ -216,6 +217,10 @@ class Card(widgets.QFrame):
             parent.data = models.update_book(parent.data, self.book, new_book, lib_name)
             parent.update_view(lib_name)
 
+    def update_(self) -> None:
+        parent = self.parent()
+        return parent.update_progress(self.book)
+
     def setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
         if self.show_progress:
@@ -232,9 +237,6 @@ class Card(widgets.QFrame):
         delete_action.triggered.connect(self.delete_)
         return menu
 
-    def update_(self) -> None:
-        parent = self.parent()
-        return parent.update_progress(self.book)
 
 
 class NewBook(widgets.QDialog):
