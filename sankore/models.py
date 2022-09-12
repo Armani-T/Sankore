@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence
 import json
 
 Data = dict[str, "Library"]

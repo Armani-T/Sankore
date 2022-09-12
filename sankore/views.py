@@ -151,7 +151,11 @@ class CardView(widgets.QWidget):
 
 class Card(widgets.QFrame):
     def __init__(
-        self, parent: CardView, book: models.Book, show_progress: bool = False
+        self,
+        parent: CardView,
+        book: models.Book,
+        show_progress: bool = False,
+        show_rating: bool = False,
     ) -> None:
         super().__init__(parent)
         self.book = book
@@ -178,11 +182,25 @@ class Card(widgets.QFrame):
         layout.addWidget(author, alignment=Qt.AlignLeft)
         pages = widgets.QLabel(f"{book.pages} Pages")
         layout.addWidget(pages, alignment=Qt.AlignLeft)
+
+        if show_rating:
+            empty_star = QPixmap(ASSETS["empty_star"])
+            filled_star = QPixmap(ASSETS["filled_star"])
+            rating_bar = widgets.QWidget(self)
+            bar_layout = widgets.QHBoxLayout(rating_bar)
+            stars = normalise(book.rating, 5, 1)
+            for index in range(1, 6):
+                icon = empty_star if index > stars else filled_star
+                bar_layout.addWidget(widgets.QLabel(pixmap=icon))
+            layout.addWidget(rating_bar, alignment=Qt.AlignLeft)
         if self.show_progress:
-            progress = widgets.QProgressBar()
-            progress.setMaximum(book.pages)
-            progress.setValue(normalise(book.current_page, book.pages))
-            layout.addWidget(progress, alignment=Qt.AlignLeft)
+            layout.addWidget(
+                widgets.QProgressBar(
+                    self,
+                    maximum=book.pages,
+                    value=normalise(book.current_page, book.pages),
+                )
+            )
 
     def delete_(self) -> None:
         parent = self.parent()
