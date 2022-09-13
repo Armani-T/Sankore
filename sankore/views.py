@@ -185,7 +185,7 @@ class Card(widgets.QFrame):
         tool_button.setIcon(QIcon(QPixmap(ASSETS["menu_icon"])))
         tool_button.setPopupMode(widgets.QToolButton.InstantPopup)
         tool_button.setAutoRaise(True)
-        tool_button.setMenu(self.setup_menu())
+        tool_button.setMenu(self._setup_menu())
         title_layout.addWidget(title, alignment=Qt.AlignLeft)
         title_layout.addWidget(tool_button, alignment=Qt.AlignRight)
         layout.addLayout(title_layout)
@@ -212,29 +212,7 @@ class Card(widgets.QFrame):
             bar.setValue(normalise(book.current_page, book.pages))
             layout.addWidget(bar)
 
-    def delete_(self) -> int:
-        parent: CardView = self.parent()
-        return parent.delete_book(self.book)
-
-    def edit_(self) -> None:
-        dialog = EditBook(self, self.book)
-        result = dialog.exec()
-        if not result and dialog.save_edits:
-            parent: CardView = self.parent()
-            new_book = dialog.updated_book()
-            lib_name: str = models.find_library(parent.data, self.book)
-            parent.data = models.update_book(parent.data, self.book, new_book, lib_name)
-            parent.update_view(lib_name)
-
-    def rate_(self) -> int:
-        parent: CardView = self.parent()
-        return parent.rate_book(self.book)
-
-    def update_(self) -> int:
-        parent: CardView = self.parent()
-        return parent.update_progress(self.book)
-
-    def setup_menu(self) -> widgets.QMenu:
+    def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
         if self.show_rating:
             rating_icon = QIcon(QPixmap(ASSETS["half_star"]))
@@ -254,6 +232,22 @@ class Card(widgets.QFrame):
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_)
         return menu
+
+    def delete_(self) -> int:
+        parent: CardView = self.parent()
+        return parent.delete_book(self.book)
+
+    def edit_(self) -> int:
+        parent: CardView = self.parent()
+        return parent.edit_book(self.book)
+
+    def rate_(self) -> int:
+        parent: CardView = self.parent()
+        return parent.rate_book(self.book)
+
+    def update_(self) -> int:
+        parent: CardView = self.parent()
+        return parent.update_progress(self.book)
 
 
 class NewBook(widgets.QDialog):
