@@ -226,35 +226,35 @@ class Card(widgets.QFrame):
         if self.show_rating:
             rating_icon = QIcon(QPixmap(ASSETS["half_star"]))
             rating_action = menu.addAction(rating_icon, "Rate")
-            rating_action.triggered.connect(self.rate_)
+            rating_action.triggered.connect(self.rate_book)
         if self.show_progress:
             update_icon = QIcon(QPixmap(ASSETS["bookmark_icon"]))
             update_action = menu.addAction(update_icon, "Update reading progress")
-            update_action.triggered.connect(self.update_)
+            update_action.triggered.connect(self.update_progress)
         if self.show_rating or self.show_progress:
             menu.addSeparator()
 
         edit_icon = QIcon(QPixmap(ASSETS["edit_icon"]))
         edit_action = menu.addAction(edit_icon, "Edit")
-        edit_action.triggered.connect(self.edit_)
+        edit_action.triggered.connect(self.edit_book)
         delete_icon = QIcon(QPixmap(ASSETS["trash_icon"]))
         delete_action = menu.addAction(delete_icon, "Delete")
-        delete_action.triggered.connect(self.delete_)
+        delete_action.triggered.connect(self.delete_book)
         return menu
 
-    def delete_(self) -> int:
+    def delete_book(self) -> int:
         parent: CardView = self.parent()
         return parent.delete_book(self.book)
 
-    def edit_(self) -> int:
+    def edit_book(self) -> int:
         parent: CardView = self.parent()
         return parent.edit_book(self.book)
 
-    def rate_(self) -> int:
+    def rate_book(self) -> int:
         parent: CardView = self.parent()
         return parent.rate_book(self.book)
 
-    def update_(self) -> int:
+    def update_progress(self) -> int:
         parent: CardView = self.parent()
         return parent.update_progress(self.book)
 
