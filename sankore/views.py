@@ -315,6 +315,7 @@ class NewLibrary(widgets.QDialog):
         self.name_edit = widgets.QLineEdit(self)
         self.description_edit = widgets.QPlainTextEdit(self)
         self.page_tracking = widgets.QCheckBox(self)
+        self.can_rate = widgets.QCheckBox(self)
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.save)
 
@@ -322,6 +323,7 @@ class NewLibrary(widgets.QDialog):
         layout.addRow("Name:", self.name_edit)
         layout.addRow("Description:", self.description_edit)
         layout.addRow("Page Tracking:", self.page_tracking)
+        layout.addRow("Rate Books:", self.can_rate)
         layout.addRow(save_button)
 
     def name(self) -> str:
@@ -333,6 +335,7 @@ class NewLibrary(widgets.QDialog):
             books=(),
             description=self.description_edit.toPlainText().strip(),
             page_tracking=self.page_tracking.isChecked(),
+            can_rate=self.can_rate.isChecked(),
         )
         if name := self.name():
             exit_code, new_data = models.create_lib(self.data, name, new_lib)
