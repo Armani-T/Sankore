@@ -128,19 +128,19 @@ class CardView(widgets.QWidget):
             card.deleteLater()
 
     def delete_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.data, book)
         dialog = AreYouSure(self, book.title)
         exit_code = dialog.exec()
-        if dialog.save_changes:
-            lib_name = models.find_library(self.data, book)
+        if dialog.save_changes and lib_name is not None:
             self.data = models.remove_book(self.data, book, lib_name)
             self.update_view(lib_name)
         return exit_code
 
     def rate_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.data, book)
         dialog = RateBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes:
-            lib_name = models.find_library(self.data, book)
+        if dialog.save_changes and lib_name is not None:
             self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
             self.update_view(lib_name)
         return exit_code
@@ -151,10 +151,10 @@ class CardView(widgets.QWidget):
         self.populate()
 
     def update_progress(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.data, book)
         dialog = UpdateProgress(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes:
-            lib_name = models.find_library(self.data, book)
+        if dialog.save_changes and lib_name is not None:
             self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
             self.update_view(lib_name)
         return exit_code
