@@ -75,8 +75,7 @@ class Home(widgets.QMainWindow):
         dialog = NewLibrary(self.data, self)
         result = dialog.exec()
         self.data = dialog.data
-        name = dialog.name()
-        self.libraries = sorted((*self.libraries, name))
+        self.libraries = sorted((*self.libraries, dialog.name()))
         return result
 
     def show_about(self) -> int:
@@ -515,7 +514,9 @@ class RateBook(widgets.QDialog):
         return stars
 
     def update_stars(self, rating: Optional[int] = None):
-        self.current_rating = normalise(self.current_rating if rating is None else rating, 5, 1)
+        self.current_rating = normalise(
+            (self.current_rating if rating is None else rating), 5, 1
+        )
         empty_star = QIcon(QPixmap(ASSETS["empty_star"]))
         full_star = QIcon(QPixmap(ASSETS["full_star"]))
         for index, star in enumerate(self.stars, start=1):

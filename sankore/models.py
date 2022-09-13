@@ -30,6 +30,7 @@ class Library:
     books: Sequence[Book]
     description: str
     page_tracking: bool = False
+    can_rate: bool = False
 
 
 ALL_BOOKS = "All Books"
