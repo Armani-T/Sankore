@@ -45,14 +45,14 @@ class Home(widgets.QMainWindow):
         about_action = about_menu.addAction("About")
         new_book_action.triggered.connect(self.new_book)
         new_lib_action.triggered.connect(self.new_lib)
-        about_action.triggered.connect(self.show_about)
+        about_action.triggered.connect(self._show_about)
 
         for name in self.libraries:
-            page, card_view = self.create_tab_page(name)
+            page, card_view = self._create_tab_page(name)
             self.pages[name] = card_view
             self.tabs.addTab(page, name)
 
-    def create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
+    def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
         card_view = CardView(self, lib_name)
         card_view.update_view()
@@ -60,6 +60,14 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
         return scroll_area, card_view
+
+    def _show_about(self) -> int:
+        about_text = ASSETS["about"].read_text()
+        dialog = widgets.QDialog(self)
+        label = widgets.QLabel(about_text, dialog)
+        label.setTextFormat(Qt.MarkdownText)
+        label.setAlignment(Qt.AlignCenter)
+        return dialog.exec()
 
     def new_book(self) -> int:
         dialog = NewBook(self.data, self)
@@ -77,15 +85,6 @@ class Home(widgets.QMainWindow):
         self.data = dialog.data
         self.libraries = sorted((*self.libraries, dialog.name()))
         return result
-
-    def show_about(self) -> int:
-        about_text = ASSETS["about"].read_text()
-        dialog = widgets.QDialog(self)
-        about_label = widgets.QLabel(dialog)
-        about_label.setAlignment(Qt.AlignCenter)
-        about_label.setTextFormat(Qt.MarkdownText)
-        about_label.setText(about_text)
-        return dialog.exec()
 
 
 class CardView(widgets.QWidget):
