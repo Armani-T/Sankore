@@ -1,3 +1,4 @@
+from functools import partial
 from operator import attrgetter
 from pathlib import Path
 from typing import Optional
@@ -493,8 +494,8 @@ class RateBook(widgets.QDialog):
             )
         )
 
-        self.stars = self.create_stars()
-        self.update_stars()
+        self.stars = self._create_stars()
+        self._update_stars()
         star_layout = widgets.QHBoxLayout()
         layout.addLayout(star_layout)
         for star in self.stars:
@@ -508,16 +509,16 @@ class RateBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def create_stars(self):
+    def _create_stars(self):
         stars = []
-        for i in range(1, 6):
+        for index in range(1, 6):
             star = widgets.QToolButton(self)
-            star.clicked.connect(lambda *, index=i: self.update_stars(index))
+            star.clicked.connect(partial(self._update_stars, index))
             star.setAutoRaise(True)
             stars.append(star)
         return stars
 
-    def update_stars(self, rating: Optional[int] = None):
+    def _update_stars(self, rating: Optional[int] = None):
         self.current_rating = normalise(
             (self.current_rating if rating is None else rating), 5, 1
         )
