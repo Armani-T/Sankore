@@ -127,6 +127,16 @@ class CardView(widgets.QWidget):
             card = child.widget()
             card.deleteLater()
 
+    def edit_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.data, book)
+        dialog = EditBook(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_edits and lib_name is not None:
+            new_book = dialog.updated_book()
+            self.data = models.update_book(self.data, book, new_book, lib_name)
+            self.update_view(lib_name)
+        return exit_code
+
     def delete_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.data, book)
         dialog = AreYouSure(self, book.title)
