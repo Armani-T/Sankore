@@ -202,20 +202,18 @@ class Card(widgets.QFrame):
             bar_layout = widgets.QHBoxLayout(rating_bar)
             stars = normalise(book.rating, 5, 1)
             for index in range(1, 6):
-                icon = empty_star if index > stars else full_star
-                bar_layout.addWidget(widgets.QLabel(pixmap=icon))
+                label = widgets.QLabel(self)
+                label.setPixmap(empty_star if index > stars else full_star)
+                bar_layout.addWidget(label)
             layout.addWidget(rating_bar)
         if self.show_progress:
-            layout.addWidget(
-                widgets.QProgressBar(
-                    self,
-                    maximum=book.pages,
-                    value=normalise(book.current_page, book.pages),
-                )
-            )
+            bar = widgets.QProgressBar(self)
+            bar.setMaximum(book.pages)
+            bar.setValue(normalise(book.current_page, book.pages))
+            layout.addWidget(bar)
 
-    def delete_(self) -> None:
-        parent = self.parent()
+    def delete_(self) -> int:
+        parent: CardView = self.parent()
         return parent.delete_book(self.book)
 
     def edit_(self) -> None:
@@ -224,16 +222,16 @@ class Card(widgets.QFrame):
         if not result and dialog.save_edits:
             parent: CardView = self.parent()
             new_book = dialog.updated_book()
-            lib_name = models.find_library(parent.data, self.book)
+            lib_name: str = models.find_library(parent.data, self.book)
             parent.data = models.update_book(parent.data, self.book, new_book, lib_name)
             parent.update_view(lib_name)
 
-    def rate_(self) -> None:
-        parent = self.parent()
+    def rate_(self) -> int:
+        parent: CardView = self.parent()
         return parent.rate_book(self.book)
 
-    def update_(self) -> None:
-        parent = self.parent()
+    def update_(self) -> int:
+        parent: CardView = self.parent()
         return parent.update_progress(self.book)
 
     def setup_menu(self) -> widgets.QMenu:
@@ -295,7 +293,7 @@ class NewBook(widgets.QDialog):
             author=self.author_edit.text().strip(),
             pages=pages,
             current_page=current_page,
-            ratings=1,
+            rating=1,
         )
         if new_book.title and new_book.author and new_book.pages != 0:
             self.data = models.insert_book(self.data, self.library(), new_book)
@@ -379,7 +377,7 @@ class EditBook(widgets.QDialog):
             author=self.author_edit.text(),
             pages=pages,
             current_page=min(self.book.current_page, pages),
-            ratings=self.book.rating,
+            rating=self.book.rating,
         )
 
 
@@ -455,9 +453,9 @@ class AreYouSure(widgets.QDialog):
         self.save_changes = False
 
         label = widgets.QLabel(
-            f"Are you sure you want to delete <em>{book_title.title()}</em>?",
-            alignment=Qt.AlignCenter,
+            f"Are you sure you want to delete <em>{book_title.title()}</em>?"
         )
+        label.setAlignment(Qt.AlignCenter)
         button_box = widgets.QDialogButtonBox(
             widgets.QDialogButtonBox.Yes | widgets.QDialogButtonBox.No
         )
