@@ -18,10 +18,10 @@ ASSETS: dict[str, Path] = {
     "about": ASSET_FOLDER / "about.md",
     "bookmark_icon": ASSET_FOLDER / "bookmark.png",
     "edit_icon": ASSET_FOLDER / "edit.png",
-    "empty_star": ASSET_FOLDER / "star-outline.png",
-    "full_star": ASSET_FOLDER / "star-filled.png",
-    "half_star": ASSET_FOLDER / "star-half.png",
     "menu_icon": ASSET_FOLDER / "menu-icon.png",
+    "star_half": ASSET_FOLDER / "star-half.png",
+    "star_filled": ASSET_FOLDER / "star-filled.png",
+    "star_outline": ASSET_FOLDER / "star-outline.png",
     "trash_icon": ASSET_FOLDER / "trash.png",
 }
 
@@ -206,14 +206,14 @@ class Card(widgets.QFrame):
         layout.addWidget(pages, alignment=Qt.AlignLeft)
 
         if self.show_rating:
-            empty_star = QPixmap(ASSETS["empty_star"])
-            full_star = QPixmap(ASSETS["full_star"])
+            empty_star = QPixmap(ASSETS["star_outline"])
+            filled_star = QPixmap(ASSETS["star_filled"])
             rating_bar = widgets.QWidget(self)
             bar_layout = widgets.QHBoxLayout(rating_bar)
             stars = normalise(book.rating, 5, 1)
             for index in range(1, 6):
                 label = widgets.QLabel(self)
-                label.setPixmap(empty_star if index > stars else full_star)
+                label.setPixmap(empty_star if index > stars else filled_star)
                 bar_layout.addWidget(label)
             layout.addWidget(rating_bar)
         if self.show_progress:
@@ -225,7 +225,7 @@ class Card(widgets.QFrame):
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
         if self.show_rating:
-            rating_icon = QIcon(QPixmap(ASSETS["half_star"]))
+            rating_icon = QIcon(QPixmap(ASSETS["star_half"]))
             rating_action = menu.addAction(rating_icon, "Rate")
             rating_action.triggered.connect(self.rate_book)
         if self.show_progress:
@@ -522,10 +522,10 @@ class RateBook(widgets.QDialog):
         self.current_rating = normalise(
             (self.current_rating if rating is None else rating), 5, 1
         )
-        empty_star = QIcon(QPixmap(ASSETS["empty_star"]))
-        full_star = QIcon(QPixmap(ASSETS["full_star"]))
+        empty_star = QIcon(QPixmap(ASSETS["star_outline"]))
+        filled_star = QIcon(QPixmap(ASSETS["star_filled"]))
         for index, star in enumerate(self.stars, start=1):
-            star.setIcon(empty_star if index > self.current_rating else full_star)
+            star.setIcon(empty_star if index > self.current_rating else filled_star)
 
     def updated(self):
         return models.Book(
