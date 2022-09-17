@@ -132,7 +132,7 @@ class CardView(widgets.QWidget):
         dialog = EditBook(self, book)
         exit_code = dialog.exec()
         if dialog.save_edits and lib_name is not None:
-            new_book = dialog.updated_book()
+            new_book = dialog.updated()
             self.data = models.update_book(self.data, book, new_book, lib_name)
             self.update_view(lib_name)
         return exit_code
@@ -349,8 +349,8 @@ class NewLibrary(widgets.QDialog):
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
-        self.book = book
         self.save_edits = False
+        self.book = book
 
         self.setWindowTitle(f'Editing "{book.title}"')
         self.title_edit = widgets.QLineEdit()
@@ -361,8 +361,8 @@ class EditBook(widgets.QDialog):
         self.page_edit.setValidator(NUMBER_VALIDATOR)
         self.page_edit.setText(str(book.pages))
 
-        save_button = widgets.QPushButton("Update")
-        save_button.clicked.connect(self._save)
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
 
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
@@ -370,11 +370,11 @@ class EditBook(widgets.QDialog):
         layout.addRow("No. of pages:", self.page_edit)
         layout.addRow(save_button)
 
-    def _save(self) -> None:
+    def accept(self) -> None:
         self.save_edits = True
         return super().done(0)
 
-    def updated_book(self) -> models.Book:
+    def updated(self) -> models.Book:
         pages = int(self.page_edit.text())
         return models.Book(
             title=self.title_edit.text(),
