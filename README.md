@@ -11,9 +11,9 @@ I built it as a replacement to GoodReads since that requires a network connectio
 ## Features
 
 - [X] User-defined libraries
-- [ ] A rating system for finished books
-- [ ] A tagging system
+- [X] A rating system for finished books
 - [ ] A quotation store
+- [ ] A tagging system
 - [ ] Multiple reads through the book
 - [ ] Reading goals and challenges
 - [ ] Priority sorting for unread books
