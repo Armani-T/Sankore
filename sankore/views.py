@@ -81,11 +81,15 @@ class Home(widgets.QMainWindow):
         return result
 
     def new_lib(self) -> int:
-        dialog = NewLibrary(self.data, self)
-        result = dialog.exec()
-        self.data = dialog.data
-        self.libraries = sorted((*self.libraries, dialog.name()))
-        return result
+        dialog = NewLibrary(self)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            exit_code, new_data = models.create_lib(
+                self.data, dialog.name(), dialog.new_lib()
+            )
+            self.data = new_data
+            self.libraries = sorted((*self.libraries, dialog.name()))
+        return exit_code
 
 
 class CardView(widgets.QWidget):
@@ -309,17 +313,17 @@ class NewBook(widgets.QDialog):
 
 
 class NewLibrary(widgets.QDialog):
-    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+    def __init__(self, parent: widgets.QWidget) -> None:
         super().__init__(parent)
-        self.data = data
+        self.save_changes = False
 
         self.setWindowTitle("New Library")
         self.name_edit = widgets.QLineEdit(self)
         self.description_edit = widgets.QPlainTextEdit(self)
         self.page_tracking = widgets.QCheckBox(self)
         self.can_rate = widgets.QCheckBox(self)
-        save_button = widgets.QPushButton("Add to Books")
-        save_button.clicked.connect(self.save)
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
 
         layout = widgets.QFormLayout(self)
         layout.addRow("Name:", self.name_edit)
@@ -328,21 +332,20 @@ class NewLibrary(widgets.QDialog):
         layout.addRow("Rate Books:", self.can_rate)
         layout.addRow(save_button)
 
+    def accept(self) -> None:
+        self.save_changes = bool(self.name())
+        return super().done(0)
+
     def name(self) -> str:
         return self.name_edit.text().strip().title()
 
-    def save(self) -> None:
-        exit_code = 0
-        new_lib = models.Library(
+    def new_lib(self) -> models.Library:
+        return models.Library(
             books=(),
             description=self.description_edit.toPlainText().strip(),
             page_tracking=self.page_tracking.isChecked(),
             can_rate=self.can_rate.isChecked(),
         )
-        if name := self.name():
-            exit_code, new_data = models.create_lib(self.data, name, new_lib)
-            self.data = new_data
-        return super().done(exit_code)
 
 
 # TODO: Add a way to change the library too.
