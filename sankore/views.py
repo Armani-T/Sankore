@@ -170,8 +170,12 @@ class CardView(widgets.QWidget):
         dialog = UpdateProgress(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes and lib_name is not None:
-            self.data = models.update_book(self.data, book, dialog.updated(), lib_name)
+            new_lib = "Already Read" if dialog.is_finished() else lib_name
+            self.data = models.update_book(
+                self.data, book, dialog.updated(), lib_name, new_lib
+            )
             self.update_view(lib_name)
+            self.update_view(new_lib)
         return exit_code
 
 
