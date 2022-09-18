@@ -195,6 +195,7 @@ class Card(widgets.QFrame):
     ) -> None:
         super().__init__(parent)
         self.book = book
+        self.holder = parent
         self.show_progress = show_progress
         self.show_rating = show_rating
         self.setSizePolicy(
@@ -258,20 +259,16 @@ class Card(widgets.QFrame):
         return menu
 
     def delete_book(self) -> int:
-        parent: CardView = self.parent()
-        return parent.delete_book(self.book)
+        return self.holder.delete_book(self.book)
 
     def edit_book(self) -> int:
-        parent: CardView = self.parent()
-        return parent.edit_book(self.book)
+        return self.holder.edit_book(self.book)
 
     def rate_book(self) -> int:
-        parent: CardView = self.parent()
-        return parent.rate_book(self.book)
+        return self.holder.rate_book(self.book)
 
     def update_progress(self) -> int:
-        parent: CardView = self.parent()
-        return parent.update_progress(self.book)
+        return self.holder.update_progress(self.book)
 
 
 class NewBook(widgets.QDialog):
