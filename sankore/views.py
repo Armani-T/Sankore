@@ -84,11 +84,12 @@ class Home(widgets.QMainWindow):
         dialog = NewLibrary(self)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            exit_code, new_data = models.create_lib(
-                self.data, dialog.name(), dialog.new_lib()
-            )
-            self.data = new_data
-            self.libraries = sorted((*self.libraries, dialog.name()))
+            name = dialog.name()
+            exit_code, self.data = models.create_lib(self.data, name, dialog.new_lib())
+            self.libraries = sorted((*self.libraries, name))
+            page, card_view = self._create_tab_page(name)
+            self.pages[name] = card_view
+            self.tabs.addTab(page, name)
         return exit_code
 
 
