@@ -1,7 +1,7 @@
 from functools import partial
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 from PySide6.QtCore import QCoreApplication, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
@@ -71,14 +71,14 @@ class Home(widgets.QMainWindow):
         return dialog.exec()
 
     def new_book(self) -> int:
-        dialog = NewBook(self.data, self)
-        result = dialog.exec()
-        self.data = dialog.data
-        lib_name = dialog.library()
-        card_view = self.pages[lib_name]
-        card_view.data = self.data
-        card_view.update_view(lib_name)
-        return result
+        dialog = NewBook(self, tuple(models.list_libraries(self.data, False)))
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            lib_name = dialog.library()
+            self.data = models.insert_book(self.data, lib_name, dialog.new_book())
+            card_view = self.pages[lib_name]
+            card_view.update_view(lib_name)
+        return exit_code
 
     def new_lib(self) -> int:
         dialog = NewLibrary(self)
@@ -191,7 +191,6 @@ class Card(widgets.QFrame):
             widgets.QSizePolicy.MinimumExpanding,
             widgets.QSizePolicy.MinimumExpanding,
         )
-        # noinspection PyTypeChecker
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title_layout = widgets.QHBoxLayout()
@@ -266,20 +265,19 @@ class Card(widgets.QFrame):
 
 
 class NewBook(widgets.QDialog):
-    def __init__(self, data: models.Data, parent: widgets.QWidget) -> None:
+    def __init__(self, parent: widgets.QWidget, libraries: Sequence[str]) -> None:
         super().__init__(parent)
-        self.data = data
+        self.save_changes = False
 
         self.setWindowTitle("New Book")
         self.title_edit = widgets.QLineEdit()
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
-        self.combo = widgets.QComboBox()
-        self.combo.addItems(tuple(models.list_libraries(self.data, False)))
         self.page_edit.setValidator(NUMBER_VALIDATOR)
-
+        self.combo = widgets.QComboBox()
+        self.combo.addItems(libraries)
         save_button = widgets.QPushButton("Add to Books")
-        save_button.clicked.connect(self.save)
+        save_button.clicked.connect(self.accept)
 
         layout = widgets.QFormLayout(self)
         layout.addRow("Title:", self.title_edit)
@@ -288,29 +286,24 @@ class NewBook(widgets.QDialog):
         layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
 
-    def save(self) -> None:
+    def accept(self) -> None:
+        book = self.new_book()
+        self.save_changes = book.title and book.author and book.pages > 0
+        return super().done(0)
+
+    def library(self) -> str:
+        return self.combo.currentText()
+
+    def new_book(self) -> models.Book:
         pages = int(self.page_edit.text() or "1")
-        current_page = (
-            pages
-            if self.library() == "Already Read"
-            else 1
-            if self.data[self.library()].page_tracking
-            else 0
-        )
-        new_book = models.Book(
+        current_page = pages if self.library() == "Already Read" else 0
+        return models.Book(
             title=self.title_edit.text().strip(),
             author=self.author_edit.text().strip(),
             pages=pages,
             current_page=current_page,
             rating=1,
         )
-        if new_book.title and new_book.author and new_book.pages != 0:
-            self.data = models.insert_book(self.data, self.library(), new_book)
-            return super().done(0)
-        return super().done(1)
-
-    def library(self) -> str:
-        return self.combo.currentText()
 
 
 class NewLibrary(widgets.QDialog):
@@ -416,7 +409,6 @@ class UpdateProgress(widgets.QDialog):
         finished_button.clicked.connect(
             lambda: self.slider.setValue(self.slider.maximum())
         )
-        # noinspection PyTypeChecker
         button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
         button_box.accepted.connect(self.save_)
 
@@ -455,7 +447,6 @@ class UpdateProgress(widgets.QDialog):
 
 
 class AreYouSure(widgets.QDialog):
-    # noinspection PyArgumentList
     def __init__(self, parent: widgets.QWidget, book_title: str) -> None:
         super().__init__(parent)
         self.save_changes = False
