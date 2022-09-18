@@ -33,10 +33,8 @@ class Home(widgets.QMainWindow):
         self.libraries = sorted(models.list_libraries(data, False))
         self.pages = {}
 
-        self.tabs = widgets.QTabWidget(self)
         QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(ASSETS["app_icon"])))
-        self.setCentralWidget(self.tabs)
         self.setWindowTitle(title)
 
         new_menu = self.menuBar().addMenu("New")
@@ -48,6 +46,8 @@ class Home(widgets.QMainWindow):
         new_lib_action.triggered.connect(self.new_lib)
         about_action.triggered.connect(self._show_about)
 
+        self.tabs = widgets.QTabWidget(self)
+        self.setCentralWidget(self.tabs)
         for name in self.libraries:
             page, card_view = self._create_tab_page(name)
             self.pages[name] = card_view
@@ -69,6 +69,12 @@ class Home(widgets.QMainWindow):
         label.setTextFormat(Qt.MarkdownText)
         label.setAlignment(Qt.AlignCenter)
         return dialog.exec()
+
+    def go_to(self, lib_name: Optional[str] = None) -> None:
+        card_view = self.pages[lib_name]
+        card_view.update_view(lib_name)
+        index = self.libraries.index(lib_name)
+        self.tabs.setCurrentIndex(index)
 
     def new_book(self) -> int:
         dialog = NewBook(self, tuple(models.list_libraries(self.data, False)))
@@ -110,7 +116,7 @@ class CardView(widgets.QWidget):
         return self.home.data
 
     @data.setter
-    def data(self, new_data):
+    def data(self, new_data: models.Data) -> None:
         self.home.data = new_data
 
     def populate(self) -> None:
@@ -131,6 +137,11 @@ class CardView(widgets.QWidget):
         while (child := self.layout_.takeAt(0)) is not None:
             card = child.widget()
             card.deleteLater()
+
+    def update_view(self, lib_name: Optional[str] = None) -> None:
+        self.lib_name = lib_name or self.lib_name
+        self.clear()
+        self.populate()
 
     def edit_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.data, book)
@@ -160,11 +171,6 @@ class CardView(widgets.QWidget):
             self.update_view(lib_name)
         return exit_code
 
-    def update_view(self, lib_name: Optional[str] = None) -> None:
-        self.lib_name = lib_name or self.lib_name
-        self.clear()
-        self.populate()
-
     def update_progress(self, book: models.Book) -> int:
         lib_name = models.find_library(self.data, book)
         dialog = UpdateProgress(self, book)
@@ -175,7 +181,7 @@ class CardView(widgets.QWidget):
                 self.data, book, dialog.updated(), lib_name, new_lib
             )
             self.update_view(lib_name)
-            self.update_view(new_lib)
+            self.home.go_to(new_lib)
         return exit_code
 
 
