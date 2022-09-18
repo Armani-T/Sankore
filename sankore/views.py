@@ -421,10 +421,6 @@ class UpdateProgress(widgets.QDialog):
         layout.addWidget(finished_button, 3, 2, 1, 1)
         layout.addWidget(button_box, 4, 0, 1, 5)
 
-    def save_(self) -> None:
-        self.save_changes = True
-        return super().done(0)
-
     def _update_edit(self) -> None:
         new_value = str(self.slider.value())
         self.page_edit.setText(new_value)
@@ -433,17 +429,21 @@ class UpdateProgress(widgets.QDialog):
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
 
+    def is_finished(self) -> bool:
+        return self.book.pages == self.slider.value()
+
+    def save_(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
     def updated(self) -> models.Book:
         return models.Book(
             title=self.book.title,
             author=self.book.author,
             pages=self.book.pages,
-            current_page=self.value(),
+            current_page=self.slider.value(),
             rating=self.book.rating,
         )
-
-    def value(self) -> int:
-        return self.slider.value()
 
 
 class AreYouSure(widgets.QDialog):
