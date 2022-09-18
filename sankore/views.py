@@ -42,8 +42,8 @@ class Home(widgets.QMainWindow):
         new_book_action = new_menu.addAction("New Book")
         new_lib_action = new_menu.addAction("New Library")
         about_action = about_menu.addAction("About")
-        new_book_action.triggered.connect(self.new_book)
-        new_lib_action.triggered.connect(self.new_lib)
+        new_book_action.triggered.connect(self._new_book)
+        new_lib_action.triggered.connect(self._new_lib)
         about_action.triggered.connect(self._show_about)
 
         self.tabs = widgets.QTabWidget(self)
@@ -62,6 +62,28 @@ class Home(widgets.QMainWindow):
         scroll_area.setWidgetResizable(True)
         return scroll_area, card_view
 
+    def _new_book(self) -> int:
+        dialog = NewBook(self, tuple(models.list_libraries(self.data, False)))
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            lib_name = dialog.library()
+            self.data = models.insert_book(self.data, lib_name, dialog.new_book())
+            card_view = self.pages[lib_name]
+            card_view.update_view(lib_name)
+        return exit_code
+
+    def _new_lib(self) -> int:
+        dialog = NewLibrary(self)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            name = dialog.name()
+            exit_code, self.data = models.create_lib(self.data, name, dialog.new_lib())
+            self.libraries = sorted((*self.libraries, name))
+            page, card_view = self._create_tab_page(name)
+            self.pages[name] = card_view
+            self.tabs.addTab(page, name)
+        return exit_code
+
     def _show_about(self) -> int:
         about_text = ASSETS["about"].read_text()
         dialog = widgets.QDialog(self)
@@ -75,28 +97,6 @@ class Home(widgets.QMainWindow):
         card_view.update_view(lib_name)
         index = self.libraries.index(lib_name)
         self.tabs.setCurrentIndex(index)
-
-    def new_book(self) -> int:
-        dialog = NewBook(self, tuple(models.list_libraries(self.data, False)))
-        exit_code = dialog.exec()
-        if dialog.save_changes:
-            lib_name = dialog.library()
-            self.data = models.insert_book(self.data, lib_name, dialog.new_book())
-            card_view = self.pages[lib_name]
-            card_view.update_view(lib_name)
-        return exit_code
-
-    def new_lib(self) -> int:
-        dialog = NewLibrary(self)
-        exit_code = dialog.exec()
-        if dialog.save_changes:
-            name = dialog.name()
-            exit_code, self.data = models.create_lib(self.data, name, dialog.new_lib())
-            self.libraries = sorted((*self.libraries, name))
-            page, card_view = self._create_tab_page(name)
-            self.pages[name] = card_view
-            self.tabs.addTab(page, name)
-        return exit_code
 
 
 class CardView(widgets.QWidget):
@@ -119,7 +119,7 @@ class CardView(widgets.QWidget):
     def data(self, new_data: models.Data) -> None:
         self.home.data = new_data
 
-    def populate(self) -> None:
+    def _populate(self) -> None:
         row, col = 0, 0
         show_rating = self.lib_name == "Already Read"
         show_progress = (
@@ -133,15 +133,15 @@ class CardView(widgets.QWidget):
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
-    def clear(self) -> None:
+    def _clear(self) -> None:
         while (child := self.layout_.takeAt(0)) is not None:
             card = child.widget()
             card.deleteLater()
 
     def update_view(self, lib_name: Optional[str] = None) -> None:
         self.lib_name = lib_name or self.lib_name
-        self.clear()
-        self.populate()
+        self._clear()
+        self._populate()
 
     def edit_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.data, book)
