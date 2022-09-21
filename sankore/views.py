@@ -137,6 +137,15 @@ class CardView(widgets.QWidget):
         self._clear()
         self._populate()
 
+    def delete_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = AreYouSure(self, book.title)
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name is not None:
+            self.home.data = models.remove_book(self.home.data, book, lib_name)
+            self.update_view(lib_name)
+        return exit_code
+
     def edit_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.home.data, book)
         dialog = EditBook(self, book)
@@ -146,15 +155,6 @@ class CardView(widgets.QWidget):
             self.home.data = models.update_book(
                 self.home.data, book, new_book, lib_name
             )
-            self.update_view(lib_name)
-        return exit_code
-
-    def delete_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
-        dialog = AreYouSure(self, book.title)
-        exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.remove_book(self.home.data, book, lib_name)
             self.update_view(lib_name)
         return exit_code
 
@@ -251,10 +251,16 @@ class Card(widgets.QFrame):
         edit_icon = QIcon(QPixmap(ASSETS["edit_icon"]))
         edit_action = menu.addAction(edit_icon, "Edit")
         edit_action.triggered.connect(self.edit_book)
+        change_icon = QIcon(QPixmap(ASSETS["shelf_icon"]))
+        change_icon = menu.addAction(change_icon, "Change Library")
+        change_icon.triggered.connect(self.change_library)
         delete_icon = QIcon(QPixmap(ASSETS["trash_icon"]))
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
+
+    def change_library(self) -> int:
+        return self.holder.change_library(self.book)
 
     def delete_book(self) -> int:
         return self.holder.delete_book(self.book)
