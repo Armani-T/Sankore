@@ -137,6 +137,20 @@ class CardView(widgets.QWidget):
         self._clear()
         self._populate()
 
+    def change_library(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = ChangeLibrary(
+            self, book.title, models.list_libraries(self.home.data, False), lib_name
+        )
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name != dialog.library():
+            self.home.data = models.update_book(
+                self.home.data, book, book, lib_name, dialog.library()
+            )
+            self.update_view(lib_name)
+            self.home.go_to(dialog.library())
+        return exit_code
+
     def delete_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.home.data, book)
         dialog = AreYouSure(self, book.title)
