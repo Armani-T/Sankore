@@ -19,6 +19,7 @@ ASSETS: dict[str, Path] = {
     "bookmark_icon": ASSET_FOLDER / "bookmark.png",
     "edit_icon": ASSET_FOLDER / "edit.png",
     "menu_icon": ASSET_FOLDER / "menu-icon.png",
+    "shelf_icon": ASSET_FOLDER / "shelf.png",
     "star_half": ASSET_FOLDER / "star-half.png",
     "star_filled": ASSET_FOLDER / "star-filled.png",
     "star_outline": ASSET_FOLDER / "star-outline.png",
@@ -136,6 +137,29 @@ class CardView(widgets.QWidget):
         self._clear()
         self._populate()
 
+    def change_library(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = ChangeLibrary(
+            self, book.title, models.list_libraries(self.home.data, False), lib_name
+        )
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name != dialog.library():
+            self.home.data = models.update_book(
+                self.home.data, book, book, lib_name, dialog.library()
+            )
+            self.update_view(lib_name)
+            self.home.go_to(dialog.library())
+        return exit_code
+
+    def delete_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = AreYouSure(self, book.title)
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name is not None:
+            self.home.data = models.remove_book(self.home.data, book, lib_name)
+            self.update_view(lib_name)
+        return exit_code
+
     def edit_book(self, book: models.Book) -> int:
         lib_name = models.find_library(self.home.data, book)
         dialog = EditBook(self, book)
@@ -145,15 +169,6 @@ class CardView(widgets.QWidget):
             self.home.data = models.update_book(
                 self.home.data, book, new_book, lib_name
             )
-            self.update_view(lib_name)
-        return exit_code
-
-    def delete_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
-        dialog = AreYouSure(self, book.title)
-        exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.remove_book(self.home.data, book, lib_name)
             self.update_view(lib_name)
         return exit_code
 
@@ -250,10 +265,16 @@ class Card(widgets.QFrame):
         edit_icon = QIcon(QPixmap(ASSETS["edit_icon"]))
         edit_action = menu.addAction(edit_icon, "Edit")
         edit_action.triggered.connect(self.edit_book)
+        change_icon = QIcon(QPixmap(ASSETS["shelf_icon"]))
+        change_icon = menu.addAction(change_icon, "Change Library")
+        change_icon.triggered.connect(self.change_library)
         delete_icon = QIcon(QPixmap(ASSETS["trash_icon"]))
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
+
+    def change_library(self) -> int:
+        return self.holder.change_library(self.book)
 
     def delete_book(self) -> int:
         return self.holder.delete_book(self.book)
@@ -534,6 +555,38 @@ class RateBook(widgets.QDialog):
             current_page=self.book.current_page,
             rating=self.current_rating,
         )
+
+
+class ChangeLibrary(widgets.QDialog):
+    def __init__(
+        self,
+        parent: widgets.QWidget,
+        book_title: str,
+        libraries: Sequence[str],
+        lib_name: str,
+    ) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+
+        title = widgets.QLabel(f'<b>Move "{book_title}" from "{lib_name}" to:</b>')
+        self.combo = widgets.QComboBox(self)
+        libraries = tuple(sorted(libraries))
+        self.combo.addItems(libraries)
+        self.combo.setCurrentIndex(libraries.index(lib_name))
+        button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        button_box.accepted.connect(self.accept)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(title)
+        layout.addWidget(self.combo)
+        layout.addWidget(button_box)
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def library(self) -> str:
+        return self.combo.currentText()
 
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
