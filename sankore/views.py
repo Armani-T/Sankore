@@ -557,6 +557,38 @@ class RateBook(widgets.QDialog):
         )
 
 
+class ChangeLibrary(widgets.QDialog):
+    def __init__(
+        self,
+        parent: widgets.QWidget,
+        book_title: str,
+        libraries: Sequence[str],
+        lib_name: str,
+    ) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+
+        title = widgets.QLabel(f'<b>Move "{book_title}" from "{lib_name}" to:</b>')
+        self.combo = widgets.QComboBox(self)
+        libraries = tuple(sorted(libraries))
+        self.combo.addItems(libraries)
+        self.combo.setCurrentIndex(libraries.index(lib_name))
+        button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        button_box.accepted.connect(self.accept)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(title)
+        layout.addWidget(self.combo)
+        layout.addWidget(button_box)
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def library(self) -> str:
+        return self.combo.currentText()
+
+
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
     app = widgets.QApplication()
     window = Home(title, data)
