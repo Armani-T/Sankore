@@ -19,6 +19,7 @@ ASSETS: dict[str, Path] = {
     "bookmark_icon": ASSET_FOLDER / "bookmark.png",
     "edit_icon": ASSET_FOLDER / "edit.png",
     "menu_icon": ASSET_FOLDER / "menu-icon.png",
+    "shelf_icon": ASSET_FOLDER / "shelf.png",
     "star_half": ASSET_FOLDER / "star-half.png",
     "star_filled": ASSET_FOLDER / "star-filled.png",
     "star_outline": ASSET_FOLDER / "star-outline.png",
