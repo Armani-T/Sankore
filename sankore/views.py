@@ -68,11 +68,17 @@ class Home(widgets.QMainWindow):
         return exit_code
 
     def _show_about(self) -> int:
-        about_text = dialogs.ASSETS["about"].read_text()
+        about_text = (
+            dialogs.ASSETS["about"].read_text()
+            if dialogs.ASSETS["about"].exists()
+            else "About text not found!"
+        )
         dialog = widgets.QDialog(self)
-        label = widgets.QLabel(about_text, dialog)
+        layout = widgets.QHBoxLayout(dialog)
+        label = widgets.QLabel(about_text)
         label.setTextFormat(Qt.MarkdownText)
         label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
         return dialog.exec()
 
     def go_to(self, lib_name: str) -> None:
