@@ -11,6 +11,7 @@ The app is made by **Armani Tallam**.
 - The [filled star](https://icons8.com/icon/96206/star-filled)
 - The [half-filled star](https://icons8.com/icon/94312/star-half-empty)
 - The [menu icon](https://icons8.com/icon/84119/menu-vertical)
+- The [quote icon](https://icons8.com/icon/93301/get-quote)
 - The [shelf icon](https://icons8.com/icon/87011/book-shelf)
 - The [trash icon](https://icons8.com/icon/85081/trash)
 
