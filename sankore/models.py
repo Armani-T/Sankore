@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence, TypedDict
 import json
 
 Data = dict[str, "Library"]
+Quote = TypedDict("Quote", {"page": Optional[int], "text": str})
+QuoteInfo = tuple[str, str, str, Optional[int]]
 
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
@@ -14,6 +16,7 @@ class Book:
     pages: int
     current_page: int
     rating: int
+    quotes: Sequence[Quote] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -22,6 +25,7 @@ class Book:
             "pages": self.pages,
             "current_page": self.current_page,
             "rating": self.rating,
+            "quotes": self.quotes,
         }
 
 
@@ -115,6 +119,12 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
     if all_:
         yield ALL_BOOKS
     yield from data.keys()
+
+
+def list_quotes(data: Data, lib_name: str) -> Iterable[QuoteInfo]:
+    for book in list_books(data, ALL_BOOKS):
+        for quote in book.quotes:
+            yield (quote.text, book.title, book.author, quote.page)
 
 
 def update_book(
