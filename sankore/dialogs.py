@@ -324,3 +324,32 @@ class ChangeLibrary(widgets.QDialog):
 
     def library(self) -> str:
         return self.combo.currentText()
+
+
+class QuoteBook(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+        self.book = book
+
+        self.setWindowTitle(f'Quote "{book.title.title()}" by {book.author.title()}')
+        self.quote_text = widgets.QPlainTextEdit(self)
+        self.page_edit = widgets.QLineEdit(self)
+        self.page_edit.setValidator(NUMBER_VALIDATOR)
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
+
+        layout = widgets.QFormLayout(self)
+        layout.addRow("Quote:", self.quote_text)
+        layout.addRow("On page:", self.page_edit)
+        layout.addRow(save_button)
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def quote(self) -> models.Quote:
+        return {
+            "page": int(self.page_edit.text().strip()),
+            "text": self.quote_text.toPlainText().strip(),
+        }
