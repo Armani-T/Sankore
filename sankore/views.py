@@ -111,7 +111,7 @@ class CardView(widgets.QWidget):
             models.list_books(self.home.data, self.lib_name), key=attrgetter("title")
         )
         for book in books:
-            card = Card(self, book, show_progress, show_rating)
+            card = BookCard(self, book, show_progress, show_rating)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
@@ -202,7 +202,7 @@ class CardView(widgets.QWidget):
         return exit_code
 
 
-class Card(widgets.QFrame):
+class BookCard(widgets.QFrame):
     def __init__(
         self,
         parent: CardView,
