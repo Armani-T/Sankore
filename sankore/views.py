@@ -91,8 +91,8 @@ class Home(widgets.QMainWindow):
 class CardView(widgets.QWidget):
     def __init__(self, parent: Home, lib_name: str) -> None:
         super().__init__(parent)
-        self.home = parent
-        self.lib_name = lib_name
+        self.home: Home = parent
+        self.lib_name: str = lib_name
         self.setSizePolicy(
             widgets.QSizePolicy.Minimum,
             widgets.QSizePolicy.Fixed,
@@ -150,8 +150,27 @@ class CardView(widgets.QWidget):
         lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.EditBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_edits and lib_name is not None:
+        if dialog.save_changes and lib_name is not None:
             new_book = dialog.updated()
+            self.home.data = models.update_book(
+                self.home.data, book, new_book, lib_name
+            )
+            self.update_view(lib_name)
+        return exit_code
+
+    def quote_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = dialogs.QuoteBook(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name is not None:
+            new_book = models.Book(
+                title=book.title,
+                author=book.author,
+                pages=book.pages,
+                current_page=book.current_page,
+                rating=book.rating,
+                quotes=(*book.quotes, dialog.quote()),
+            )
             self.home.data = models.update_book(
                 self.home.data, book, new_book, lib_name
             )
@@ -237,6 +256,10 @@ class Card(widgets.QFrame):
 
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
+        quote_icon = QIcon(QPixmap(dialogs.ASSETS["quote_icon"]))
+        quote_action = menu.addAction(quote_icon, "Quote")
+        quote_action.triggered.connect(self.quote_book)
+
         if self.show_rating:
             rating_icon = QIcon(QPixmap(dialogs.ASSETS["star_half"]))
             rating_action = menu.addAction(rating_icon, "Rate")
@@ -267,6 +290,9 @@ class Card(widgets.QFrame):
 
     def edit_book(self) -> int:
         return self.holder.edit_book(self.book)
+
+    def quote_book(self) -> int:
+        return self.holder.quote_book(self.book)
 
     def rate_book(self) -> int:
         return self.holder.rate_book(self.book)
