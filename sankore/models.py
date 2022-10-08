@@ -124,7 +124,7 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
 def list_quotes(data: Data, lib_name: str) -> Iterable[QuoteInfo]:
     for book in list_books(data, ALL_BOOKS):
         for quote in book.quotes:
-            yield (quote.text, book.title, book.author, quote.page)
+            yield (quote["text"], book.title, book.author, quote["page"])
 
 
 def update_book(

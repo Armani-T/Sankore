@@ -108,7 +108,7 @@ class NewLibrary(widgets.QDialog):
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
-        self.save_edits = False
+        self.save_changes = False
         self.book = book
 
         self.setWindowTitle(f'Editing "{book.title}"')
@@ -130,7 +130,7 @@ class EditBook(widgets.QDialog):
         layout.addRow(save_button)
 
     def accept(self) -> None:
-        self.save_edits = True
+        self.save_changes = True
         return super().done(0)
 
     def updated(self) -> models.Book:
