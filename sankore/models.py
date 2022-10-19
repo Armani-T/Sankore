@@ -89,6 +89,13 @@ def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
     return 1, data
 
 
+def find_book(data: Data, target_title: str) -> Optional[Book]:
+    for book in list_books(data, ALL_BOOKS):
+        if book.title == target_title:
+            return book
+    return None
+
+
 def find_library(data: Data, book: Book) -> Optional[str]:
     for lib_name in list_libraries(data, False):
         if book in data[lib_name].books:
