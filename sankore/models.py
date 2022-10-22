@@ -127,10 +127,12 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
     yield from data.keys()
 
 
-def list_quotes(data: Data, lib_name: str) -> Iterable[Tuple[Quote, str]]:
-    for book in list_books(data, ALL_BOOKS):
+def list_quotes(
+    data: Data, lib_name: Optional[str] = None
+) -> Iterable[tuple[Quote, Book]]:
+    for book in list_books(data, lib_name or ALL_BOOKS):
         for quote in book.quotes:
-            yield (quote, book.title)
+            yield quote, book
 
 
 def update_book(
