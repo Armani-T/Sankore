@@ -12,11 +12,11 @@ I built it as a replacement to GoodReads since that requires a network connectio
 
 - [X] User-defined libraries
 - [X] A rating system for finished books
-- [ ] A quotation store
-- [ ] A tagging system
+- [X] A quotation store
 - [ ] Multiple reads through the book
-- [ ] Reading goals and challenges
 - [ ] Priority sorting for unread books
+- [ ] A tagging system
+- [ ] Reading goals and challenges
 
 ## Installation
 
