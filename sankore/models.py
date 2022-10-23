@@ -1,10 +1,13 @@
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence, TypedDict
 import json
 
+get_today = lambda: date.today().strftime("%d/%m/%Y")
+
 Data = Sequence["Book"]
-Attempt = TypedDict("Attempt", {"start": Optional[str], "page": int})
+Run = TypedDict("Run", {"start": Optional[str], "page": int})
 Read = TypedDict("Read", {"start": Optional[str], "end": Optional[str]})
 
 
@@ -14,19 +17,19 @@ class Book:
     author: str
     pages: int
     rating: int
-    current: Optional[Attempt] = None
+    current_run: Optional[Run] = None
     quotes: Sequence[str] = ()
-    runs: Sequence[Read] = ()
+    reads: Sequence[Read] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "author": self.author,
             "pages": self.pages,
-            "current": self.current,
+            "current_run": self.current_run,
             "rating": self.rating,
             "quotes": self.quotes,
-            "runs": self.runs,
+            "reads": self.reads,
         }
 
 
