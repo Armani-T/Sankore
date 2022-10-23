@@ -28,7 +28,7 @@ ASSETS: dict[str, Path] = {
 
 
 class NewBook(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, libraries: Sequence[str]) -> None:
+    def __init__(self, parent: widgets.QWidget) -> None:
         super().__init__(parent)
         self.save_changes = False
 
@@ -37,8 +37,6 @@ class NewBook(widgets.QDialog):
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.page_edit.setValidator(NUMBER_VALIDATOR)
-        self.combo = widgets.QComboBox()
-        self.combo.addItems(libraries)
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.accept)
 
@@ -46,7 +44,6 @@ class NewBook(widgets.QDialog):
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
         layout.addRow("No. of pages:", self.page_edit)
-        layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
 
     def accept(self) -> None:
@@ -54,17 +51,11 @@ class NewBook(widgets.QDialog):
         self.save_changes = bool(book.title and book.author and book.pages > 0)
         return super().done(0)
 
-    def library(self) -> str:
-        return self.combo.currentText()
-
     def new_book(self) -> models.Book:
-        pages = int(self.page_edit.text() or "1")
-        current_page = pages if self.library() == "Already Read" else 0
         return models.Book(
             title=self.title_edit.text().strip(),
             author=self.author_edit.text().strip(),
-            pages=pages,
-            current_page=current_page,
+            pages=int(self.page_edit.text() or "1"),
             rating=1,
         )
 
