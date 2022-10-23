@@ -69,43 +69,6 @@ class NewBook(widgets.QDialog):
         )
 
 
-class NewLibrary(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget) -> None:
-        super().__init__(parent)
-        self.save_changes = False
-
-        self.setWindowTitle("New Library")
-        self.name_edit = widgets.QLineEdit(self)
-        self.description_edit = widgets.QPlainTextEdit(self)
-        self.page_tracking = widgets.QCheckBox(self)
-        self.can_rate = widgets.QCheckBox(self)
-        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
-        save_button.accepted.connect(self.accept)
-
-        layout = widgets.QFormLayout(self)
-        layout.addRow("Name:", self.name_edit)
-        layout.addRow("Description:", self.description_edit)
-        layout.addRow("Page Tracking:", self.page_tracking)
-        layout.addRow("Rate Books:", self.can_rate)
-        layout.addRow(save_button)
-
-    def accept(self) -> None:
-        self.save_changes = bool(self.name())
-        return super().done(0)
-
-    def name(self) -> str:
-        return self.name_edit.text().strip().title()
-
-    def new_lib(self) -> models.Library:
-        return models.Library(
-            books=(),
-            description=self.description_edit.toPlainText().strip(),
-            page_tracking=self.page_tracking.isChecked(),
-            can_rate=self.can_rate.isChecked(),
-        )
-
-
-# TODO: Add a way to change the library too.
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
