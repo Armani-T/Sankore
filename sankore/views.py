@@ -263,7 +263,7 @@ class Card(widgets.QFrame):
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
         quote_icon = QIcon(QPixmap(dialogs.ASSETS["quote_icon"]))
-        quote_action = menu.addAction(quote_icon, "Quote")
+        quote_action = menu.addAction(quote_icon, "Save quote")
         quote_action.triggered.connect(self.quote_book)
 
         if self.show_rating:

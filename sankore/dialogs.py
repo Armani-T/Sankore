@@ -349,8 +349,5 @@ class QuoteBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def quote(self) -> models.Quote:
-        return {
-            "page": int(self.page_edit.text().strip()),
-            "text": self.quote_text.toPlainText().strip(),
-        }
+    def quote(self) -> str:
+        return self.quote_text.toPlainText().strip()
