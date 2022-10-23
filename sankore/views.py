@@ -320,8 +320,8 @@ class SideBar(widgets.QScrollArea):
         self._add_quotes()
 
     def _add_quotes(self) -> None:
-        for quote, book in models.list_quotes(self.home.data):
-            card = widgets.QLabel(f"{quote['text']} - <b>{book.author.title()}</b>")
+        for quote, author in models.list_quotes(self.home.data):
+            card = widgets.QLabel(f'"{quote}" - <b>{author.title()}</b>')
             self.layout_.addWidget(card)
             card.setFrameStyle(widgets.QFrame.StyledPanel)
             card.setSizePolicy(CARD_SIZE_POLICY)
