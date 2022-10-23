@@ -29,12 +29,18 @@ class Home(widgets.QMainWindow):
         new_lib_action.triggered.connect(self._new_lib)
         about_action.triggered.connect(self._show_about)
 
+        self.sidebar = SideBar(self)
         self.tabs = widgets.QTabWidget(self)
-        self.setCentralWidget(self.tabs)
         for name in self.libraries:
             page, card_view = self._create_tab_page(name)
             self.pages[name] = card_view
             self.tabs.addTab(page, name)
+
+        centre = widgets.QWidget(self)
+        self.setCentralWidget(centre)
+        centre_layout = widgets.QGridLayout(centre)
+        centre_layout.addWidget(self.tabs, 0, 0, 1, 15)
+        centre_layout.addWidget(self.sidebar, 0, 16, 1, 5)
 
     def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
@@ -86,6 +92,9 @@ class Home(widgets.QMainWindow):
         card_view.update_view(lib_name)
         index = self.libraries.index(lib_name)
         self.tabs.setCurrentIndex(index)
+
+    def update_sidebar(self) -> None:
+        self.sidebar.update_()
 
 
 class CardView(widgets.QWidget):
@@ -170,6 +179,7 @@ class CardView(widgets.QWidget):
                 self.home.data, book, new_book, lib_name
             )
             self.update_view(lib_name)
+            self.home.update_sidebar()
         return exit_code
 
     def rate_book(self, book: models.Book) -> int:
