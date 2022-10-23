@@ -17,8 +17,6 @@ class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
         self.data = data
-        self.libraries = sorted(models.list_libraries(data, False))
-        self.pages = {}
 
         QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(dialogs.ASSETS["app_icon"])))
@@ -27,55 +25,32 @@ class Home(widgets.QMainWindow):
         new_menu = self.menuBar().addMenu("New")
         about_menu = self.menuBar().addMenu("About")
         new_book_action = new_menu.addAction("New Book")
-        new_lib_action = new_menu.addAction("New Library")
         about_action = about_menu.addAction("About")
         new_book_action.triggered.connect(self._new_book)
-        new_lib_action.triggered.connect(self._new_lib)
         about_action.triggered.connect(self._show_about)
 
+        scroll_area = widgets.QScrollArea(self)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.cards = CardView(self)
+        self.cards.update_view()
+        scroll_area.setWidget(self.cards)
+        scroll_area.setAlignment(Qt.AlignTop)
+        scroll_area.setWidgetResizable(True)
+
         self.sidebar = SideBar(self)
-        self.tabs = widgets.QTabWidget(self)
-        for name in self.libraries:
-            page, card_view = self._create_tab_page(name)
-            self.pages[name] = card_view
-            self.tabs.addTab(page, name)
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
-        centre_layout.addWidget(self.tabs, 0, 0, 1, 20)
+        centre_layout.addWidget(self.books, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
 
-    def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
-        scroll_area = widgets.QScrollArea(self.tabs)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        card_view = CardView(self, lib_name)
-        card_view.update_view()
-        scroll_area.setWidget(card_view)
-        scroll_area.setAlignment(Qt.AlignTop)
-        scroll_area.setWidgetResizable(True)
-        return scroll_area, card_view
-
     def _new_book(self) -> int:
-        dialog = dialogs.NewBook(self, self.libraries)
+        dialog = dialogs.NewBook(self)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            lib_name = dialog.library()
-            self.data = models.insert_book(self.data, lib_name, dialog.new_book())
-            card_view = self.pages[lib_name]
-            card_view.update_view(lib_name)
-        return exit_code
-
-    def _new_lib(self) -> int:
-        dialog = dialogs.NewLibrary(self)
-        exit_code = dialog.exec()
-        if dialog.save_changes:
-            name = dialog.name()
-            exit_code, self.data = models.create_lib(self.data, name, dialog.new_lib())
-            self.libraries = sorted((*self.libraries, name))
-            page, card_view = self._create_tab_page(name)
-            self.pages[name] = card_view
-            self.tabs.addTab(page, name)
+            self.data = models.insert_book(self.data, dialog.new_book())
+            self.cards.update_view()
         return exit_code
 
     def _show_about(self) -> int:
@@ -91,12 +66,6 @@ class Home(widgets.QMainWindow):
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
         return dialog.exec()
-
-    def go_to(self, lib_name: str) -> None:
-        card_view = self.pages[lib_name]
-        card_view.update_view(lib_name)
-        index = self.libraries.index(lib_name)
-        self.tabs.setCurrentIndex(index)
 
     def update_sidebar(self) -> None:
         self.sidebar.update_()
