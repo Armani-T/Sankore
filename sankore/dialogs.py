@@ -89,14 +89,12 @@ class EditBook(widgets.QDialog):
         return super().done(0)
 
     def updated(self) -> models.Book:
-        pages = int(self.page_edit.text())
-        return models.Book(
-            title=self.title_edit.text(),
-            author=self.author_edit.text(),
-            pages=pages,
-            current_page=min(self.book.current_page, pages),
-            rating=self.book.rating,
-        )
+        kwargs = self.book.to_dict() | {
+            "title": self.title_edit.text(),
+            "author": self.author_edit.text(),
+            "pages": int(self.page_edit.text()),
+        }
+        return models.Book(**kwargs)
 
 
 class UpdateProgress(widgets.QDialog):
