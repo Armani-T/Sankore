@@ -307,26 +307,30 @@ class Card(widgets.QFrame):
         return self.holder.update_progress(self.book)
 
 
-class SideBar(widgets.QWidget):
+class SideBar(widgets.QScrollArea):
     def __init__(self, parent: Home) -> None:
         super().__init__(parent)
-        layout = widgets.QVBoxLayout(self)
-        layout.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
-        for quote, book in models.list_quotes(parent.data):
-            card = widgets.QLabel(
-                text=(
-                    f"{quote['text']}\n\n- <b>{book.author.title()}</b>"
-                    f"\n(<i>{book.title.title()}</i>)"
-                ),
-                textFormat=Qt.TextFormat.RichText,
-                wordWrap=True,
-            )
+        self.home: Home = parent
+        self.setAlignment(Qt.AlignTop)
+        self.setWidgetResizable(True)
+
+        holder = widgets.QWidget(self)
+        self.layout_ = widgets.QVBoxLayout(holder)
+        self.setWidget(holder)
+        self._add_quotes()
+
+    def _add_quotes(self) -> None:
+        for quote, book in models.list_quotes(self.home.data):
+            card = widgets.QLabel(f"{quote['text']} - <b>{book.author.title()}</b>")
+            self.layout_.addWidget(card)
             card.setFrameStyle(widgets.QFrame.StyledPanel)
-            card.setSizePolicy(
-                widgets.QSizePolicy.MinimumExpanding,
-                widgets.QSizePolicy.Minimum,
-            )
-            layout.addWidget(card)
+            card.setSizePolicy(CARD_SIZE_POLICY)
+            card.setTextFormat(Qt.TextFormat.RichText)
+            card.setWordWrap(True)
+
+    def update_(self) -> None:
+        _clear_layout(self.layout_)
+        self._add_quotes()
 
 
 def _clear_layout(layout: widgets.QLayout) -> None:
