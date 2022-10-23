@@ -43,11 +43,12 @@ class Home(widgets.QMainWindow):
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
-        centre_layout.addWidget(self.tabs, 0, 0, 1, 15)
-        centre_layout.addWidget(self.sidebar, 0, 16, 1, 5)
+        centre_layout.addWidget(self.tabs, 0, 0, 1, 20)
+        centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
 
     def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         card_view = CardView(self, lib_name)
         card_view.update_view()
         scroll_area.setWidget(card_view)
@@ -104,12 +105,9 @@ class Home(widgets.QMainWindow):
 class CardView(widgets.QWidget):
     def __init__(self, parent: Home, lib_name: str) -> None:
         super().__init__(parent)
+        self.setSizePolicy(widgets.QSizePolicy.Ignored, widgets.QSizePolicy.Fixed)
         self.home: Home = parent
         self.lib_name: str = lib_name
-        self.setSizePolicy(
-            widgets.QSizePolicy.Minimum,
-            widgets.QSizePolicy.Fixed,
-        )
         self.layout_ = widgets.QGridLayout(self)
         self.layout_.setAlignment(Qt.AlignTop)
 
@@ -312,6 +310,7 @@ class SideBar(widgets.QScrollArea):
         super().__init__(parent)
         self.home: Home = parent
         self.setAlignment(Qt.AlignTop)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
 
         holder = widgets.QWidget(self)
@@ -320,6 +319,7 @@ class SideBar(widgets.QScrollArea):
         self._add_quotes()
 
     def _add_quotes(self) -> None:
+        self.layout_.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
         for quote, author in models.list_quotes(self.home.data):
             card = widgets.QLabel(f'"{quote}" - <b>{author.title()}</b>')
             self.layout_.addWidget(card)
