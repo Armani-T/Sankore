@@ -72,109 +72,65 @@ class Home(widgets.QMainWindow):
 
 
 class CardView(widgets.QWidget):
-    def __init__(self, parent: Home, lib_name: str) -> None:
+    def __init__(self, parent: Home) -> None:
         super().__init__(parent)
         self.setSizePolicy(widgets.QSizePolicy.Ignored, widgets.QSizePolicy.Fixed)
         self.home: Home = parent
-        self.lib_name: str = lib_name
         self.layout_ = widgets.QGridLayout(self)
         self.layout_.setAlignment(Qt.AlignTop)
 
     def _populate(self) -> None:
         row, col = 0, 0
-        show_rating = self.lib_name == "Already Read"
-        show_progress = (
-            self.lib_name != models.ALL_BOOKS
-            and self.home.data[self.lib_name].page_tracking
-        )
-        books = sorted(
-            models.list_books(self.home.data, self.lib_name), key=attrgetter("title")
-        )
-        for book in books:
-            card = Card(self, book, show_progress, show_rating)
+        for book in self.home.data:
+            card = Card(self, book, book.current_run is not None, book.rating >= 0)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
-    def update_view(self, lib_name: Optional[str] = None) -> None:
-        self.lib_name = lib_name or self.lib_name
+    def update_view(self) -> None:
         _clear_layout(self.layout_)
         self._populate()
 
-    def change_library(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
-        dialog = dialogs.ChangeLibrary(self, book.title, self.home.libraries, lib_name)
-        exit_code = dialog.exec()
-        if dialog.save_changes and lib_name != dialog.library():
-            self.home.data = models.update_book(
-                self.home.data, book, book, lib_name, dialog.library()
-            )
-            self.update_view(lib_name)
-            self.home.go_to(dialog.library())
-        return exit_code
-
     def delete_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.AreYouSure(self, book.title)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.remove_book(self.home.data, book, lib_name)
-            self.update_view(lib_name)
+        if dialog.save_changes:
+            self.home.data = models.remove_book(self.home.data, book)
+            self.update_view()
         return exit_code
 
     def edit_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.EditBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
+        if dialog.save_changes:
             new_book = dialog.updated()
-            self.home.data = models.update_book(
-                self.home.data, book, new_book, lib_name
-            )
-            self.update_view(lib_name)
+            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.update_view()
         return exit_code
 
     def quote_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.QuoteBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            new_book = models.Book(
-                title=book.title,
-                author=book.author,
-                pages=book.pages,
-                current_page=book.current_page,
-                rating=book.rating,
-                quotes=(*book.quotes, dialog.quote()),
-            )
-            self.home.data = models.update_book(
-                self.home.data, book, new_book, lib_name
-            )
-            self.update_view(lib_name)
+        if dialog.save_changes:
+            new_book = models.Book(**book.to_dict(), quotes=(*book.quotes, dialog.quote()))
+            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.update_view()
             self.home.update_sidebar()
         return exit_code
 
     def rate_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.RateBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.update_book(
-                self.home.data, book, dialog.updated(), lib_name
-            )
-            self.update_view(lib_name)
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
         return exit_code
 
     def update_progress(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.UpdateProgress(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            new_lib = "Already Read" if dialog.is_finished() else lib_name
-            self.home.data = models.update_book(
-                self.home.data, book, dialog.updated(), lib_name, new_lib
-            )
-            self.update_view(lib_name)
-            self.home.go_to(new_lib)
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
         return exit_code
 
 
