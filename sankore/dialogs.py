@@ -1,6 +1,8 @@
+# TODO: Create a function that takes a dict and uses it to update and
+# save a book that already exists.
 from functools import partial
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
@@ -152,13 +154,17 @@ class UpdateProgress(widgets.QDialog):
         return super().done(0)
 
     def updated(self) -> models.Book:
-        return models.Book(
-            title=self.book.title,
-            author=self.book.author,
-            pages=self.book.pages,
-            current_page=self.slider.value(),
-            rating=self.book.rating,
-        )
+        start = self.book.current.start
+        if self.is_finished():
+            new_read: models.Read = {"start": start, "end": models.get_today()}
+            reads = (new_read, *self.book.reads)
+            return models.Book(**self.book.to_dict(), current_run=None, reads=reads)
+
+        new_run: models.Run = {
+            "start": start or models.get_today(),
+            "page": self.slider.value(),
+        }
+        return models.Book(**self.book.to_dict(), current_run=new_run)
 
 
 class AreYouSure(widgets.QDialog):
