@@ -111,18 +111,13 @@ class CardView(widgets.QWidget):
             models.list_books(self.home.data, self.lib_name), key=attrgetter("title")
         )
         for book in books:
-            card = BookCard(self, book, show_progress, show_rating)
+            card = Card(self, book, show_progress, show_rating)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
-    def _clear(self) -> None:
-        while (child := self.layout_.takeAt(0)) is not None:
-            card = child.widget()
-            card.deleteLater()
-
     def update_view(self, lib_name: Optional[str] = None) -> None:
         self.lib_name = lib_name or self.lib_name
-        self._clear()
+        _clear_layout(self.layout_)
         self._populate()
 
     def change_library(self, book: models.Book) -> int:
@@ -202,7 +197,7 @@ class CardView(widgets.QWidget):
         return exit_code
 
 
-class BookCard(widgets.QFrame):
+class Card(widgets.QFrame):
     def __init__(
         self,
         parent: CardView,
@@ -299,6 +294,12 @@ class BookCard(widgets.QFrame):
 
     def update_progress(self) -> int:
         return self.holder.update_progress(self.book)
+
+
+def _clear_layout(layout: widgets.QLayout) -> None:
+    while (child := layout.takeAt(0)) is not None:
+        widget = child.widget()
+        widget.deleteLater()
 
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
