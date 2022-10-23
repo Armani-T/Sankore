@@ -296,6 +296,28 @@ class Card(widgets.QFrame):
         return self.holder.update_progress(self.book)
 
 
+class SideBar(widgets.QWidget):
+    def __init__(self, parent: Home) -> None:
+        super().__init__(parent)
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
+        for quote, book in models.list_quotes(parent.data):
+            card = widgets.QLabel(
+                text=(
+                    f"{quote['text']}\n\n- <b>{book.author.title()}</b>"
+                    f"\n(<i>{book.title.title()}</i>)"
+                ),
+                textFormat=Qt.TextFormat.RichText,
+                wordWrap=True,
+            )
+            card.setFrameStyle(widgets.QFrame.StyledPanel)
+            card.setSizePolicy(
+                widgets.QSizePolicy.MinimumExpanding,
+                widgets.QSizePolicy.Minimum,
+            )
+            layout.addWidget(card)
+
+
 def _clear_layout(layout: widgets.QLayout) -> None:
     while (child := layout.takeAt(0)) is not None:
         widget = child.widget()
