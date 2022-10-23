@@ -31,50 +31,20 @@ class Book:
         }
 
 
-ALL_BOOKS = "All Books"
-DEFAULT_DATA: Data = {
-    "To Read": Library(books=(), description="Books that I want read in the future."),
-    "Already Read": Library(books=(), description="Books that I've finished reading."),
-    "Currently Reading": Library(
-        books=(),
-        description="Books that I'm reading right now.",
-        page_tracking=True,
-    ),
-}
-
-
-def _prepare_json(json_data: dict[str, Any]) -> Data:
-    format_lib = lambda lib_json: Library(
-        books=[Book(**book_json) for book_json in lib_json["books"]],
-        description=lib_json["description"],
-        page_tracking=lib_json["page_tracking"],
-    )
-    return {
-        name: format_lib(library) for name, library in json_data["libraries"].items()
-    }
-
-
-def _prepare_string(data: Data) -> str:
-    lib_to_dict = lambda lib: {
-        "books": [book.to_dict() for book in lib.books],
-        "description": lib.description,
-        "page_tracking": lib.page_tracking,
-    }
-    dict_data = {name: lib_to_dict(library) for name, library in data.items()}
-    return json.dumps({"libraries": dict_data})
-
-
 def get_data(data_file: Path) -> Data:
     try:
         contents = data_file.read_text("utf8")
-        data = json.loads(contents)
-        return _prepare_json(data)
+        full_json = json.loads(contents)
+        return tuple(
+            Book(**book_json)
+            for book_json in full_json.get("books", ())
+        )
     except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return DEFAULT_DATA
+        return ()
 
 
 def save_data(data_file: Path, new_data: Data) -> None:
-    string = _prepare_string(new_data)
+    string = json.dumps({"books": [book.to_dict() for book in new_data]})
     data_file.write_text(string, "utf8")
 
 
