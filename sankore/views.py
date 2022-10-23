@@ -8,6 +8,10 @@ from PySide6 import QtWidgets as widgets
 import dialogs
 import models
 
+CARD_SIZE_POLICY = widgets.QSizePolicy(
+    widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
+)
+
 
 class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
@@ -220,10 +224,7 @@ class Card(widgets.QFrame):
         self.holder = parent
         self.show_progress = show_progress
         self.show_rating = show_rating
-        self.setSizePolicy(
-            widgets.QSizePolicy.MinimumExpanding,
-            widgets.QSizePolicy.MinimumExpanding,
-        )
+        self.setSizePolicy(CARD_SIZE_POLICY)
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title_layout = widgets.QHBoxLayout()
