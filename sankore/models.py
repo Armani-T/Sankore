@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Iterable, Optional, Sequence, TypedDict
 import json
 
-Data = dict[str, "Library"]
+Data = Sequence[Book]
+Attempt = TypedDict("Attempt", {"start": Optional[str], "page": int})
+Read = TypedDict("Read", {"start": Optional[str], "end": Optional[str]})
 
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
@@ -12,27 +14,21 @@ class Book:
     title: str
     author: str
     pages: int
-    current_page: int
     rating: int
+    current: Optional[Attempt] = None
     quotes: Sequence[str] = ()
+    runs: Sequence[FullRead] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "author": self.author,
             "pages": self.pages,
-            "current_page": self.current_page,
+            "current": self.current,
             "rating": self.rating,
             "quotes": self.quotes,
+            "runs": self.runs,
         }
-
-
-@dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
-class Library:
-    books: Sequence[Book]
-    description: str
-    page_tracking: bool = False
-    can_rate: bool = False
 
 
 ALL_BOOKS = "All Books"
