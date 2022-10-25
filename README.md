@@ -16,6 +16,7 @@ I built it as a replacement to GoodReads since that requires a network connectio
 - [X] Multiple reads through a book
 - [ ] Use a database for storage with an option for JSON exporting
 - [ ] A tagging system
+- [ ] A search bar with filters
 - [ ] A reading list with priority sorting
 - [ ] Reading goals and challenges
 - [ ] A speed tracker
