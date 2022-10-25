@@ -1,6 +1,3 @@
-from operator import attrgetter
-from typing import Optional
-
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6 import QtWidgets as widgets
@@ -111,7 +108,9 @@ class CardView(widgets.QWidget):
         dialog = dialogs.QuoteBook(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            new_book = models.Book(**book.to_dict(), quotes=(*book.quotes, dialog.quote()))
+            new_book = models.Book(
+                **book.to_dict(), quotes=(*book.quotes, dialog.quote())
+            )
             self.home.data = models.update_book(self.home.data, book, new_book)
             self.update_view()
             self.home.update_sidebar()
