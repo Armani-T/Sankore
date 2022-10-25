@@ -164,6 +164,15 @@ class Card(widgets.QFrame):
         layout.addWidget(author, alignment=Qt.AlignLeft)
         pages = widgets.QLabel(f"{book.pages} Pages")
         layout.addWidget(pages, alignment=Qt.AlignLeft)
+        read_status = (
+            "Currently reading" if self.book.current_run is not None
+            else f"Read {len(self.book.reads)} times" if self.book.reads
+            else "Never read"
+        )
+        layout.addWidget(
+            widgets.QLabel(f"<i>{read_status}</i>"),
+            alignment=Qt.AlignLeft,
+        )
 
         if self.show_rating:
             empty_star = QPixmap(dialogs.ASSETS["star_outline"])
