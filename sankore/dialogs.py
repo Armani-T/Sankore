@@ -162,12 +162,14 @@ class UpdateProgress(widgets.QDialog):
         )
         if self.is_finished():
             new_read: models.Read = {"start": start, "end": models.get_today()}
-            reads = (new_read, *self.book.reads)
-            return models.Book(**self.book.to_dict(), current_run=None, reads=reads)
-        return models.Book(
-            **self.book.to_dict(),
-            current_run={"start": start, "page": self.slider.value()},
-        )
+            kwargs = self.book.to_dict() | {
+                "current_run": None, "reads": (new_read, *self.book.reads)
+            }
+        else:
+            kwargs = self.book.to_dict() | {
+                "current_run": {"start": start, "page": self.slider.value()}
+            }
+        return models.Book(**kwargs)
 
 
 class AreYouSure(widgets.QDialog):
@@ -247,7 +249,8 @@ class RateBook(widgets.QDialog):
             star.setIcon(empty_star if index > self.current_rating else filled_star)
 
     def updated(self):
-        return models.Book(**self.book.to_dict(), rating=self.current_rating)
+        kwargs = self.book.to_dict() | {"rating": self.current_rating}
+        return models.Book(**kwargs)
 
 
 class QuoteBook(widgets.QDialog):
