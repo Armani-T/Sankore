@@ -1,6 +1,8 @@
+# TODO: Create a function that takes a dict and uses it to update and
+# save a book that already exists.
 from functools import partial
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from PySide6.QtCore import QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
@@ -28,7 +30,7 @@ ASSETS: dict[str, Path] = {
 
 
 class NewBook(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, libraries: Sequence[str]) -> None:
+    def __init__(self, parent: widgets.QWidget) -> None:
         super().__init__(parent)
         self.save_changes = False
 
@@ -37,8 +39,6 @@ class NewBook(widgets.QDialog):
         self.author_edit = widgets.QLineEdit()
         self.page_edit = widgets.QLineEdit()
         self.page_edit.setValidator(NUMBER_VALIDATOR)
-        self.combo = widgets.QComboBox()
-        self.combo.addItems(libraries)
         save_button = widgets.QPushButton("Add to Books")
         save_button.clicked.connect(self.accept)
 
@@ -46,7 +46,6 @@ class NewBook(widgets.QDialog):
         layout.addRow("Title:", self.title_edit)
         layout.addRow("Author:", self.author_edit)
         layout.addRow("No. of pages:", self.page_edit)
-        layout.addRow("Library:", self.combo)
         layout.addRow(save_button)
 
     def accept(self) -> None:
@@ -54,58 +53,15 @@ class NewBook(widgets.QDialog):
         self.save_changes = bool(book.title and book.author and book.pages > 0)
         return super().done(0)
 
-    def library(self) -> str:
-        return self.combo.currentText()
-
     def new_book(self) -> models.Book:
-        pages = int(self.page_edit.text() or "1")
-        current_page = pages if self.library() == "Already Read" else 0
         return models.Book(
             title=self.title_edit.text().strip(),
             author=self.author_edit.text().strip(),
-            pages=pages,
-            current_page=current_page,
+            pages=int(self.page_edit.text() or "1"),
             rating=1,
         )
 
 
-class NewLibrary(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget) -> None:
-        super().__init__(parent)
-        self.save_changes = False
-
-        self.setWindowTitle("New Library")
-        self.name_edit = widgets.QLineEdit(self)
-        self.description_edit = widgets.QPlainTextEdit(self)
-        self.page_tracking = widgets.QCheckBox(self)
-        self.can_rate = widgets.QCheckBox(self)
-        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
-        save_button.accepted.connect(self.accept)
-
-        layout = widgets.QFormLayout(self)
-        layout.addRow("Name:", self.name_edit)
-        layout.addRow("Description:", self.description_edit)
-        layout.addRow("Page Tracking:", self.page_tracking)
-        layout.addRow("Rate Books:", self.can_rate)
-        layout.addRow(save_button)
-
-    def accept(self) -> None:
-        self.save_changes = bool(self.name())
-        return super().done(0)
-
-    def name(self) -> str:
-        return self.name_edit.text().strip().title()
-
-    def new_lib(self) -> models.Library:
-        return models.Library(
-            books=(),
-            description=self.description_edit.toPlainText().strip(),
-            page_tracking=self.page_tracking.isChecked(),
-            can_rate=self.can_rate.isChecked(),
-        )
-
-
-# TODO: Add a way to change the library too.
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
@@ -135,14 +91,12 @@ class EditBook(widgets.QDialog):
         return super().done(0)
 
     def updated(self) -> models.Book:
-        pages = int(self.page_edit.text())
-        return models.Book(
-            title=self.title_edit.text(),
-            author=self.author_edit.text(),
-            pages=pages,
-            current_page=min(self.book.current_page, pages),
-            rating=self.book.rating,
-        )
+        kwargs = self.book.to_dict() | {
+            "title": self.title_edit.text(),
+            "author": self.author_edit.text(),
+            "pages": int(self.page_edit.text()),
+        }
+        return models.Book(**kwargs)  # type: ignore
 
 
 class UpdateProgress(widgets.QDialog):
@@ -166,7 +120,8 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setMaximum(book.pages)
         self.slider.setTracking(False)
         self.slider.valueChanged.connect(self._update_edit)
-        self.slider.setValue(book.current_page)
+        value = 0 if book.current_run is None else book.current_run["page"]
+        self.slider.setValue(value)
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
@@ -200,12 +155,18 @@ class UpdateProgress(widgets.QDialog):
         return super().done(0)
 
     def updated(self) -> models.Book:
+        start = (
+            models.get_today()
+            if self.book.current_run is None
+            else self.book.current_run["start"]
+        )
+        if self.is_finished():
+            new_read: models.Read = {"start": start, "end": models.get_today()}
+            reads = (new_read, *self.book.reads)
+            return models.Book(**self.book.to_dict(), current_run=None, reads=reads)
         return models.Book(
-            title=self.book.title,
-            author=self.book.author,
-            pages=self.book.pages,
-            current_page=self.slider.value(),
-            rating=self.book.rating,
+            **self.book.to_dict(),
+            current_run={"start": start, "page": self.slider.value()},
         )
 
 
@@ -234,7 +195,7 @@ class AreYouSure(widgets.QDialog):
 
     def reject(self) -> None:
         self.save_changes = False
-        return super().done(1)
+        return super().done(0)
 
 
 class RateBook(widgets.QDialog):
@@ -286,45 +247,7 @@ class RateBook(widgets.QDialog):
             star.setIcon(empty_star if index > self.current_rating else filled_star)
 
     def updated(self):
-        return models.Book(
-            title=self.book.title,
-            author=self.book.author,
-            pages=self.book.pages,
-            current_page=self.book.current_page,
-            rating=self.current_rating,
-        )
-
-
-class ChangeLibrary(widgets.QDialog):
-    def __init__(
-        self,
-        parent: widgets.QWidget,
-        book_title: str,
-        libraries: Sequence[str],
-        lib_name: str,
-    ) -> None:
-        super().__init__(parent)
-        self.save_changes = False
-
-        title = widgets.QLabel(f'<b>Move "{book_title}" from "{lib_name}" to:</b>')
-        self.combo = widgets.QComboBox(self)
-        libraries = tuple(sorted(libraries))
-        self.combo.addItems(libraries)
-        self.combo.setCurrentIndex(libraries.index(lib_name))
-        button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
-        button_box.accepted.connect(self.accept)
-
-        layout = widgets.QVBoxLayout(self)
-        layout.addWidget(title)
-        layout.addWidget(self.combo)
-        layout.addWidget(button_box)
-
-    def accept(self) -> None:
-        self.save_changes = True
-        return super().done(0)
-
-    def library(self) -> str:
-        return self.combo.currentText()
+        return models.Book(**self.book.to_dict(), rating=self.current_rating)
 
 
 class QuoteBook(widgets.QDialog):

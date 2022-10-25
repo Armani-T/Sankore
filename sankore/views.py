@@ -1,6 +1,3 @@
-from operator import attrgetter
-from typing import Optional
-
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6 import QtWidgets as widgets
@@ -17,8 +14,6 @@ class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
         super().__init__()
         self.data = data
-        self.libraries = sorted(models.list_libraries(data, False))
-        self.pages = {}
 
         QCoreApplication.setApplicationName("Sankore")
         self.setWindowIcon(QIcon(QPixmap(dialogs.ASSETS["app_icon"])))
@@ -27,55 +22,32 @@ class Home(widgets.QMainWindow):
         new_menu = self.menuBar().addMenu("New")
         about_menu = self.menuBar().addMenu("About")
         new_book_action = new_menu.addAction("New Book")
-        new_lib_action = new_menu.addAction("New Library")
         about_action = about_menu.addAction("About")
         new_book_action.triggered.connect(self._new_book)
-        new_lib_action.triggered.connect(self._new_lib)
         about_action.triggered.connect(self._show_about)
 
+        scroll_area = widgets.QScrollArea(self)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.cards = CardView(self)
+        self.cards.update_view()
+        scroll_area.setWidget(self.cards)
+        scroll_area.setAlignment(Qt.AlignTop)
+        scroll_area.setWidgetResizable(True)
+
         self.sidebar = SideBar(self)
-        self.tabs = widgets.QTabWidget(self)
-        for name in self.libraries:
-            page, card_view = self._create_tab_page(name)
-            self.pages[name] = card_view
-            self.tabs.addTab(page, name)
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
-        centre_layout.addWidget(self.tabs, 0, 0, 1, 20)
+        centre_layout.addWidget(scroll_area, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
 
-    def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
-        scroll_area = widgets.QScrollArea(self.tabs)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        card_view = CardView(self, lib_name)
-        card_view.update_view()
-        scroll_area.setWidget(card_view)
-        scroll_area.setAlignment(Qt.AlignTop)
-        scroll_area.setWidgetResizable(True)
-        return scroll_area, card_view
-
     def _new_book(self) -> int:
-        dialog = dialogs.NewBook(self, self.libraries)
+        dialog = dialogs.NewBook(self)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            lib_name = dialog.library()
-            self.data = models.insert_book(self.data, lib_name, dialog.new_book())
-            card_view = self.pages[lib_name]
-            card_view.update_view(lib_name)
-        return exit_code
-
-    def _new_lib(self) -> int:
-        dialog = dialogs.NewLibrary(self)
-        exit_code = dialog.exec()
-        if dialog.save_changes:
-            name = dialog.name()
-            exit_code, self.data = models.create_lib(self.data, name, dialog.new_lib())
-            self.libraries = sorted((*self.libraries, name))
-            page, card_view = self._create_tab_page(name)
-            self.pages[name] = card_view
-            self.tabs.addTab(page, name)
+            self.data = models.insert_book(self.data, dialog.new_book())
+            self.cards.update_view()
         return exit_code
 
     def _show_about(self) -> int:
@@ -92,120 +64,72 @@ class Home(widgets.QMainWindow):
         layout.addWidget(label)
         return dialog.exec()
 
-    def go_to(self, lib_name: str) -> None:
-        card_view = self.pages[lib_name]
-        card_view.update_view(lib_name)
-        index = self.libraries.index(lib_name)
-        self.tabs.setCurrentIndex(index)
-
     def update_sidebar(self) -> None:
         self.sidebar.update_()
 
 
 class CardView(widgets.QWidget):
-    def __init__(self, parent: Home, lib_name: str) -> None:
+    def __init__(self, parent: Home) -> None:
         super().__init__(parent)
         self.setSizePolicy(widgets.QSizePolicy.Ignored, widgets.QSizePolicy.Fixed)
         self.home: Home = parent
-        self.lib_name: str = lib_name
         self.layout_ = widgets.QGridLayout(self)
         self.layout_.setAlignment(Qt.AlignTop)
 
     def _populate(self) -> None:
         row, col = 0, 0
-        show_rating = self.lib_name == "Already Read"
-        show_progress = (
-            self.lib_name != models.ALL_BOOKS
-            and self.home.data[self.lib_name].page_tracking
-        )
-        books = sorted(
-            models.list_books(self.home.data, self.lib_name), key=attrgetter("title")
-        )
-        for book in books:
-            card = Card(self, book, show_progress, show_rating)
+        for book in self.home.data:
+            card = Card(self, book, book.current_run is not None, book.rating >= 0)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
-    def update_view(self, lib_name: Optional[str] = None) -> None:
-        self.lib_name = lib_name or self.lib_name
+    def update_view(self) -> None:
         _clear_layout(self.layout_)
         self._populate()
 
-    def change_library(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
-        dialog = dialogs.ChangeLibrary(self, book.title, self.home.libraries, lib_name)
-        exit_code = dialog.exec()
-        if dialog.save_changes and lib_name != dialog.library():
-            self.home.data = models.update_book(
-                self.home.data, book, book, lib_name, dialog.library()
-            )
-            self.update_view(lib_name)
-            self.home.go_to(dialog.library())
-        return exit_code
-
     def delete_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.AreYouSure(self, book.title)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.remove_book(self.home.data, book, lib_name)
-            self.update_view(lib_name)
+        if dialog.save_changes:
+            self.home.data = models.remove_book(self.home.data, book)
+            self.update_view()
         return exit_code
 
     def edit_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.EditBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
+        if dialog.save_changes:
             new_book = dialog.updated()
-            self.home.data = models.update_book(
-                self.home.data, book, new_book, lib_name
-            )
-            self.update_view(lib_name)
+            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.update_view()
         return exit_code
 
     def quote_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.QuoteBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
+        if dialog.save_changes:
             new_book = models.Book(
-                title=book.title,
-                author=book.author,
-                pages=book.pages,
-                current_page=book.current_page,
-                rating=book.rating,
-                quotes=(*book.quotes, dialog.quote()),
+                **book.to_dict(), quotes=(*book.quotes, dialog.quote())
             )
-            self.home.data = models.update_book(
-                self.home.data, book, new_book, lib_name
-            )
-            self.update_view(lib_name)
+            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.update_view()
             self.home.update_sidebar()
         return exit_code
 
     def rate_book(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.RateBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            self.home.data = models.update_book(
-                self.home.data, book, dialog.updated(), lib_name
-            )
-            self.update_view(lib_name)
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
         return exit_code
 
     def update_progress(self, book: models.Book) -> int:
-        lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.UpdateProgress(self, book)
         exit_code = dialog.exec()
-        if dialog.save_changes and lib_name is not None:
-            new_lib = "Already Read" if dialog.is_finished() else lib_name
-            self.home.data = models.update_book(
-                self.home.data, book, dialog.updated(), lib_name, new_lib
-            )
-            self.update_view(lib_name)
-            self.home.go_to(new_lib)
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
         return exit_code
 
 
@@ -240,6 +164,15 @@ class Card(widgets.QFrame):
         layout.addWidget(author, alignment=Qt.AlignLeft)
         pages = widgets.QLabel(f"{book.pages} Pages")
         layout.addWidget(pages, alignment=Qt.AlignLeft)
+        read_status = (
+            "Currently reading" if self.book.current_run is not None
+            else f"Read {len(self.book.reads)} times" if self.book.reads
+            else "Never read"
+        )
+        layout.addWidget(
+            widgets.QLabel(f"<i>{read_status}</i>"),
+            alignment=Qt.AlignLeft,
+        )
 
         if self.show_rating:
             empty_star = QPixmap(dialogs.ASSETS["star_outline"])
@@ -252,10 +185,10 @@ class Card(widgets.QFrame):
                 label.setPixmap(empty_star if index > stars else filled_star)
                 bar_layout.addWidget(label)
             layout.addWidget(rating_bar)
-        if self.show_progress:
+        if self.show_progress and book.current_run is not None:
             bar = widgets.QProgressBar(self)
             bar.setMaximum(book.pages)
-            bar.setValue(dialogs.normalise(book.current_page, book.pages))
+            bar.setValue(dialogs.normalise(book.current_run["page"], book.pages))
             layout.addWidget(bar)
 
     def _setup_menu(self) -> widgets.QMenu:
@@ -278,16 +211,10 @@ class Card(widgets.QFrame):
         edit_icon = QIcon(QPixmap(dialogs.ASSETS["edit_icon"]))
         edit_action = menu.addAction(edit_icon, "Edit")
         edit_action.triggered.connect(self.edit_book)
-        change_icon = QIcon(QPixmap(dialogs.ASSETS["shelf_icon"]))
-        change_action = menu.addAction(change_icon, "Change Library")
-        change_action.triggered.connect(self.change_library)
         delete_icon = QIcon(QPixmap(dialogs.ASSETS["trash_icon"]))
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
-
-    def change_library(self) -> int:
-        return self.holder.change_library(self.book)
 
     def delete_book(self) -> int:
         return self.holder.delete_book(self.book)

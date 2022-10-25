@@ -13,10 +13,13 @@ I built it as a replacement to GoodReads since that requires a network connectio
 - [X] User-defined libraries
 - [X] A rating system for finished books
 - [X] A quotation store
-- [ ] Multiple reads through the book
-- [ ] Priority sorting for unread books
+- [X] Multiple reads through a book
+- [ ] Use a database for storage with an option for JSON exporting
 - [ ] A tagging system
+- [ ] A search bar with filters
+- [ ] A reading list with priority sorting
 - [ ] Reading goals and challenges
+- [ ] A speed tracker
 
 ## Installation
 
