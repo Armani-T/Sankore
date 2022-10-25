@@ -39,7 +39,7 @@ class Home(widgets.QMainWindow):
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
-        centre_layout.addWidget(self.books, 0, 0, 1, 20)
+        centre_layout.addWidget(scroll_area, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
 
     def _new_book(self) -> int:
@@ -176,10 +176,10 @@ class Card(widgets.QFrame):
                 label.setPixmap(empty_star if index > stars else filled_star)
                 bar_layout.addWidget(label)
             layout.addWidget(rating_bar)
-        if self.show_progress:
+        if self.show_progress and book.current_run is not None:
             bar = widgets.QProgressBar(self)
             bar.setMaximum(book.pages)
-            bar.setValue(dialogs.normalise(book.current_page, book.pages))
+            bar.setValue(dialogs.normalise(book.current_run["page"], book.pages))
             layout.addWidget(bar)
 
     def _setup_menu(self) -> widgets.QMenu:
@@ -202,16 +202,10 @@ class Card(widgets.QFrame):
         edit_icon = QIcon(QPixmap(dialogs.ASSETS["edit_icon"]))
         edit_action = menu.addAction(edit_icon, "Edit")
         edit_action.triggered.connect(self.edit_book)
-        change_icon = QIcon(QPixmap(dialogs.ASSETS["shelf_icon"]))
-        change_action = menu.addAction(change_icon, "Change Library")
-        change_action.triggered.connect(self.change_library)
         delete_icon = QIcon(QPixmap(dialogs.ASSETS["trash_icon"]))
         delete_action = menu.addAction(delete_icon, "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
-
-    def change_library(self) -> int:
-        return self.holder.change_library(self.book)
 
     def delete_book(self) -> int:
         return self.holder.delete_book(self.book)

@@ -96,7 +96,7 @@ class EditBook(widgets.QDialog):
             "author": self.author_edit.text(),
             "pages": int(self.page_edit.text()),
         }
-        return models.Book(**kwargs)
+        return models.Book(**kwargs)  # type: ignore
 
 
 class UpdateProgress(widgets.QDialog):
@@ -120,7 +120,8 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setMaximum(book.pages)
         self.slider.setTracking(False)
         self.slider.valueChanged.connect(self._update_edit)
-        self.slider.setValue(book.current_page)
+        value = 0 if book.current_run is None else book.current_run["page"]
+        self.slider.setValue(value)
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
@@ -154,17 +155,19 @@ class UpdateProgress(widgets.QDialog):
         return super().done(0)
 
     def updated(self) -> models.Book:
-        start = self.book.current.start
+        start = (
+            models.get_today()
+            if self.book.current_run is None
+            else self.book.current_run["start"]
+        )
         if self.is_finished():
             new_read: models.Read = {"start": start, "end": models.get_today()}
             reads = (new_read, *self.book.reads)
             return models.Book(**self.book.to_dict(), current_run=None, reads=reads)
-
-        new_run: models.Run = {
-            "start": start or models.get_today(),
-            "page": self.slider.value(),
-        }
-        return models.Book(**self.book.to_dict(), current_run=new_run)
+        return models.Book(
+            **self.book.to_dict(),
+            current_run={"start": start, "page": self.slider.value()},
+        )
 
 
 class AreYouSure(widgets.QDialog):
