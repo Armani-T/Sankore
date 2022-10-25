@@ -18,6 +18,7 @@ ASSETS: dict[str, Path] = {
     "bookmark_icon": _asset_folder / "bookmark.png",
     "edit_icon": _asset_folder / "edit.png",
     "menu_icon": _asset_folder / "menu-icon.png",
+    "quote_icon": _asset_folder / "quote.png",
     "shelf_icon": _asset_folder / "shelf.png",
     "star_half": _asset_folder / "star-half.png",
     "star_filled": _asset_folder / "star-filled.png",
@@ -108,7 +109,7 @@ class NewLibrary(widgets.QDialog):
 class EditBook(widgets.QDialog):
     def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
         super().__init__(parent)
-        self.save_edits = False
+        self.save_changes = False
         self.book = book
 
         self.setWindowTitle(f'Editing "{book.title}"')
@@ -130,7 +131,7 @@ class EditBook(widgets.QDialog):
         layout.addRow(save_button)
 
     def accept(self) -> None:
-        self.save_edits = True
+        self.save_changes = True
         return super().done(0)
 
     def updated(self) -> models.Book:
@@ -324,3 +325,29 @@ class ChangeLibrary(widgets.QDialog):
 
     def library(self) -> str:
         return self.combo.currentText()
+
+
+class QuoteBook(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+        self.book = book
+
+        self.setWindowTitle(f'Quote "{book.title.title()}" by {book.author.title()}')
+        self.quote_text = widgets.QPlainTextEdit(self)
+        self.page_edit = widgets.QLineEdit(self)
+        self.page_edit.setValidator(NUMBER_VALIDATOR)
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
+
+        layout = widgets.QFormLayout(self)
+        layout.addRow("Quote:", self.quote_text)
+        layout.addRow("On page:", self.page_edit)
+        layout.addRow(save_button)
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def quote(self) -> str:
+        return self.quote_text.toPlainText().strip()

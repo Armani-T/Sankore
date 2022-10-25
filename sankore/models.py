@@ -14,6 +14,7 @@ class Book:
     pages: int
     current_page: int
     rating: int
+    quotes: Sequence[str] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -22,6 +23,7 @@ class Book:
             "pages": self.pages,
             "current_page": self.current_page,
             "rating": self.rating,
+            "quotes": self.quotes,
         }
 
 
@@ -86,6 +88,13 @@ def create_lib(data: Data, name: str, new_lib: Library) -> tuple[int, Data]:
     return 1, data
 
 
+def find_book(data: Data, target_title: str) -> Optional[Book]:
+    for book in list_books(data, ALL_BOOKS):
+        if book.title == target_title:
+            return book
+    return None
+
+
 def find_library(data: Data, book: Book) -> Optional[str]:
     for lib_name in list_libraries(data, False):
         if book in data[lib_name].books:
@@ -115,6 +124,12 @@ def list_libraries(data: Data, all_: bool = True) -> Iterable[str]:
     if all_:
         yield ALL_BOOKS
     yield from data.keys()
+
+
+def list_quotes(data: Data, lib_name: str = ALL_BOOKS) -> Iterable[tuple[str, str]]:
+    for book in list_books(data, lib_name):
+        for quote in book.quotes:
+            yield quote, book.author
 
 
 def update_book(

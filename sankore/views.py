@@ -8,6 +8,10 @@ from PySide6 import QtWidgets as widgets
 import dialogs
 import models
 
+CARD_SIZE_POLICY = widgets.QSizePolicy(
+    widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
+)
+
 
 class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
@@ -29,15 +33,22 @@ class Home(widgets.QMainWindow):
         new_lib_action.triggered.connect(self._new_lib)
         about_action.triggered.connect(self._show_about)
 
+        self.sidebar = SideBar(self)
         self.tabs = widgets.QTabWidget(self)
-        self.setCentralWidget(self.tabs)
         for name in self.libraries:
             page, card_view = self._create_tab_page(name)
             self.pages[name] = card_view
             self.tabs.addTab(page, name)
 
+        centre = widgets.QWidget(self)
+        self.setCentralWidget(centre)
+        centre_layout = widgets.QGridLayout(centre)
+        centre_layout.addWidget(self.tabs, 0, 0, 1, 20)
+        centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
+
     def _create_tab_page(self, lib_name: str) -> tuple[widgets.QWidget, "CardView"]:
         scroll_area = widgets.QScrollArea(self.tabs)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         card_view = CardView(self, lib_name)
         card_view.update_view()
         scroll_area.setWidget(card_view)
@@ -87,16 +98,16 @@ class Home(widgets.QMainWindow):
         index = self.libraries.index(lib_name)
         self.tabs.setCurrentIndex(index)
 
+    def update_sidebar(self) -> None:
+        self.sidebar.update_()
+
 
 class CardView(widgets.QWidget):
     def __init__(self, parent: Home, lib_name: str) -> None:
         super().__init__(parent)
-        self.home = parent
-        self.lib_name = lib_name
-        self.setSizePolicy(
-            widgets.QSizePolicy.Minimum,
-            widgets.QSizePolicy.Fixed,
-        )
+        self.setSizePolicy(widgets.QSizePolicy.Ignored, widgets.QSizePolicy.Fixed)
+        self.home: Home = parent
+        self.lib_name: str = lib_name
         self.layout_ = widgets.QGridLayout(self)
         self.layout_.setAlignment(Qt.AlignTop)
 
@@ -115,14 +126,9 @@ class CardView(widgets.QWidget):
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
-    def _clear(self) -> None:
-        while (child := self.layout_.takeAt(0)) is not None:
-            card = child.widget()
-            card.deleteLater()
-
     def update_view(self, lib_name: Optional[str] = None) -> None:
         self.lib_name = lib_name or self.lib_name
-        self._clear()
+        _clear_layout(self.layout_)
         self._populate()
 
     def change_library(self, book: models.Book) -> int:
@@ -150,12 +156,32 @@ class CardView(widgets.QWidget):
         lib_name = models.find_library(self.home.data, book)
         dialog = dialogs.EditBook(self, book)
         exit_code = dialog.exec()
-        if dialog.save_edits and lib_name is not None:
+        if dialog.save_changes and lib_name is not None:
             new_book = dialog.updated()
             self.home.data = models.update_book(
                 self.home.data, book, new_book, lib_name
             )
             self.update_view(lib_name)
+        return exit_code
+
+    def quote_book(self, book: models.Book) -> int:
+        lib_name = models.find_library(self.home.data, book)
+        dialog = dialogs.QuoteBook(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_changes and lib_name is not None:
+            new_book = models.Book(
+                title=book.title,
+                author=book.author,
+                pages=book.pages,
+                current_page=book.current_page,
+                rating=book.rating,
+                quotes=(*book.quotes, dialog.quote()),
+            )
+            self.home.data = models.update_book(
+                self.home.data, book, new_book, lib_name
+            )
+            self.update_view(lib_name)
+            self.home.update_sidebar()
         return exit_code
 
     def rate_book(self, book: models.Book) -> int:
@@ -196,10 +222,7 @@ class Card(widgets.QFrame):
         self.holder = parent
         self.show_progress = show_progress
         self.show_rating = show_rating
-        self.setSizePolicy(
-            widgets.QSizePolicy.MinimumExpanding,
-            widgets.QSizePolicy.MinimumExpanding,
-        )
+        self.setSizePolicy(CARD_SIZE_POLICY)
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title_layout = widgets.QHBoxLayout()
@@ -237,6 +260,10 @@ class Card(widgets.QFrame):
 
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
+        quote_icon = QIcon(QPixmap(dialogs.ASSETS["quote_icon"]))
+        quote_action = menu.addAction(quote_icon, "Save quote")
+        quote_action.triggered.connect(self.quote_book)
+
         if self.show_rating:
             rating_icon = QIcon(QPixmap(dialogs.ASSETS["star_half"]))
             rating_action = menu.addAction(rating_icon, "Rate")
@@ -268,11 +295,48 @@ class Card(widgets.QFrame):
     def edit_book(self) -> int:
         return self.holder.edit_book(self.book)
 
+    def quote_book(self) -> int:
+        return self.holder.quote_book(self.book)
+
     def rate_book(self) -> int:
         return self.holder.rate_book(self.book)
 
     def update_progress(self) -> int:
         return self.holder.update_progress(self.book)
+
+
+class SideBar(widgets.QScrollArea):
+    def __init__(self, parent: Home) -> None:
+        super().__init__(parent)
+        self.home: Home = parent
+        self.setAlignment(Qt.AlignTop)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setWidgetResizable(True)
+
+        holder = widgets.QWidget(self)
+        self.layout_ = widgets.QVBoxLayout(holder)
+        self.setWidget(holder)
+        self._add_quotes()
+
+    def _add_quotes(self) -> None:
+        self.layout_.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
+        for quote, author in models.list_quotes(self.home.data):
+            card = widgets.QLabel(f'"{quote}" - <b>{author.title()}</b>')
+            self.layout_.addWidget(card)
+            card.setFrameStyle(widgets.QFrame.StyledPanel)
+            card.setSizePolicy(CARD_SIZE_POLICY)
+            card.setTextFormat(Qt.TextFormat.RichText)
+            card.setWordWrap(True)
+
+    def update_(self) -> None:
+        _clear_layout(self.layout_)
+        self._add_quotes()
+
+
+def _clear_layout(layout: widgets.QLayout) -> None:
+    while (child := layout.takeAt(0)) is not None:
+        widget = child.widget()
+        widget.deleteLater()
 
 
 def run_ui(title: str, data: models.Data) -> tuple[models.Data, int]:
