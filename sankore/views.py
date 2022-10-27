@@ -162,8 +162,10 @@ class Card(widgets.QFrame):
         else:
             times_read = len(self.book.reads)
             read_status = widgets.QLabel(
-                "<i>Never read</i>" if times_read == 0
-                else "<i>Read once</i>" if times_read == 1
+                "<i>Never read</i>"
+                if times_read == 0
+                else "<i>Read once</i>"
+                if times_read == 1
                 else f"<i>Read {times_read} times</i>"
             )
             layout.addWidget(read_status, alignment=Qt.AlignLeft)
