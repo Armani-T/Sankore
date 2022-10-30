@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence, TypedDict
-import json
 
 get_today = lambda: date.today().strftime("%d/%m/%Y")
 
@@ -16,7 +14,7 @@ class Book:
     title: str
     author: str
     pages: int
-    rating: int
+    rating: int = 0
     current_run: Optional[Run] = None
     quotes: Sequence[str] = ()
     reads: Sequence[Read] = ()
@@ -31,20 +29,6 @@ class Book:
             "quotes": self.quotes,
             "reads": self.reads,
         }
-
-
-def get_data(data_file: Path) -> Data:
-    try:
-        contents = data_file.read_text("utf8")
-        full_json = json.loads(contents)
-        return tuple(Book(**book_json) for book_json in full_json.get("books", ()))
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return ()
-
-
-def save_data(data_file: Path, new_data: Data) -> None:
-    string = json.dumps({"books": [book.to_dict() for book in new_data]})
-    data_file.write_text(string, "utf8")
 
 
 def find_book(data: Data, target_title: str) -> Optional[Book]:

@@ -79,7 +79,7 @@ class CardView(widgets.QWidget):
     def _populate(self) -> None:
         row, col = 0, 0
         for book in self.home.data:
-            card = Card(self, book, book.current_run is not None, book.rating >= 0)
+            card = Card(self, book)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
@@ -108,9 +108,8 @@ class CardView(widgets.QWidget):
         dialog = dialogs.QuoteBook(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            new_book = models.Book(
-                **book.to_dict(), quotes=(*book.quotes, dialog.quote())
-            )
+            kwargs = book.to_dict() | {"quotes": (*book.quotes, dialog.quote())}
+            new_book = models.Book(**kwargs)
             self.home.data = models.update_book(self.home.data, book, new_book)
             self.update_view()
             self.home.update_sidebar()
@@ -134,23 +133,15 @@ class CardView(widgets.QWidget):
 
 
 class Card(widgets.QFrame):
-    def __init__(
-        self,
-        parent: CardView,
-        book: models.Book,
-        show_progress: bool = False,
-        show_rating: bool = False,
-    ) -> None:
+    def __init__(self, parent: CardView, book: models.Book) -> None:
         super().__init__(parent)
         self.book = book
         self.holder = parent
-        self.show_progress = show_progress
-        self.show_rating = show_rating
         self.setSizePolicy(CARD_SIZE_POLICY)
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title_layout = widgets.QHBoxLayout()
-        title = widgets.QLabel(book.title.title())
+        title = widgets.QLabel(f"<b>{book.title.title()}</b>")
         tool_button = widgets.QToolButton(self)
         tool_button.setIcon(QIcon(QPixmap(dialogs.ASSETS["menu_icon"])))
         tool_button.setPopupMode(widgets.QToolButton.InstantPopup)
@@ -162,19 +153,20 @@ class Card(widgets.QFrame):
 
         author = widgets.QLabel(book.author.title())
         layout.addWidget(author, alignment=Qt.AlignLeft)
-        pages = widgets.QLabel(f"{book.pages} Pages")
-        layout.addWidget(pages, alignment=Qt.AlignLeft)
-        read_status = (
-            "Currently reading" if self.book.current_run is not None
-            else f"Read {len(self.book.reads)} times" if self.book.reads
-            else "Never read"
-        )
-        layout.addWidget(
-            widgets.QLabel(f"<i>{read_status}</i>"),
-            alignment=Qt.AlignLeft,
-        )
 
-        if self.show_rating:
+        if book.current_run is not None:
+            bar = widgets.QProgressBar(self)
+            bar.setMaximum(book.pages)
+            bar.setValue(dialogs.normalise(book.current_run["page"], book.pages))
+            layout.addWidget(bar)
+        elif not self.book.reads:
+            read_status = widgets.QLabel("<i>Never read</i>")
+            layout.addWidget(read_status, alignment=Qt.AlignLeft)
+        elif (times_read := len(self.book.reads)) > 1:
+            read_status = widgets.QLabel(f"<i>Read {times_read} times</i>")
+            layout.addWidget(read_status, alignment=Qt.AlignLeft)
+
+        if self.book.reads and self.book.rating
             empty_star = QPixmap(dialogs.ASSETS["star_outline"])
             filled_star = QPixmap(dialogs.ASSETS["star_filled"])
             rating_bar = widgets.QWidget(self)
@@ -185,11 +177,6 @@ class Card(widgets.QFrame):
                 label.setPixmap(empty_star if index > stars else filled_star)
                 bar_layout.addWidget(label)
             layout.addWidget(rating_bar)
-        if self.show_progress and book.current_run is not None:
-            bar = widgets.QProgressBar(self)
-            bar.setMaximum(book.pages)
-            bar.setValue(dialogs.normalise(book.current_run["page"], book.pages))
-            layout.addWidget(bar)
 
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
@@ -197,15 +184,18 @@ class Card(widgets.QFrame):
         quote_action = menu.addAction(quote_icon, "Save quote")
         quote_action.triggered.connect(self.quote_book)
 
-        if self.show_rating:
+        add_separator = False
+        if self.book.rating != 0:
+            add_separator = True
             rating_icon = QIcon(QPixmap(dialogs.ASSETS["star_half"]))
             rating_action = menu.addAction(rating_icon, "Rate")
             rating_action.triggered.connect(self.rate_book)
-        if self.show_progress:
+        if self.book.current_run is not None:
+            add_separator = True
             update_icon = QIcon(QPixmap(dialogs.ASSETS["bookmark_icon"]))
             update_action = menu.addAction(update_icon, "Update reading progress")
             update_action.triggered.connect(self.update_progress)
-        if self.show_rating or self.show_progress:
+        if add_separator:
             menu.addSeparator()
 
         edit_icon = QIcon(QPixmap(dialogs.ASSETS["edit_icon"]))

@@ -162,12 +162,15 @@ class UpdateProgress(widgets.QDialog):
         )
         if self.is_finished():
             new_read: models.Read = {"start": start, "end": models.get_today()}
-            reads = (new_read, *self.book.reads)
-            return models.Book(**self.book.to_dict(), current_run=None, reads=reads)
-        return models.Book(
-            **self.book.to_dict(),
-            current_run={"start": start, "page": self.slider.value()},
-        )
+            kwargs = self.book.to_dict() | {
+                "current_run": None,
+                "reads": (new_read, *self.book.reads),
+            }
+        else:
+            kwargs = self.book.to_dict() | {
+                "current_run": {"start": start, "page": self.slider.value()}
+            }
+        return models.Book(**kwargs)
 
 
 class AreYouSure(widgets.QDialog):
@@ -247,7 +250,8 @@ class RateBook(widgets.QDialog):
             star.setIcon(empty_star if index > self.current_rating else filled_star)
 
     def updated(self):
-        return models.Book(**self.book.to_dict(), rating=self.current_rating)
+        kwargs = self.book.to_dict() | {"rating": self.current_rating}
+        return models.Book(**kwargs)
 
 
 class QuoteBook(widgets.QDialog):
@@ -258,15 +262,12 @@ class QuoteBook(widgets.QDialog):
 
         self.setWindowTitle(f'Quote "{book.title.title()}" by {book.author.title()}')
         self.quote_text = widgets.QPlainTextEdit(self)
-        self.page_edit = widgets.QLineEdit(self)
-        self.page_edit.setValidator(NUMBER_VALIDATOR)
         save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
         save_button.accepted.connect(self.accept)
 
-        layout = widgets.QFormLayout(self)
-        layout.addRow("Quote:", self.quote_text)
-        layout.addRow("On page:", self.page_edit)
-        layout.addRow(save_button)
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(self.quote_text)
+        layout.addWidget(save_button)
 
     def accept(self) -> None:
         self.save_changes = True
