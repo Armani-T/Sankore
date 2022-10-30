@@ -141,7 +141,7 @@ class Card(widgets.QFrame):
         self.setFrameStyle(widgets.QFrame.StyledPanel)
         layout = widgets.QVBoxLayout(self)
         title_layout = widgets.QHBoxLayout()
-        title = widgets.QLabel(book.title.title())
+        title = widgets.QLabel(f"<b>{book.title.title()}</b>")
         tool_button = widgets.QToolButton(self)
         tool_button.setIcon(QIcon(QPixmap(dialogs.ASSETS["menu_icon"])))
         tool_button.setPopupMode(widgets.QToolButton.InstantPopup)
@@ -159,18 +159,14 @@ class Card(widgets.QFrame):
             bar.setMaximum(book.pages)
             bar.setValue(dialogs.normalise(book.current_run["page"], book.pages))
             layout.addWidget(bar)
-        else:
-            times_read = len(self.book.reads)
-            read_status = widgets.QLabel(
-                "<i>Never read</i>"
-                if times_read == 0
-                else "<i>Read once</i>"
-                if times_read == 1
-                else f"<i>Read {times_read} times</i>"
-            )
+        elif not self.book.reads:
+            read_status = widgets.QLabel("<i>Never read</i>")
+            layout.addWidget(read_status, alignment=Qt.AlignLeft)
+        elif (times_read := len(self.book.reads)) > 1:
+            read_status = widgets.QLabel(f"<i>Read {times_read} times</i>")
             layout.addWidget(read_status, alignment=Qt.AlignLeft)
 
-        if self.book.rating != 0:
+        if self.book.reads and self.book.rating
             empty_star = QPixmap(dialogs.ASSETS["star_outline"])
             filled_star = QPixmap(dialogs.ASSETS["star_filled"])
             rating_bar = widgets.QWidget(self)
