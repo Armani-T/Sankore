@@ -89,63 +89,57 @@ class CardView(widgets.QWidget):
         _clear_layout(self.layout_)
         self._populate()
 
-    def delete_book(self, book: models.Book) -> int:
+    def delete_book(self, book: models.Book) -> None:
         dialog = dialogs.AreYouSure(self, book.title)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.remove_book(self.home.data, book)
             self.update_view()
-        return exit_code
 
-    def edit_book(self, book: models.Book) -> int:
+    def edit_book(self, book: models.Book) -> None:
         dialog = dialogs.EditBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
-    def log_completed(self, book: models.Book) -> int:
+    def log_completed(self, book: models.Book) -> None:
         dialog = dialogs.LogRead(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return 0
 
-    def quote_book(self, book: models.Book) -> int:
+    def quote_book(self, book: models.Book) -> None:
         dialog = dialogs.QuoteBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             kwargs = book.to_dict() | {"quotes": (*book.quotes, dialog.quote())}
-            new_book = models.Book(**kwargs)
+            new_book = models.Book(**kwargs)  # type: ignore
             self.home.data = models.update_book(self.home.data, book, new_book)
             self.update_view()
             self.home.update_sidebar()
-        return exit_code
 
-    def rate_book(self, book: models.Book) -> int:
+    def rate_book(self, book: models.Book) -> None:
         dialog = dialogs.RateBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
-    def start_reading(self, book: models.Book) -> int:
+    def start_reading(self, book: models.Book) -> None:
         new_read = {"start": models.get_today(), "page": 0}
         kwargs = book.to_dict() | {"current_run": new_read}
-        self.home.data = models.update_book(self.home.data, book, models.Book(**kwargs))
+        new_book = models.Book(**kwargs)  # type: ignore
+        self.home.data = models.update_book(self.home.data, book, new_book)
         self.update_view()
-        return 0
 
-    def update_progress(self, book: models.Book) -> int:
+    def update_progress(self, book: models.Book) -> None:
         dialog = dialogs.UpdateProgress(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
 
 class Card(widgets.QFrame):
@@ -218,26 +212,26 @@ class Card(widgets.QFrame):
         delete_action.triggered.connect(self.delete_book)
         return menu
 
-    def delete_book(self) -> int:
-        return self.holder.delete_book(self.book)
+    def delete_book(self) -> None:
+        self.holder.delete_book(self.book)
 
-    def edit_book(self) -> int:
-        return self.holder.edit_book(self.book)
+    def edit_book(self) -> None:
+        self.holder.edit_book(self.book)
 
-    def log_completed(self) -> int:
-        return self.holder.log_completed(self.book)
+    def log_completed(self) -> None:
+        self.holder.log_completed(self.book)
 
-    def quote_book(self) -> int:
-        return self.holder.quote_book(self.book)
+    def quote_book(self) -> None:
+        self.holder.quote_book(self.book)
 
-    def rate_book(self) -> int:
-        return self.holder.rate_book(self.book)
+    def rate_book(self) -> None:
+        self.holder.rate_book(self.book)
 
-    def start_reading(self) -> int:
-        return self.holder.start_reading(self.book)
+    def start_reading(self) -> None:
+        self.holder.start_reading(self.book)
 
-    def update_progress(self) -> int:
-        return self.holder.update_progress(self.book)
+    def update_progress(self) -> None:
+        self.holder.update_progress(self.book)
 
 
 class SideBar(widgets.QScrollArea):

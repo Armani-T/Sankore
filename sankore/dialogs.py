@@ -170,7 +170,7 @@ class UpdateProgress(widgets.QDialog):
             kwargs = self.book.to_dict() | {
                 "current_run": {"start": start, "page": self.slider.value()}
             }
-        return models.Book(**kwargs)
+        return models.Book(**kwargs)  # type: ignore
 
 
 class AreYouSure(widgets.QDialog):
