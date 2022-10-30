@@ -9,6 +9,8 @@ CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
 )
 
+get_icon = lambda icon_name: QIcon(QPixmap(dialogs.ASSETS[icon_name]))
+
 
 class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
@@ -180,29 +182,23 @@ class Card(widgets.QFrame):
 
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
-        quote_icon = QIcon(QPixmap(dialogs.ASSETS["quote_icon"]))
-        quote_action = menu.addAction(quote_icon, "Save quote")
+        quote_action = menu.addAction(get_icon("quote_icon"), "Save quote")
         quote_action.triggered.connect(self.quote_book)
-
-        add_separator = False
-        if self.book.rating != 0:
-            add_separator = True
-            rating_icon = QIcon(QPixmap(dialogs.ASSETS["star_half"]))
-            rating_action = menu.addAction(rating_icon, "Rate")
-            rating_action.triggered.connect(self.rate_book)
         if self.book.current_run is not None:
-            add_separator = True
-            update_icon = QIcon(QPixmap(dialogs.ASSETS["bookmark_icon"]))
-            update_action = menu.addAction(update_icon, "Update reading progress")
+            update_action = menu.addAction(get_icon("bookmark_icon"), "Update position")
             update_action.triggered.connect(self.update_progress)
-        if add_separator:
-            menu.addSeparator()
+        elif self.book.current_run is None:
+            start_action = menu.addAction(get_icon("shelf_icon"), "Start reading")
+            start_action.triggered.connect(self.start_reading)
 
-        edit_icon = QIcon(QPixmap(dialogs.ASSETS["edit_icon"]))
-        edit_action = menu.addAction(edit_icon, "Edit")
+        if self.book.rating != 0:
+            rating_action = menu.addAction(get_icon("star_half"), "Rate")
+            rating_action.triggered.connect(self.rate_book)
+
+        menu.addSeparator()
+        edit_action = menu.addAction(get_icon("edit_icon"), "Edit")
         edit_action.triggered.connect(self.edit_book)
-        delete_icon = QIcon(QPixmap(dialogs.ASSETS["trash_icon"]))
-        delete_action = menu.addAction(delete_icon, "Delete")
+        delete_action = menu.addAction(get_icon("trash_icon"), "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
 
@@ -217,6 +213,9 @@ class Card(widgets.QFrame):
 
     def rate_book(self) -> int:
         return self.holder.rate_book(self.book)
+
+    def start_reading(self) -> int:
+        return self.holder.start_reading(self.book)
 
     def update_progress(self) -> int:
         return self.holder.update_progress(self.book)
