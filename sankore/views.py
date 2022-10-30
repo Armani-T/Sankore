@@ -125,6 +125,13 @@ class CardView(widgets.QWidget):
             self.update_view()
         return exit_code
 
+    def start_reading(self, book: models.Book) -> int:
+        new_read = {"start": models.get_today(), "page": 0}
+        kwargs = book.to_dict() | {"current_run": new_read}
+        self.home.data = models.update_book(self.home.data, book, models.Book(**kwargs))
+        self.update_view()
+        return 0
+
     def update_progress(self, book: models.Book) -> int:
         dialog = dialogs.UpdateProgress(self, book)
         exit_code = dialog.exec()
