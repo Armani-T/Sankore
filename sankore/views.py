@@ -101,10 +101,17 @@ class CardView(widgets.QWidget):
         dialog = dialogs.EditBook(self, book)
         exit_code = dialog.exec()
         if dialog.save_changes:
-            new_book = dialog.updated()
-            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
         return exit_code
+
+    def log_completed(self, book: models.Book) -> int:
+        dialog = dialogs.LogRead(self, book)
+        exit_code = dialog.exec()
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
+        return 0
 
     def quote_book(self, book: models.Book) -> int:
         dialog = dialogs.QuoteBook(self, book)
@@ -203,6 +210,8 @@ class Card(widgets.QFrame):
             rating_action.triggered.connect(self.rate_book)
 
         menu.addSeparator()
+        log_action = menu.addAction(get_icon("shelf_icon"), "Log completed read")
+        log_action.triggered.connect(self.log_completed)
         edit_action = menu.addAction(get_icon("edit_icon"), "Edit")
         edit_action.triggered.connect(self.edit_book)
         delete_action = menu.addAction(get_icon("trash_icon"), "Delete")
@@ -214,6 +223,9 @@ class Card(widgets.QFrame):
 
     def edit_book(self) -> int:
         return self.holder.edit_book(self.book)
+
+    def log_completed(self) -> int:
+        return self.holder.log_completed(self.book)
 
     def quote_book(self) -> int:
         return self.holder.quote_book(self.book)
