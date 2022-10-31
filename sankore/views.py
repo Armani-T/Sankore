@@ -166,7 +166,7 @@ class Card(widgets.QFrame):
             read_status = widgets.QLabel(f"<i>Read {times_read} times</i>")
             layout.addWidget(read_status, alignment=Qt.AlignLeft)
 
-        if self.book.reads and self.book.rating
+        if self.book.reads and self.book.rating:
             empty_star = QPixmap(dialogs.ASSETS["star_outline"])
             filled_star = QPixmap(dialogs.ASSETS["star_filled"])
             rating_bar = widgets.QWidget(self)
