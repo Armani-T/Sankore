@@ -14,7 +14,7 @@ I built it as a replacement to GoodReads since that requires a network connectio
 - [X] A rating system for finished books
 - [X] A quotation store
 - [X] Multiple reads through a book
-- [ ] Use a database for storage with an option for JSON exporting
+- [ ] Use a database for storage
 - [ ] A tagging system
 - [ ] A search bar with filters
 - [ ] A reading list with priority sorting
@@ -51,9 +51,9 @@ To get the app running, navigate to the `Sankore/` folder and run `python3 sanko
 
 ![Adding a new book](assets/new-book.png)
 
-![Adding a new library](assets/new-library.png)
+![Updating my reading progress](assets/update.png)
 
-![Updating my reading position](assets/update.png)
+![Rating a book](assets/rate.png)
 
 ## Contributing
 
