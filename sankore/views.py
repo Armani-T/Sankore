@@ -80,7 +80,7 @@ class CardView(widgets.QWidget):
 
     def _populate(self) -> None:
         row, col = 0, 0
-        for book in self.home.data:
+        for book in sorted(self.home.data, key=lambda book: book.title):
             card = Card(self, book)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
