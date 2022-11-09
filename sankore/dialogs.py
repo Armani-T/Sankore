@@ -4,7 +4,7 @@ from functools import partial
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QRegularExpression, Qt
+from PySide6.QtCore import QCalendar, QDate, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
@@ -275,3 +275,53 @@ class QuoteBook(widgets.QDialog):
 
     def quote(self) -> str:
         return self.quote_text.toPlainText().strip()
+
+
+class LogRead(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+        self.book = book
+
+        self.setWindowTitle(f'Reading log for "{book.title.title()}"')
+        self.start_picker = widgets.QCalendarWidget(self)
+        self.start_picker.setMaximumDate(QDate.currentDate())
+        self.start_picker.selectionChanged.connect(self._restrict_date_range)
+        self.start_picker.setVerticalHeaderFormat(
+            widgets.QCalendarWidget.NoVerticalHeader
+        )
+
+        self.end_picker = widgets.QCalendarWidget(self)
+        self.end_picker.setMaximumDate(QDate.currentDate())
+        self.end_picker.setVerticalHeaderFormat(
+            widgets.QCalendarWidget.NoVerticalHeader
+        )
+
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(widgets.QLabel("<h1>Start</h1>", alignment=Qt.AlignCenter))
+        layout.addWidget(self.start_picker)
+        layout.addWidget(widgets.QLabel("<h1>End</h1>", alignment=Qt.AlignCenter))
+        layout.addWidget(self.end_picker)
+        layout.addWidget(save_button)
+
+    def _restrict_date_range(self) -> None:
+        self.end_picker.setMinimumDate(self.start_picker.selectedDate())
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def updated(self) -> str:
+        calendar = QCalendar(QCalendar.System.Gregorian)
+        start = self.start_picker.selectedDate()
+        end = self.end_picker.selectedDate()
+        start_date, end_date = (
+            f"{start.day(calendar)}/{start.month(calendar)}/{start.year(calendar)}",
+            f"{end.day(calendar)}/{end.month(calendar)}/{end.year(calendar)}",
+        )
+        kwargs = self.book.to_dict()
+        kwargs["reads"] = ({"start": start_date, "end": end_date}, *kwargs["reads"])
+        return Book(**kwargs)  # type: ignore
