@@ -9,6 +9,8 @@ CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
 )
 
+get_icon = lambda icon_name: QIcon(QPixmap(dialogs.ASSETS[icon_name]))
+
 
 class Home(widgets.QMainWindow):
     def __init__(self, title: str, data: models.Data) -> None:
@@ -78,7 +80,7 @@ class CardView(widgets.QWidget):
 
     def _populate(self) -> None:
         row, col = 0, 0
-        for book in self.home.data:
+        for book in sorted(self.home.data, key=lambda book: book.title):
             card = Card(self, book)
             self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
@@ -87,49 +89,57 @@ class CardView(widgets.QWidget):
         _clear_layout(self.layout_)
         self._populate()
 
-    def delete_book(self, book: models.Book) -> int:
+    def delete_book(self, book: models.Book) -> None:
         dialog = dialogs.AreYouSure(self, book.title)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.remove_book(self.home.data, book)
             self.update_view()
-        return exit_code
 
-    def edit_book(self, book: models.Book) -> int:
+    def edit_book(self, book: models.Book) -> None:
         dialog = dialogs.EditBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
-            new_book = dialog.updated()
-            self.home.data = models.update_book(self.home.data, book, new_book)
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
-    def quote_book(self, book: models.Book) -> int:
+    def log_completed(self, book: models.Book) -> None:
+        dialog = dialogs.LogRead(self, book)
+        dialog.exec()
+        if dialog.save_changes:
+            self.home.data = models.update_book(self.home.data, book, dialog.updated())
+            self.update_view()
+
+    def quote_book(self, book: models.Book) -> None:
         dialog = dialogs.QuoteBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             kwargs = book.to_dict() | {"quotes": (*book.quotes, dialog.quote())}
-            new_book = models.Book(**kwargs)
+            new_book = models.Book(**kwargs)  # type: ignore
             self.home.data = models.update_book(self.home.data, book, new_book)
             self.update_view()
             self.home.update_sidebar()
-        return exit_code
 
-    def rate_book(self, book: models.Book) -> int:
+    def rate_book(self, book: models.Book) -> None:
         dialog = dialogs.RateBook(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
-    def update_progress(self, book: models.Book) -> int:
+    def start_reading(self, book: models.Book) -> None:
+        new_read = {"start": models.get_today(), "page": 0}
+        kwargs = book.to_dict() | {"current_run": new_read}
+        new_book = models.Book(**kwargs)  # type: ignore
+        self.home.data = models.update_book(self.home.data, book, new_book)
+        self.update_view()
+
+    def update_progress(self, book: models.Book) -> None:
         dialog = dialogs.UpdateProgress(self, book)
-        exit_code = dialog.exec()
+        dialog.exec()
         if dialog.save_changes:
             self.home.data = models.update_book(self.home.data, book, dialog.updated())
             self.update_view()
-        return exit_code
 
 
 class Card(widgets.QFrame):
@@ -180,46 +190,48 @@ class Card(widgets.QFrame):
 
     def _setup_menu(self) -> widgets.QMenu:
         menu = widgets.QMenu(self)
-        quote_icon = QIcon(QPixmap(dialogs.ASSETS["quote_icon"]))
-        quote_action = menu.addAction(quote_icon, "Save quote")
+        quote_action = menu.addAction(get_icon("quote_icon"), "Save quote")
         quote_action.triggered.connect(self.quote_book)
-
-        add_separator = False
-        if self.book.rating != 0:
-            add_separator = True
-            rating_icon = QIcon(QPixmap(dialogs.ASSETS["star_half"]))
-            rating_action = menu.addAction(rating_icon, "Rate")
-            rating_action.triggered.connect(self.rate_book)
         if self.book.current_run is not None:
-            add_separator = True
-            update_icon = QIcon(QPixmap(dialogs.ASSETS["bookmark_icon"]))
-            update_action = menu.addAction(update_icon, "Update reading progress")
+            update_action = menu.addAction(get_icon("bookmark_icon"), "Update position")
             update_action.triggered.connect(self.update_progress)
-        if add_separator:
-            menu.addSeparator()
+        elif self.book.current_run is None:
+            start_action = menu.addAction(get_icon("shelf_icon"), "Start reading")
+            start_action.triggered.connect(self.start_reading)
 
-        edit_icon = QIcon(QPixmap(dialogs.ASSETS["edit_icon"]))
-        edit_action = menu.addAction(edit_icon, "Edit")
+        if self.book.rating != 0:
+            rating_action = menu.addAction(get_icon("star_half"), "Rate")
+            rating_action.triggered.connect(self.rate_book)
+
+        menu.addSeparator()
+        log_action = menu.addAction(get_icon("shelf_icon"), "Log completed read")
+        log_action.triggered.connect(self.log_completed)
+        edit_action = menu.addAction(get_icon("edit_icon"), "Edit")
         edit_action.triggered.connect(self.edit_book)
-        delete_icon = QIcon(QPixmap(dialogs.ASSETS["trash_icon"]))
-        delete_action = menu.addAction(delete_icon, "Delete")
+        delete_action = menu.addAction(get_icon("trash_icon"), "Delete")
         delete_action.triggered.connect(self.delete_book)
         return menu
 
-    def delete_book(self) -> int:
-        return self.holder.delete_book(self.book)
+    def delete_book(self) -> None:
+        self.holder.delete_book(self.book)
 
-    def edit_book(self) -> int:
-        return self.holder.edit_book(self.book)
+    def edit_book(self) -> None:
+        self.holder.edit_book(self.book)
 
-    def quote_book(self) -> int:
-        return self.holder.quote_book(self.book)
+    def log_completed(self) -> None:
+        self.holder.log_completed(self.book)
 
-    def rate_book(self) -> int:
-        return self.holder.rate_book(self.book)
+    def quote_book(self) -> None:
+        self.holder.quote_book(self.book)
 
-    def update_progress(self) -> int:
-        return self.holder.update_progress(self.book)
+    def rate_book(self) -> None:
+        self.holder.rate_book(self.book)
+
+    def start_reading(self) -> None:
+        self.holder.start_reading(self.book)
+
+    def update_progress(self) -> None:
+        self.holder.update_progress(self.book)
 
 
 class SideBar(widgets.QScrollArea):

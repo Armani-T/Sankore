@@ -4,11 +4,11 @@ from functools import partial
 from pathlib import Path
 from typing import Optional
 
-from PySide6.QtCore import QRegularExpression, Qt
+from PySide6.QtCore import QCalendar, QDate, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
-import models
+from models import Book, get_today
 
 normalise = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
 
@@ -53,8 +53,8 @@ class NewBook(widgets.QDialog):
         self.save_changes = bool(book.title and book.author and book.pages > 0)
         return super().done(0)
 
-    def new_book(self) -> models.Book:
-        return models.Book(
+    def new_book(self) -> Book:
+        return Book(
             title=self.title_edit.text().strip(),
             author=self.author_edit.text().strip(),
             pages=int(self.page_edit.text() or "1"),
@@ -63,7 +63,7 @@ class NewBook(widgets.QDialog):
 
 
 class EditBook(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
         super().__init__(parent)
         self.save_changes = False
         self.book = book
@@ -90,17 +90,17 @@ class EditBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def updated(self) -> models.Book:
+    def updated(self) -> Book:
         kwargs = self.book.to_dict() | {
             "title": self.title_edit.text(),
             "author": self.author_edit.text(),
             "pages": int(self.page_edit.text()),
         }
-        return models.Book(**kwargs)  # type: ignore
+        return Book(**kwargs)  # type: ignore
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
         super().__init__(parent)
         self.save_changes = False
         self.book = book
@@ -154,14 +154,14 @@ class UpdateProgress(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def updated(self) -> models.Book:
+    def updated(self) -> Book:
         start = (
-            models.get_today()
+            get_today()
             if self.book.current_run is None
             else self.book.current_run["start"]
         )
         if self.is_finished():
-            new_read: models.Read = {"start": start, "end": models.get_today()}
+            new_read = {"start": start, "end": get_today()}
             kwargs = self.book.to_dict() | {
                 "current_run": None,
                 "reads": (new_read, *self.book.reads),
@@ -170,7 +170,7 @@ class UpdateProgress(widgets.QDialog):
             kwargs = self.book.to_dict() | {
                 "current_run": {"start": start, "page": self.slider.value()}
             }
-        return models.Book(**kwargs)
+        return Book(**kwargs)  # type: ignore
 
 
 class AreYouSure(widgets.QDialog):
@@ -202,7 +202,7 @@ class AreYouSure(widgets.QDialog):
 
 
 class RateBook(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
         super().__init__(parent)
         self.save_changes = False
         self.book = book
@@ -251,11 +251,11 @@ class RateBook(widgets.QDialog):
 
     def updated(self):
         kwargs = self.book.to_dict() | {"rating": self.current_rating}
-        return models.Book(**kwargs)
+        return Book(**kwargs)
 
 
 class QuoteBook(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, book: models.Book) -> None:
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
         super().__init__(parent)
         self.save_changes = False
         self.book = book
@@ -275,3 +275,53 @@ class QuoteBook(widgets.QDialog):
 
     def quote(self) -> str:
         return self.quote_text.toPlainText().strip()
+
+
+class LogRead(widgets.QDialog):
+    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
+        super().__init__(parent)
+        self.save_changes = False
+        self.book = book
+
+        self.setWindowTitle(f'Reading log for "{book.title.title()}"')
+        self.start_picker = widgets.QCalendarWidget(self)
+        self.start_picker.setMaximumDate(QDate.currentDate())
+        self.start_picker.selectionChanged.connect(self._restrict_date_range)
+        self.start_picker.setVerticalHeaderFormat(
+            widgets.QCalendarWidget.NoVerticalHeader
+        )
+
+        self.end_picker = widgets.QCalendarWidget(self)
+        self.end_picker.setMaximumDate(QDate.currentDate())
+        self.end_picker.setVerticalHeaderFormat(
+            widgets.QCalendarWidget.NoVerticalHeader
+        )
+
+        save_button = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
+        save_button.accepted.connect(self.accept)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(widgets.QLabel("<h1>Start</h1>", alignment=Qt.AlignCenter))
+        layout.addWidget(self.start_picker)
+        layout.addWidget(widgets.QLabel("<h1>End</h1>", alignment=Qt.AlignCenter))
+        layout.addWidget(self.end_picker)
+        layout.addWidget(save_button)
+
+    def _restrict_date_range(self) -> None:
+        self.end_picker.setMinimumDate(self.start_picker.selectedDate())
+
+    def accept(self) -> None:
+        self.save_changes = True
+        return super().done(0)
+
+    def updated(self) -> str:
+        calendar = QCalendar(QCalendar.System.Gregorian)
+        start = self.start_picker.selectedDate()
+        end = self.end_picker.selectedDate()
+        start_date, end_date = (
+            f"{start.day(calendar)}/{start.month(calendar)}/{start.year(calendar)}",
+            f"{end.day(calendar)}/{end.month(calendar)}/{end.year(calendar)}",
+        )
+        kwargs = self.book.to_dict()
+        kwargs["reads"] = ({"start": start_date, "end": end_date}, *kwargs["reads"])
+        return Book(**kwargs)  # type: ignore
