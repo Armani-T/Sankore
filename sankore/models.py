@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
+from sqlite3 import connect, Cursor
 from typing import Any, Iterable, Optional, Sequence, TypedDict
 
-get_today = lambda: date.today().strftime("%d/%m/%Y")
+INIT_DB_SCRIPT = Path(__file__) / "../../assets/init.sql"
 
 Data = Sequence["Book"]
 Run = TypedDict("Run", {"start": Optional[str], "page": int})
 Read = TypedDict("Read", {"start": Optional[str], "end": Optional[str]})
+
+get_today = lambda: date.today().strftime("%d/%m/%Y")
 
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
@@ -54,3 +58,16 @@ def update_book(data: Data, old_book: Book, new_book: Book) -> Data:
 
 def remove_book(data: Data, target_book: Book) -> Data:
     return tuple(book for book in data if book != target_book)
+
+
+def get_cursor(db_file: Path) -> Cursor:
+    initialise = not db_file.exists()
+    db_file.touch(exist_ok=True)
+    connection = connect(str(db_file))
+    if initialise:
+        script_text = INIT_DB_SCRIPT.read_text("utf8")
+        init_cursor = connection.cursor()
+        init_cursor.executescript(script_text)
+        connection.commit()
+        init_cursor.close()
+    return connection.cursor()
