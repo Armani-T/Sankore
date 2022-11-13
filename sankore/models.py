@@ -34,30 +34,8 @@ class Book:
             "reads": self.reads,
         }
 
-
-def find_book(data: Data, target_title: str) -> Optional[Book]:
-    for book in data:
-        if book.title == target_title:
-            return book
-    return None
-
-
-def insert_book(data: Data, new_book: Book) -> Data:
-    return (new_book, *data)
-
-
-def list_quotes(data: Data) -> Iterable[tuple[str, str]]:
-    for book in data:
-        for quote in book.quotes:
-            yield quote, book.author
-
-
-def update_book(data: Data, old_book: Book, new_book: Book) -> Data:
-    return (new_book, *remove_book(data, old_book))
-
-
-def remove_book(data: Data, target_book: Book) -> Data:
-    return tuple(book for book in data if book != target_book)
+    def to_tuple(self) -> tuple[str, str, int, int]:
+        return (self.title, self.author, self.pages, self.rating)
 
 
 def get_cursor(db_file: Path) -> Cursor:
@@ -71,3 +49,36 @@ def get_cursor(db_file: Path) -> Cursor:
         connection.commit()
         init_cursor.close()
     return connection.cursor()
+
+
+def find_book(cursor: Cursor, target_title: str) -> Optional[Book]:
+    cursor.execute("SELECT * FROM books WHERE title = ?", (target_title,))
+    book_info = cursor.fetchone()
+    return None if book_info is None else Book(*book_info)
+
+
+def insert_book(cursor: Cursor, new_book: Book) -> None:
+    cursor.execute("INSERT INTO books VALUES (?, ?, ?, ?)", new_book.to_tuple())
+    cursor.connection.commit()
+
+
+def list_quotes(cursor: Cursor) -> Iterable[tuple[str, str]]:
+    cursor.execute("SELECT (text_, author) FROM quotes")
+    quote: Optional[tuple[str, str]]
+    quote = cursor.fetchone()
+    while quote is not None:
+        yield quote
+        quote = cursor.fetchone()
+
+
+def remove_book(cursor: Cursor, book: Book) -> Data:
+    cursor.execute("DELETE FROM books WHERE title = ?", (book.title,))
+    cursor.connection.commit()
+
+
+def update_book(cursor: Cursor, old_book: Book, new_book: Book) -> None:
+    cursor.execute(
+        "UPDATE books SET title = ?, author = ?, pages = ? WHERE title = ?",
+        (new_book.title, new_book.author, new_book.pages, old_book.title),
+    )
+    cursor.connection.commit()
