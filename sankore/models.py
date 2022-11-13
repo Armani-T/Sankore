@@ -19,19 +19,31 @@ class Book:
     author: str
     pages: int
     rating: int = 0
-    current_run: Optional[Run] = None
-    quotes: Sequence[str] = ()
-    reads: Sequence[Read] = ()
+
+    def current_run(self, cursor: Cursor) -> Optional[Run]:
+        run_info = cursor.execute(
+            "SELECT (start, page) FROM ongoing_reads WHERE title = ?",
+            (self.title,),
+        ).fetchone()
+        return (
+            {"start": run_info[0], "page": run_info[1]}
+            if run_info is not None
+            else None
+        )
+
+    def reads(self, cursor: Cursor) -> Sequence[Read]:
+        cursor.execute(
+            "SELECT (start, end_) FROM finished_reads WHERE book_title = ?",
+            (self.title,),
+        )
+        return [{"start": line[0], "end": line[1]} for line in cursor.fetchall()]
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "author": self.author,
             "pages": self.pages,
-            "current_run": self.current_run,
             "rating": self.rating,
-            "quotes": self.quotes,
-            "reads": self.reads,
         }
 
     def to_tuple(self) -> tuple[str, str, int, int]:
