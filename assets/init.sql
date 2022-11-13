@@ -9,12 +9,9 @@ CREATE TABLE books (
 
 CREATE TABLE quotes (
   text_ TEXT NOT NULL,
-  book_title TEXT NOT NULL,
+  author TEXT NOT NULL,
 
-  PRIMARY KEY (text_, book_title),
-  FOREIGN KEY (book_title) REFERENCES books (title)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  PRIMARY KEY (text_, author)
 );
 
 CREATE TABLE finished_reads (
