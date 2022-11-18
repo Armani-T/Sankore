@@ -1,25 +1,21 @@
 CREATE TABLE books (
-  title TEXT NOT NULL,
+  title TEXT PRIMARY KEY,
   author TEXT NOT NULL,
   pages INTEGER NOT NULL,
-  rating INTEGER DEFAULT 1,
-
-  PRIMARY KEY (title, author)
+  rating INTEGER DEFAULT null
 );
 
 CREATE TABLE quotes (
-  text_ TEXT NOT NULL,
-  author TEXT NOT NULL,
-
-  PRIMARY KEY (text_, author)
+  text_ TEXT PRIMARY KEY,
+  author TEXT NOT NULL
 );
 
 CREATE TABLE finished_reads (
+  book_title TEXT NOT NULL,
   start TEXT,
   end_ TEXT,
-  book_title TEXT NOT NULL,
 
-  PRIMARY KEY (start, end_, book_title),
+  PRIMARY KEY (book_title, start, end_),
   FOREIGN KEY (book_title) REFERENCES books (title)
     ON DELETE CASCADE
     ON UPDATE CASCADE
