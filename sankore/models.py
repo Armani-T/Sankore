@@ -50,23 +50,13 @@ class Book:
         return (self.title, self.author, self.pages, self.rating)
 
 
-def get_cursor(db_file: Path) -> Cursor:
-    initialise = not db_file.exists()
-    db_file.touch(exist_ok=True)
-    connection = connect(str(db_file))
-    if initialise:
-        script_text = INIT_DB_SCRIPT.read_text("utf8")
-        init_cursor = connection.cursor()
-        init_cursor.executescript(script_text)
-        connection.commit()
-        init_cursor.close()
-    return connection.cursor()
-
-
 def find_book(cursor: Cursor, target_title: str) -> Optional[Book]:
     cursor.execute("SELECT * FROM books WHERE title = ?", (target_title,))
     book_info = cursor.fetchone()
-    return None if book_info is None else Book(*book_info)
+    if book_info is not None:
+        title, author, pages, rating = book_info
+        return Book(title=title, author=author, pages=pages, rating=rating)
+    return None
 
 
 def insert_book(cursor: Cursor, new_book: Book) -> None:
@@ -83,7 +73,7 @@ def list_quotes(cursor: Cursor) -> Iterable[tuple[str, str]]:
         quote = cursor.fetchone()
 
 
-def remove_book(cursor: Cursor, book: Book) -> Data:
+def remove_book(cursor: Cursor, book: Book) -> None:
     cursor.execute("DELETE FROM books WHERE title = ?", (book.title,))
     cursor.connection.commit()
 

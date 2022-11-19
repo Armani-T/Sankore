@@ -1,12 +1,26 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from sqlite3 import connect, Connection
 from typing import NoReturn
 
-from models import get_cursor
 from views import run_ui
 
 APP_NAME = "sankore"  # NOTE: The app name should always be in lowercase.
 DB_FILE = Path(__file__).joinpath(f"../../{APP_NAME}.sqlite3").resolve()
+INIT_DB_SCRIPT = Path(__file__) / "../../assets/init.sql"
+
+
+def get_cursor(db_file: Path) -> Connection:
+    initialise = not db_file.exists()
+    db_file.touch(exist_ok=True)
+    connection = connect(str(db_file))
+    if initialise:
+        script_text = INIT_DB_SCRIPT.read_text("utf8")
+        init_cursor = connection.cursor()
+        init_cursor.executescript(script_text)
+        connection.commit()
+        init_cursor.close()
+    return connection
 
 
 def main() -> NoReturn:
