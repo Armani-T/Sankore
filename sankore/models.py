@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from datetime import date
 from pathlib import Path
-from sqlite3 import connect, Cursor
+from sqlite3 import Cursor
 from typing import Any, Iterable, Optional, Sequence, TypedDict
 
 INIT_DB_SCRIPT = Path(__file__) / "../../assets/init.sql"
@@ -10,15 +9,13 @@ Data = Sequence["Book"]
 Run = TypedDict("Run", {"start": Optional[str], "page": int})
 Read = TypedDict("Read", {"start": Optional[str], "end": Optional[str]})
 
-get_today = lambda: date.today().strftime("%d/%m/%Y")
-
 
 @dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Book:
     title: str
     author: str
     pages: int
-    rating: int = 0
+    rating: int
 
     def current_run(self, cursor: Cursor) -> Optional[Run]:
         run_info = cursor.execute(

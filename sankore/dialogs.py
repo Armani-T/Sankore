@@ -1,15 +1,17 @@
 # TODO: Create a function that takes a dict and uses it to update and
 # save a book that already exists.
+from datetime import date
 from functools import partial
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from PySide6.QtCore import QCalendar, QDate, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
 from PySide6 import QtWidgets as widgets
 
-from models import Book, get_today
+from models import Book
 
+get_today = lambda: date.today().strftime("%d/%m/%Y")
 normalise = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
 
 _asset_folder = Path(__file__).joinpath("../../assets").resolve()
