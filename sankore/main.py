@@ -7,7 +7,7 @@ from views import run_ui
 
 APP_NAME = "sankore"  # NOTE: The app name should always be in lowercase.
 DB_FILE = Path(__file__).joinpath(f"../../{APP_NAME}.sqlite3").resolve()
-INIT_DB_SCRIPT = Path(__file__) / "../../assets/init.sql"
+INIT_DB_SCRIPT = Path(__file__).joinpath("../../assets/init.sql").resolve()
 
 
 def get_cursor(db_file: Path) -> Connection:

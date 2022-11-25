@@ -1,25 +1,17 @@
-from dataclasses import dataclass
-from pathlib import Path
 from sqlite3 import Cursor
-from typing import Any, Iterable, Optional, Sequence, TypedDict
-
-INIT_DB_SCRIPT = Path(__file__) / "../../assets/init.sql"
-
-Data = Sequence["Book"]
-Run = TypedDict("Run", {"start": Optional[str], "page": int})
-Read = TypedDict("Read", {"start": Optional[str], "end": Optional[str]})
+from typing import Any, Optional, Sequence, Union
 
 
-@dataclass(frozen=True, kw_only=True, slots=True, unsafe_hash=True)
 class Book:
-    title: str
-    author: str
-    pages: int
-    rating: int
+    def __init__(self, title: str, author: str, pages: int, rating: int) -> None:
+        self.title = title
+        self.author = author
+        self.pages = pages
+        self.rating = rating
 
-    def current_run(self, cursor: Cursor) -> Optional[Run]:
+    def current_run(self, cursor: Cursor) -> Optional[dict[str, Union[str, int]]]:
         run_info = cursor.execute(
-            "SELECT (start, page) FROM ongoing_reads WHERE title = ?",
+            "SELECT start, page FROM ongoing_reads WHERE book_title = ?;",
             (self.title,),
         ).fetchone()
         return (
@@ -28,12 +20,12 @@ class Book:
             else None
         )
 
-    def reads(self, cursor: Cursor) -> Sequence[Read]:
+    def reads(self, cursor: Cursor) -> Sequence[dict[str, str]]:
         cursor.execute(
-            "SELECT (start, end_) FROM finished_reads WHERE book_title = ?",
+            "SELECT start, end_ FROM finished_reads WHERE book_title = ?;",
             (self.title,),
         )
-        return [{"start": line[0], "end": line[1]} for line in cursor.fetchall()]
+        return [{"start": start, "end": end} for (start, end) in cursor.fetchall()]
 
     def to_dict(self) -> dict[str, Any]:
         return {
