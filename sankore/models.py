@@ -45,39 +45,3 @@ class Book:
 
     def to_tuple(self) -> tuple[str, str, int, int]:
         return (self.title, self.author, self.pages, self.rating)
-
-
-def find_book(cursor: Cursor, target_title: str) -> Optional[Book]:
-    cursor.execute("SELECT * FROM books WHERE title = ?", (target_title,))
-    book_info = cursor.fetchone()
-    if book_info is not None:
-        title, author, pages, rating = book_info
-        return Book(title=title, author=author, pages=pages, rating=rating)
-    return None
-
-
-def insert_book(cursor: Cursor, new_book: Book) -> None:
-    cursor.execute("INSERT INTO books VALUES (?, ?, ?, ?)", new_book.to_tuple())
-    cursor.connection.commit()
-
-
-def list_quotes(cursor: Cursor) -> Iterable[tuple[str, str]]:
-    cursor.execute("SELECT (text_, author) FROM quotes")
-    quote: Optional[tuple[str, str]]
-    quote = cursor.fetchone()
-    while quote is not None:
-        yield quote
-        quote = cursor.fetchone()
-
-
-def remove_book(cursor: Cursor, book: Book) -> None:
-    cursor.execute("DELETE FROM books WHERE title = ?", (book.title,))
-    cursor.connection.commit()
-
-
-def update_book(cursor: Cursor, old_book: Book, new_book: Book) -> None:
-    cursor.execute(
-        "UPDATE books SET title = ?, author = ?, pages = ? WHERE title = ?",
-        (new_book.title, new_book.author, new_book.pages, old_book.title),
-    )
-    cursor.connection.commit()
