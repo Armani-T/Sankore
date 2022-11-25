@@ -1,9 +1,7 @@
-# TODO: Create a function that takes a dict and uses it to update and
-# save a book that already exists.
 from datetime import date
 from functools import partial
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from PySide6.QtCore import QCalendar, QDate, QRegularExpression, Qt
 from PySide6.QtGui import QIcon, QPixmap, QRegularExpressionValidator
@@ -51,16 +49,16 @@ class NewBook(widgets.QDialog):
         layout.addRow(save_button)
 
     def accept(self) -> None:
-        book = self.new_book()
-        self.save_changes = bool(book.title and book.author and book.pages > 0)
+        title, author, *_ = self.result()
+        self.save_changes = bool(title and author)
         return super().done(0)
 
-    def new_book(self) -> Book:
-        return Book(
-            title=self.title_edit.text().strip(),
-            author=self.author_edit.text().strip(),
-            pages=int(self.page_edit.text() or "1"),
-            rating=1,
+    def result(self) -> tuple[str, str, int, Optional[int]]:
+        return (
+            self.title_edit.text().strip(),
+            self.author_edit.text().strip(),
+            int(self.page_edit.text() or 1),
+            None,
         )
 
 
@@ -92,17 +90,16 @@ class EditBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def updated(self) -> Book:
-        kwargs = self.book.to_dict() | {
-            "title": self.title_edit.text(),
-            "author": self.author_edit.text(),
-            "pages": int(self.page_edit.text()),
-        }
-        return Book(**kwargs)  # type: ignore
+    def result(self) -> tuple[str, str, int]:
+        return (
+            self.title_edit.text(),
+            self.author_edit.text(),
+            int(self.page_edit.text()),
+        )
 
 
 class UpdateProgress(widgets.QDialog):
-    def __init__(self, parent: widgets.QWidget, book: Book) -> None:
+    def __init__(self, parent: widgets.QWidget, book: Book, current_value: int) -> None:
         super().__init__(parent)
         self.save_changes = False
         self.book = book
@@ -122,8 +119,7 @@ class UpdateProgress(widgets.QDialog):
         self.slider.setMaximum(book.pages)
         self.slider.setTracking(False)
         self.slider.valueChanged.connect(self._update_edit)
-        value = 0 if book.current_run is None else book.current_run["page"]
-        self.slider.setValue(value)
+        self.slider.setValue(current_value)
 
         finished_button = widgets.QPushButton("Finished the book")
         finished_button.clicked.connect(
@@ -149,30 +145,18 @@ class UpdateProgress(widgets.QDialog):
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
 
+    def end_date(self) -> str:
+        return get_today()
+
     def is_finished(self) -> bool:
         return self.book.pages == self.slider.value()
+
+    def new_page(self) -> int:
+        return self.slider.value()
 
     def save_(self) -> None:
         self.save_changes = True
         return super().done(0)
-
-    def updated(self) -> Book:
-        start = (
-            get_today()
-            if self.book.current_run is None
-            else self.book.current_run["start"]
-        )
-        if self.is_finished():
-            new_read = {"start": start, "end": get_today()}
-            kwargs = self.book.to_dict() | {
-                "current_run": None,
-                "reads": (new_read, *self.book.reads),
-            }
-        else:
-            kwargs = self.book.to_dict() | {
-                "current_run": {"start": start, "page": self.slider.value()}
-            }
-        return Book(**kwargs)  # type: ignore
 
 
 class AreYouSure(widgets.QDialog):
@@ -243,17 +227,14 @@ class RateBook(widgets.QDialog):
         return stars
 
     def _update_stars(self, rating: Optional[int] = None):
-        self.current_rating = normalise(
-            (self.current_rating if rating is None else rating), 5, 1
-        )
+        self.current_rating = normalise(rating or 0, 5, 1)
         empty_star = QIcon(QPixmap(ASSETS["star_outline"]))
         filled_star = QIcon(QPixmap(ASSETS["star_filled"]))
         for index, star in enumerate(self.stars, start=1):
             star.setIcon(empty_star if index > self.current_rating else filled_star)
 
-    def updated(self):
-        kwargs = self.book.to_dict() | {"rating": self.current_rating}
-        return Book(**kwargs)
+    def result(self) -> tuple[int, str]:
+        return self.current_rating, self.book.title
 
 
 class QuoteBook(widgets.QDialog):
@@ -275,8 +256,8 @@ class QuoteBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def quote(self) -> str:
-        return self.quote_text.toPlainText().strip()
+    def result(self) -> str:
+        return self.quote_text.toPlainText().strip(), self.book.author
 
 
 class LogRead(widgets.QDialog):
@@ -316,14 +297,11 @@ class LogRead(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def updated(self) -> str:
+    def result(self) -> tuple[str, str]:
         calendar = QCalendar(QCalendar.System.Gregorian)
         start = self.start_picker.selectedDate()
         end = self.end_picker.selectedDate()
-        start_date, end_date = (
+        return (
             f"{start.day(calendar)}/{start.month(calendar)}/{start.year(calendar)}",
             f"{end.day(calendar)}/{end.month(calendar)}/{end.year(calendar)}",
         )
-        kwargs = self.book.to_dict()
-        kwargs["reads"] = ({"start": start_date, "end": end_date}, *kwargs["reads"])
-        return Book(**kwargs)  # type: ignore
