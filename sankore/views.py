@@ -290,7 +290,7 @@ class SideBar(widgets.QScrollArea):
     def update_(self) -> None:
         _clear_layout(self.layout_)
         self.layout_.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
-        quotes = self.cursor.execute("SELECT * FROM quotes;").fetchall()
+        quotes = self.cursor.execute("SELECT text_, author FROM quotes;").fetchall()
         for text, author in quotes:
             card = widgets.QLabel(f'"{text}" - <b>{author.title()}</b>')
             card.setFrameStyle(widgets.QFrame.StyledPanel)
