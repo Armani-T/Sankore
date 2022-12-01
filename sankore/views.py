@@ -206,7 +206,7 @@ class Card(widgets.QFrame):
         if run := book.current_run(self.holder.cursor):
             bar = widgets.QProgressBar(self)
             bar.setMaximum(book.pages)
-            bar.setValue(dialogs.normalise(run["page"], book.pages))
+            bar.setValue(dialogs.moderate(run["page"], book.pages))
             layout.addWidget(bar)
         elif (times_read := len(self.book.reads(self.holder.cursor))) > 1:
             read_status = widgets.QLabel(f"<i>Read {times_read} times</i>")
@@ -220,7 +220,7 @@ class Card(widgets.QFrame):
             filled_star = QPixmap(dialogs.ASSETS["star_filled"])
             rating_bar = widgets.QWidget(self)
             bar_layout = widgets.QHBoxLayout(rating_bar)
-            stars = dialogs.normalise(book.rating, 5, 1)
+            stars = dialogs.moderate(book.rating, 5, 1)
             for index_ in range(1, 6):
                 label = widgets.QLabel(self)
                 label.setPixmap(empty_star if index_ > stars else filled_star)
