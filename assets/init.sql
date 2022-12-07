@@ -31,3 +31,14 @@ CREATE TABLE ongoing_reads (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
+
+CREATE TABLE progress_logs (
+    id INTEGER PRIMARY KEY,
+    book_title TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    pages INTEGER NOT NULL,
+
+    FOREIGN KEY (book_title) REFERENCES books (title)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE
+);
