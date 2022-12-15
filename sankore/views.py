@@ -135,7 +135,7 @@ class CardView(widgets.QWidget):
         dialog = dialogs.QuoteBook(self, book)
         dialog.exec()
         if dialog.save_changes:
-            self.cursor.execute("INSERT INTO quotes VALUES (?, ?);", dialog.result())
+            self.cursor.execute("INSERT INTO quotes VALUES (?, ?, ?);", dialog.result())
             self.cursor.connection.commit()
             self.update_view()
             self.home.update_sidebar()
