@@ -7,7 +7,8 @@ CREATE TABLE books (
 
 CREATE TABLE quotes (
   text_ TEXT PRIMARY KEY,
-  author TEXT NOT NULL
+  author TEXT NOT NULL,
+  update_date TEXT NOT NULL
 );
 
 CREATE TABLE finished_reads (

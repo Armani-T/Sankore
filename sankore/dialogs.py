@@ -10,7 +10,7 @@ from PySide6 import QtWidgets as widgets
 from models import Book
 
 get_today = lambda: date.today().strftime("%d/%m/%Y")
-normalise = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
+moderate = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
 
 _asset_folder = Path(__file__).joinpath("../../assets").resolve()
 NUMBER_VALIDATOR = QRegularExpressionValidator(QRegularExpression(r"\d+"))
@@ -227,7 +227,7 @@ class RateBook(widgets.QDialog):
         return stars
 
     def _update_stars(self, rating: Optional[int] = None):
-        self.current_rating = normalise(rating or 0, 5, 1)
+        self.current_rating = moderate(rating or 0, 5, 1)
         empty_star = QIcon(QPixmap(ASSETS["star_outline"]))
         filled_star = QIcon(QPixmap(ASSETS["star_filled"]))
         for index, star in enumerate(self.stars, start=1):
@@ -257,7 +257,11 @@ class QuoteBook(widgets.QDialog):
         return super().done(0)
 
     def result(self) -> str:
-        return self.quote_text.toPlainText().strip(), self.book.author
+        return (
+            self.quote_text.toPlainText().strip(),
+            self.book.author,
+            get_today(),
+        )
 
 
 class LogRead(widgets.QDialog):
