@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlite3 import Connection, Cursor
+from typing import Callable, Iterable
 
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -7,6 +8,8 @@ from PySide6 import QtWidgets as widgets
 
 import dialogs
 from models import Book
+
+WidgetBuilder = Callable[[widgets.QWidget, Cursor], widgets.QWidget]
 
 CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
@@ -39,7 +42,9 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
 
-        self.sidebar = SideBar(self)
+        self.sidebar = SideBar(
+            self, (("Recently Read", RecentlyReadBar), ("Recent Quotes", QuoteBar))
+        )
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
@@ -86,15 +91,15 @@ class CardView(widgets.QWidget):
         self.layout_.setAlignment(Qt.AlignTop)
 
     def _populate(self) -> None:
-        row, col = 0, 0
-        books = sorted(
+        records = sorted(
             self.cursor.execute("SELECT * FROM books;").fetchall(),
             key=lambda b: b[0],
         )
-        for (title, author, pages, rating) in books:
-            book = Book(title=title, author=author, pages=pages, rating=rating)
-            card = Card(self, book)
-            self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
+        row, col = 0, 0
+        for record in records:
+            self.layout_.addWidget(
+                Card(self, Book(*record)), row, col, Qt.AlignBaseline
+            )
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
     def update_view(self) -> None:
@@ -275,17 +280,19 @@ class Card(widgets.QFrame):
 
 
 class SideBar(widgets.QWidget):
-    def __init__(self, parent: Home) -> None:
+    def __init__(self, parent: Home, sections: Iterable[tuple[str, WidgetBuilder]]):
         super().__init__(parent)
         self.home = parent
         self.layout_ = widgets.QVBoxLayout(self)
-        self.layout_.addWidget(RecentlyReadBar(self, parent.connection.cursor()))
-        self.layout_.addWidget(QuoteBar(self, parent.connection.cursor()))
+        for title, build_func in sections:
+            self.layout_.addWidget(widgets.QLabel(f"<h2>{title.title()}</h2>"))
+            self.layout_.addWidget(build_func(self, parent.connection.cursor()))
 
     def update_(self) -> None:
         n = 0
         while (child := self.layout_.takeAt(n)) is not None:
-            child.widget().update_()
+            if not isinstance(widget := child.widget(), widgets.QLabel):
+                widget.update_()
             n += 1
 
 
@@ -304,7 +311,6 @@ class QuoteBar(widgets.QScrollArea):
 
     def update_(self) -> None:
         _clear_layout(self.layout_)
-        self.layout_.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
         quotes = self.cursor.execute("SELECT text_, author FROM quotes;").fetchall()
         for text, author in quotes:
             card = widgets.QLabel(f'"{text}" - <b>{author.title()}</b>')
@@ -330,7 +336,6 @@ class RecentlyReadBar(widgets.QScrollArea):
 
     def update_(self) -> None:
         _clear_layout(self.layout_)
-        self.layout_.addWidget(widgets.QLabel("<h1>Recently Read</h1>"))
         records = sorted(
             self.cursor.execute("SELECT * FROM ongoing_reads;").fetchall(),
             key=lambda pair: datetime.strptime(pair[1], "%d/%m/%Y"),
