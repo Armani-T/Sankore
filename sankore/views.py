@@ -1,4 +1,5 @@
-from sqlite3 import Connection
+from datetime import datetime
+from sqlite3 import Connection, Cursor
 
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -273,11 +274,25 @@ class Card(widgets.QFrame):
         self.holder.update_progress(self.book)
 
 
-class SideBar(widgets.QScrollArea):
+class SideBar(widgets.QWidget):
     def __init__(self, parent: Home) -> None:
         super().__init__(parent)
-        self.home: Home = parent
-        self.cursor = self.home.connection.cursor()
+        self.home = parent
+        self.layout_ = widgets.QVBoxLayout(self)
+        self.layout_.addWidget(RecentlyReadBar(self, parent.connection.cursor()))
+        self.layout_.addWidget(QuoteBar(self, parent.connection.cursor()))
+
+    def update_(self) -> None:
+        n = 0
+        while (child := self.layout_.takeAt(n)) is not None:
+            child.widget().update_()
+            n += 1
+
+
+class QuoteBar(widgets.QScrollArea):
+    def __init__(self, parent: widgets.QWidget, cursor: Cursor) -> None:
+        super().__init__(parent)
+        self.cursor = cursor
         self.setAlignment(Qt.AlignTop)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
@@ -298,6 +313,32 @@ class SideBar(widgets.QScrollArea):
             card.setTextFormat(Qt.TextFormat.RichText)
             card.setWordWrap(True)
             self.layout_.addWidget(card)
+
+
+class RecentlyReadBar(widgets.QScrollArea):
+    def __init__(self, parent: widgets.QWidget, cursor: Cursor) -> None:
+        super().__init__(parent)
+        self.cursor = cursor
+        self.setAlignment(Qt.AlignTop)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setWidgetResizable(True)
+
+        holder = widgets.QWidget(self)
+        self.layout_ = widgets.QVBoxLayout(holder)
+        self.setWidget(holder)
+        self.update_()
+
+    def update_(self) -> None:
+        _clear_layout(self.layout_)
+        self.layout_.addWidget(widgets.QLabel("<h1>Recently Read</h1>"))
+        records = sorted(
+            self.cursor.execute("SELECT * FROM ongoing_reads;").fetchall(),
+            key=lambda pair: datetime.strptime(pair[1], "%d/%m/%Y"),
+            reverse=True,
+        )
+        for title, *_ in records:
+            self.cursor.execute("SELECT * FROM books WHERE title = ?;", (title,))
+            self.layout_.addWidget(Card(self, Book(*self.cursor.fetchone())))
 
 
 def _clear_layout(layout: widgets.QLayout) -> None:
