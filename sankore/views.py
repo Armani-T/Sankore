@@ -343,7 +343,40 @@ class RecentlyReadBar(widgets.QScrollArea):
         )
         for title, *_ in records:
             self.cursor.execute("SELECT * FROM books WHERE title = ?;", (title,))
-            self.layout_.addWidget(Card(self, Book(*self.cursor.fetchone())))
+            self.layout_.addWidget(
+                SmallCard(
+                    self,
+                    Book(*self.cursor.fetchone()),
+                    self.cursor,
+                    self.save_progress,
+                )
+            )
+
+
+class SmallCard(widgets.QFrame):
+    def __init__(
+        self,
+        parent: widgets.QWidget,
+        book: Book,
+        cursor: Cursor,
+        save_progress: Callable[[Book], None],
+    ) -> None:
+        super().__init__(parent)
+        self.setSizePolicy(CARD_SIZE_POLICY)
+        self.setFrameStyle(widgets.QFrame.StyledPanel)
+        self.mousePressEvent = lambda _, book_=book: save_progress(book_)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(widgets.QLabel(book.title))
+        current_page = book.current_run(cursor)["page"]
+        # noinspection PyArgumentList
+        layout.addWidget(
+            widgets.QProgressBar(
+                self,
+                maximum=book.pages,
+                value=dialogs.moderate(current_page, book.pages),
+            )
+        )
 
 
 def _clear_layout(layout: widgets.QLayout) -> None:
