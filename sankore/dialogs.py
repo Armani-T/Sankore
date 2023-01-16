@@ -105,12 +105,13 @@ class UpdateProgress(widgets.QDialog):
 
         title = widgets.QLabel(f"<h1>{book.title.title()}</h1>")
         title.setAlignment(Qt.AlignCenter)
-        left_text = widgets.QLabel("Reached page")
+        left_text = widgets.QLabel("I'm on page")
         left_text.setAlignment(Qt.AlignRight)
         self.page_edit = widgets.QLineEdit()
         self.page_edit.setValidator(NUMBER_VALIDATOR)
+        self.page_edit.setAlignment(Qt.AlignCenter)
         self.page_edit.textChanged.connect(self._update_slider)
-        right_text = widgets.QLabel(f"out of {book.pages}.")
+        right_text = widgets.QLabel(f"out of <b>{book.pages}</b>.")
         right_text.setAlignment(Qt.AlignLeft)
 
         self.slider = widgets.QSlider(Qt.Horizontal)
@@ -120,7 +121,7 @@ class UpdateProgress(widgets.QDialog):
         self.slider.valueChanged.connect(self._update_edit)
         self.slider.setValue(current_value)
 
-        finished_button = widgets.QPushButton("Finished the book")
+        finished_button = widgets.QPushButton("Done?")
         finished_button.clicked.connect(
             lambda: self.slider.setValue(self.slider.maximum())
         )
