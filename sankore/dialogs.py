@@ -53,12 +53,11 @@ class NewBook(widgets.QDialog):
         self.save_changes = bool(title and author)
         return super().done(0)
 
-    def result(self) -> tuple[str, str, int, Optional[int]]:
+    def result(self) -> tuple[str, str, int]:
         return (
             self.title_edit.text().strip(),
             self.author_edit.text().strip(),
             int(self.page_edit.text() or 1),
-            None,
         )
 
 
@@ -145,7 +144,8 @@ class UpdateProgress(widgets.QDialog):
         new_value = int(self.page_edit.text() or "0")
         self.slider.setValue(new_value)
 
-    def end_date(self) -> str:
+    @staticmethod
+    def end_date() -> str:
         return get_today()
 
     def is_finished(self) -> bool:
@@ -256,7 +256,7 @@ class QuoteBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def result(self) -> str:
+    def result(self) -> tuple[str, str, str]:
         return (
             self.quote_text.toPlainText().strip(),
             self.book.author,
@@ -288,8 +288,10 @@ class LogRead(widgets.QDialog):
         save_button.accepted.connect(self.accept)
 
         layout = widgets.QVBoxLayout(self)
+        # noinspection PyArgumentList
         layout.addWidget(widgets.QLabel("<h1>Start</h1>", alignment=Qt.AlignCenter))
         layout.addWidget(self.start_picker)
+        # noinspection PyArgumentList
         layout.addWidget(widgets.QLabel("<h1>End</h1>", alignment=Qt.AlignCenter))
         layout.addWidget(self.end_picker)
         layout.addWidget(save_button)
@@ -301,11 +303,12 @@ class LogRead(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def result(self) -> tuple[str, str]:
+    def result(self) -> tuple[str, str, str]:
         calendar = QCalendar(QCalendar.System.Gregorian)
         start = self.start_picker.selectedDate()
         end = self.end_picker.selectedDate()
         return (
+            self.book.title,
             f"{start.day(calendar)}/{start.month(calendar)}/{start.year(calendar)}",
             f"{end.day(calendar)}/{end.month(calendar)}/{end.year(calendar)}",
         )
