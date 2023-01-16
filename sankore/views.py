@@ -43,13 +43,26 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
 
-        self.sidebar = SideBar(self, self.connection.cursor(), self.save_progress)
+        # self.sidebar = SideBar(self, self.connection.cursor(), self.save_progress)
+        self.sidebar = self._create_sidebar()
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
         centre_layout.addWidget(scroll_area, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
+
+    def _create_sidebar(self) -> widgets.QWidget:
+        new_cursor = self.connection.cursor()
+        base = widgets.QWidget(self)
+        base.quotes = QuoteBar(self, new_cursor)
+        base.read = ReadingBar(self, new_cursor, self.save_progress)
+        base_layout = widgets.QVBoxLayout(base)
+        base_layout.addWidget(widgets.QLabel("<h3>Still Reading</h3>"))
+        base_layout.addWidget(base.read)
+        base_layout.addWidget(widgets.QLabel("<h3>Recent Quotes</h3>"))
+        base_layout.addWidget(base.quotes)
+        return base
 
     def _show_about(self) -> int:
         about_text = (
@@ -65,9 +78,11 @@ class Home(widgets.QMainWindow):
         layout.addWidget(label)
         return dialog.exec()
 
+    # noinspection PyUnresolvedReferences
     def _update_view(self) -> None:
         self.cards.update_view()
-        self.sidebar.update_view()
+        self.sidebar.read.update_view()
+        self.sidebar.quotes.update_view()
 
     def delete_book(self, book: Book) -> None:
         dialog = dialogs.AreYouSure(self, book.title)
@@ -105,6 +120,7 @@ class Home(widgets.QMainWindow):
         if dialog.save_changes:
             self.cursor.execute("INSERT INTO quotes VALUES (?, ?, ?);", dialog.result())
             self.connection.commit()
+            # noinspection PyUnresolvedReferences
             self.sidebar.quotes.update_view()
 
     def new_book(self) -> None:
@@ -294,25 +310,6 @@ class Card(widgets.QFrame):
         self.holder.save_progress(self.book)
 
 
-class SideBar(widgets.QWidget):
-    def __init__(
-        self, parent: Home, cursor: Cursor, save_progress: Callable[[Book], None]
-    ) -> None:
-        super().__init__(parent)
-        self.quotes = QuoteBar(self, cursor)
-        self.recently_read = RecentlyReadBar(self, cursor, save_progress)
-
-        self.layout_ = widgets.QVBoxLayout(self)
-        self.layout_.addWidget(widgets.QLabel("<h3>Recently Read</h3>"))
-        self.layout_.addWidget(self.recently_read)
-        self.layout_.addWidget(widgets.QLabel("<h3>Recent Quotes</h3>"))
-        self.layout_.addWidget(self.quotes)
-
-    def update_view(self) -> None:
-        self.quotes.update_view()
-        self.recently_read.update_view()
-
-
 class QuoteBar(widgets.QScrollArea):
     def __init__(self, parent: widgets.QWidget, cursor: Cursor) -> None:
         super().__init__(parent)
@@ -338,7 +335,7 @@ class QuoteBar(widgets.QScrollArea):
             self.layout_.addWidget(card)
 
 
-class RecentlyReadBar(widgets.QScrollArea):
+class ReadingBar(widgets.QScrollArea):
     def __init__(
         self,
         parent: widgets.QWidget,
