@@ -15,7 +15,6 @@ CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
 )
 
-header = lambda text, level=1: f"<h{level}>{text}</h{level}>"
 get_icon = lambda icon_name: QIcon(QPixmap(dialogs.ASSETS[icon_name]))
 
 
@@ -44,25 +43,20 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
 
-        self.sidebar = self._create_sidebar()
+        self.sidebar = widgets.QWidget(self)
+        self.sidebar.quotes = QuoteBar(self, self.cursor)
+        self.sidebar.read = ReadingBar(self, self.cursor, self.save_progress)
+        sidebar_layout = widgets.QVBoxLayout(self.sidebar)
+        sidebar_layout.addWidget(widgets.QLabel(dialogs.header("Still Reading", 3)))
+        sidebar_layout.addWidget(self.sidebar.read)
+        sidebar_layout.addWidget(widgets.QLabel(dialogs.header("Recent Quotes", 3)))
+        sidebar_layout.addWidget(self.sidebar.quotes)
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
         centre_layout.addWidget(scroll_area, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
-
-    def _create_sidebar(self) -> widgets.QWidget:
-        new_cursor = self.connection.cursor()
-        base = widgets.QWidget(self)
-        base.quotes = QuoteBar(self, new_cursor)
-        base.read = ReadingBar(self, new_cursor, self.save_progress)
-        base_layout = widgets.QVBoxLayout(base)
-        base_layout.addWidget(widgets.QLabel(header("Still Reading", 3)))
-        base_layout.addWidget(base.read)
-        base_layout.addWidget(widgets.QLabel(header("Recent Quotes", 3)))
-        base_layout.addWidget(base.quotes)
-        return base
 
     def _show_about(self) -> int:
         about_text = (
@@ -162,12 +156,12 @@ class Home(widgets.QMainWindow):
                     (book.title,),
                 ).execute(
                     "INSERT INTO finished_reads VALUES (?, ?, ?);",
-                    (book.title, old_progress["start"], dialog.end_date()),
+                    (book.title, old_progress["start"], dialogs.get_today()),
                 )
             else:
                 self.cursor.execute(
                     "UPDATE ongoing_reads SET page = ? WHERE book_title = ?;",
-                    (dialog.new_page(), book.title),
+                    (dialog.new_value(), book.title),
                 )
             self.connection.commit()
             self._update_view()
