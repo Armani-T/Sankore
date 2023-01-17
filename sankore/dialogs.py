@@ -10,6 +10,7 @@ from PySide6 import QtWidgets as widgets
 from models import Book
 
 get_today = lambda: date.today().strftime("%d/%m/%Y")
+header = lambda text, level=1: f"<h{level}>{text}</h{level}>"
 moderate = lambda value, maximum, minimum=0: min(max(minimum, value), maximum)
 
 _asset_folder = Path(__file__).joinpath("../../assets").resolve()
@@ -53,12 +54,11 @@ class NewBook(widgets.QDialog):
         self.save_changes = bool(title and author)
         return super().done(0)
 
-    def result(self) -> tuple[str, str, int, Optional[int]]:
+    def result(self) -> tuple[str, str, int]:
         return (
             self.title_edit.text().strip(),
             self.author_edit.text().strip(),
             int(self.page_edit.text() or 1),
-            None,
         )
 
 
@@ -99,64 +99,46 @@ class EditBook(widgets.QDialog):
 
 
 class UpdateProgress(widgets.QDialog):
+    # noinspection PyArgumentList
     def __init__(self, parent: widgets.QWidget, book: Book, current_value: int) -> None:
         super().__init__(parent)
         self.save_changes = False
-        self.book = book
+        self.maximum = book.pages
 
-        title = widgets.QLabel(f"<h1>{book.title.title()}</h1>")
-        title.setAlignment(Qt.AlignCenter)
-        left_text = widgets.QLabel("Reached page")
-        left_text.setAlignment(Qt.AlignRight)
-        self.page_edit = widgets.QLineEdit()
-        self.page_edit.setValidator(NUMBER_VALIDATOR)
-        self.page_edit.textChanged.connect(self._update_slider)
-        right_text = widgets.QLabel(f"out of {book.pages}.")
-        right_text.setAlignment(Qt.AlignLeft)
-
-        self.slider = widgets.QSlider(Qt.Horizontal)
-        self.slider.setMinimum(0)
-        self.slider.setMaximum(book.pages)
-        self.slider.setTracking(False)
-        self.slider.valueChanged.connect(self._update_edit)
-        self.slider.setValue(current_value)
-
-        finished_button = widgets.QPushButton("Finished the book")
-        finished_button.clicked.connect(
-            lambda: self.slider.setValue(self.slider.maximum())
+        self.pages = widgets.QLineEdit(
+            alignment=Qt.AlignCenter,
+            text=str(current_value),
+            validator=NUMBER_VALIDATOR,
         )
+        done_button = widgets.QPushButton("Done?")
+        done_button.clicked.connect(lambda: self.pages.setText(str(self.maximum)))
         button_box = widgets.QDialogButtonBox(widgets.QDialogButtonBox.Save)
         button_box.accepted.connect(self.save_)
 
-        layout = widgets.QGridLayout(self)
-        layout.addWidget(title, 0, 1, 1, 3)
-        layout.addWidget(left_text, 1, 0, 1, 2)
-        layout.addWidget(self.page_edit, 1, 2, 1, 1)
-        layout.addWidget(right_text, 1, 3, 1, 2)
-        layout.addWidget(self.slider, 2, 1, 1, 3)
-        layout.addWidget(finished_button, 3, 2, 1, 1)
-        layout.addWidget(button_box, 4, 0, 1, 5)
+        editor_layout = widgets.QHBoxLayout()
+        editor_layout.addWidget(widgets.QLabel("I'm on page", alignment=Qt.AlignRight))
+        editor_layout.addWidget(self.pages)
+        editor_layout.addWidget(
+            widgets.QLabel(f"out of <b>{book.pages}</b>.", alignment=Qt.AlignLeft)
+        )
 
-    def _update_edit(self) -> None:
-        new_value = str(self.slider.value())
-        self.page_edit.setText(new_value)
-
-    def _update_slider(self) -> None:
-        new_value = int(self.page_edit.text() or "0")
-        self.slider.setValue(new_value)
-
-    def end_date(self) -> str:
-        return get_today()
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(
+            widgets.QLabel(header(book.title.title(), 2), alignment=Qt.AlignCenter)
+        )
+        layout.addLayout(editor_layout)
+        layout.addWidget(done_button)
+        layout.addWidget(button_box)
 
     def is_finished(self) -> bool:
-        return self.book.pages == self.slider.value()
-
-    def new_page(self) -> int:
-        return self.slider.value()
+        return int(self.pages.text()) >= self.maximum
 
     def save_(self) -> None:
         self.save_changes = True
         return super().done(0)
+
+    def new_value(self) -> int:
+        return int(self.pages.text())
 
 
 class AreYouSure(widgets.QDialog):
@@ -256,7 +238,7 @@ class QuoteBook(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def result(self) -> str:
+    def result(self) -> tuple[str, str, str]:
         return (
             self.quote_text.toPlainText().strip(),
             self.book.author,
@@ -288,8 +270,10 @@ class LogRead(widgets.QDialog):
         save_button.accepted.connect(self.accept)
 
         layout = widgets.QVBoxLayout(self)
+        # noinspection PyArgumentList
         layout.addWidget(widgets.QLabel("<h1>Start</h1>", alignment=Qt.AlignCenter))
         layout.addWidget(self.start_picker)
+        # noinspection PyArgumentList
         layout.addWidget(widgets.QLabel("<h1>End</h1>", alignment=Qt.AlignCenter))
         layout.addWidget(self.end_picker)
         layout.addWidget(save_button)
@@ -301,11 +285,12 @@ class LogRead(widgets.QDialog):
         self.save_changes = True
         return super().done(0)
 
-    def result(self) -> tuple[str, str]:
+    def result(self) -> tuple[str, str, str]:
         calendar = QCalendar(QCalendar.System.Gregorian)
         start = self.start_picker.selectedDate()
         end = self.end_picker.selectedDate()
         return (
+            self.book.title,
             f"{start.day(calendar)}/{start.month(calendar)}/{start.year(calendar)}",
             f"{end.day(calendar)}/{end.month(calendar)}/{end.year(calendar)}",
         )

@@ -1,4 +1,6 @@
-from sqlite3 import Connection
+from datetime import datetime
+from sqlite3 import Connection, Cursor
+from typing import Callable
 
 from PySide6.QtCore import QCoreApplication, Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -6,6 +8,8 @@ from PySide6 import QtWidgets as widgets
 
 import dialogs
 from models import Book
+
+WidgetBuilder = Callable[[widgets.QWidget, Cursor], widgets.QWidget]
 
 CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
@@ -18,6 +22,7 @@ class Home(widgets.QMainWindow):
     def __init__(self, title: str, connection: Connection) -> None:
         super().__init__()
         self.connection = connection
+        self.cursor = connection.cursor()
 
         QCoreApplication.setApplicationName(title)
         self.setWindowIcon(QIcon(QPixmap(dialogs.ASSETS["app_icon"])))
@@ -27,7 +32,7 @@ class Home(widgets.QMainWindow):
         about_menu = self.menuBar().addMenu("About")
         new_book_action = new_menu.addAction("New Book")
         about_action = about_menu.addAction("About")
-        new_book_action.triggered.connect(self._new_book)
+        new_book_action.triggered.connect(self.new_book)
         about_action.triggered.connect(self._show_about)
 
         scroll_area = widgets.QScrollArea(self)
@@ -38,24 +43,20 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
 
-        self.sidebar = SideBar(self)
+        self.sidebar = widgets.QWidget(self)
+        self.sidebar.quotes = QuoteBar(self, self.cursor)
+        self.sidebar.read = ReadingBar(self, self.cursor, self.save_progress)
+        sidebar_layout = widgets.QVBoxLayout(self.sidebar)
+        sidebar_layout.addWidget(widgets.QLabel(dialogs.header("Still Reading", 3)))
+        sidebar_layout.addWidget(self.sidebar.read)
+        sidebar_layout.addWidget(widgets.QLabel(dialogs.header("Recent Quotes", 3)))
+        sidebar_layout.addWidget(self.sidebar.quotes)
 
         centre = widgets.QWidget(self)
         self.setCentralWidget(centre)
         centre_layout = widgets.QGridLayout(centre)
         centre_layout.addWidget(scroll_area, 0, 0, 1, 20)
         centre_layout.addWidget(self.sidebar, 0, 21, 1, 5)
-
-    def _new_book(self) -> int:
-        dialog = dialogs.NewBook(self)
-        exit_code = dialog.exec()
-        if dialog.save_changes:
-            cursor = self.connection.cursor()
-            cursor.execute("INSERT INTO books VALUES (?, ?, ?, ?);", dialog.result())
-            self.connection.commit()
-            cursor.close()
-            self.cards.update_view()
-        return exit_code
 
     def _show_about(self) -> int:
         about_text = (
@@ -71,8 +72,99 @@ class Home(widgets.QMainWindow):
         layout.addWidget(label)
         return dialog.exec()
 
-    def update_sidebar(self) -> None:
-        self.sidebar.update_()
+    # noinspection PyUnresolvedReferences
+    def _update_view(self) -> None:
+        self.cards.update_view()
+        self.sidebar.read.update_view()
+        self.sidebar.quotes.update_view()
+
+    def delete_book(self, book: Book) -> None:
+        dialog = dialogs.AreYouSure(self, book.title)
+        dialog.exec()
+        if dialog.save_changes:
+            self.cursor.execute("DELETE FROM books WHERE title = ?;", (book.title,))
+            self.connection.commit()
+            self._update_view()
+
+    def edit_book(self, book: Book) -> None:
+        dialog = dialogs.EditBook(self, book)
+        dialog.exec()
+        if dialog.save_changes:
+            new_title, new_author, new_pages = dialog.result()
+            self.cursor.execute(
+                "UPDATE books SET title = ?, author = ?, pages = ? WHERE title = ?;",
+                (new_title, new_author, new_pages, book.title),
+            )
+            self.connection.commit()
+            self._update_view()
+
+    def log_completed(self, book: Book) -> None:
+        dialog = dialogs.LogRead(self, book)
+        dialog.exec()
+        if dialog.save_changes:
+            self.cursor.execute(
+                "INSERT INTO finished_reads VALUES (?, ?, ?);", dialog.result()
+            )
+            self.connection.commit()
+            self._update_view()
+
+    def quote_book(self, book: Book) -> None:
+        dialog = dialogs.QuoteBook(self, book)
+        dialog.exec()
+        if dialog.save_changes:
+            self.cursor.execute("INSERT INTO quotes VALUES (?, ?, ?);", dialog.result())
+            self.connection.commit()
+            # noinspection PyUnresolvedReferences
+            self.sidebar.quotes.update_view()
+
+    def new_book(self) -> None:
+        dialog = dialogs.NewBook(self)
+        dialog.exec()
+        if dialog.save_changes:
+            self.cursor.execute(
+                "INSERT INTO books VALUES (?, ?, ?, null);", dialog.result()
+            )
+            self.connection.commit()
+            self._update_view()
+
+    def rate_book(self, book: Book) -> None:
+        dialog = dialogs.RateBook(self, book)
+        dialog.exec()
+        if dialog.save_changes:
+            self.cursor.execute(
+                "UPDATE books SET rating = ? WHERE title = ?;", dialog.result()
+            )
+            self.connection.commit()
+            self._update_view()
+
+    def start_reading(self, book: Book) -> None:
+        self.cursor.execute(
+            "INSERT INTO ongoing_reads VALUES (?, ?, ?);",
+            (book.title, dialogs.get_today(), 1),
+        )
+        self.connection.commit()
+        self._update_view()
+
+    def save_progress(self, book: Book) -> None:
+        old_progress = book.current_run(self.cursor)
+        dialog = dialogs.UpdateProgress(self, book, old_progress["page"])
+        dialog.exec()
+        if dialog.save_changes:
+            if dialog.is_finished():
+                self.cursor.execute(
+                    "DELETE FROM ongoing_reads WHERE book_title = ?;",
+                    (book.title,),
+                ).execute(
+                    "INSERT INTO finished_reads VALUES (?, ?, ?);",
+                    (book.title, old_progress["start"], dialogs.get_today()),
+                )
+            else:
+                self.cursor.execute(
+                    "UPDATE ongoing_reads SET page = ? WHERE book_title = ?;",
+                    (dialog.new_value(), book.title),
+                )
+            self.connection.commit()
+            self._update_view()
 
 
 class CardView(widgets.QWidget):
@@ -85,15 +177,15 @@ class CardView(widgets.QWidget):
         self.layout_.setAlignment(Qt.AlignTop)
 
     def _populate(self) -> None:
-        row, col = 0, 0
-        books = sorted(
+        records = sorted(
             self.cursor.execute("SELECT * FROM books;").fetchall(),
             key=lambda b: b[0],
         )
-        for (title, author, pages, rating) in books:
-            book = Book(title=title, author=author, pages=pages, rating=rating)
-            card = Card(self, book)
-            self.layout_.addWidget(card, row, col, Qt.AlignBaseline)
+        row, col = 0, 0
+        for record in records:
+            self.layout_.addWidget(
+                Card(self, Book(*record)), row, col, Qt.AlignBaseline
+            )
             row, col = ((row + 1), 0) if col > 1 else (row, (col + 1))
 
     def update_view(self) -> None:
@@ -101,84 +193,25 @@ class CardView(widgets.QWidget):
         self._populate()
 
     def delete_book(self, book: Book) -> None:
-        dialog = dialogs.AreYouSure(self, book.title)
-        dialog.exec()
-        if dialog.save_changes:
-            self.cursor.execute("DELETE FROM books WHERE title = ?;", (book.title,))
-            self.cursor.connection.commit()
-            self.update_view()
+        return self.home.delete_book(book)
 
     def edit_book(self, book: Book) -> None:
-        dialog = dialogs.EditBook(self, book)
-        dialog.exec()
-        if dialog.save_changes:
-            new_title, new_author, new_pages = dialog.result()
-            self.cursor.execute(
-                "UPDATE books SET title = ?, author = ?, pages = ? WHERE title = ?;",
-                (new_title, new_author, new_pages, book.title),
-            )
-            self.cursor.connection.commit()
-            self.update_view()
+        return self.home.edit_book(book)
 
     def log_completed(self, book: Book) -> None:
-        dialog = dialogs.LogRead(self, book)
-        dialog.exec()
-        if dialog.save_changes:
-            self.cursor.execute(
-                "INSERT INTO finished_reads VALUES (?, ?, ?);",
-                (book.title, *dialog.result()),
-            )
-            self.cursor.connection.commit()
-            self.update_view()
+        return self.home.log_completed(book)
 
     def quote_book(self, book: Book) -> None:
-        dialog = dialogs.QuoteBook(self, book)
-        dialog.exec()
-        if dialog.save_changes:
-            self.cursor.execute("INSERT INTO quotes VALUES (?, ?, ?);", dialog.result())
-            self.cursor.connection.commit()
-            self.update_view()
-            self.home.update_sidebar()
+        return self.home.quote_book(book)
 
     def rate_book(self, book: Book) -> None:
-        dialog = dialogs.RateBook(self, book)
-        dialog.exec()
-        if dialog.save_changes:
-            self.cursor.execute(
-                "UPDATE books SET rating = ? WHERE title = ?;", dialog.result()
-            )
-            self.cursor.connection.commit()
-            self.update_view()
+        return self.home.rate_book(book)
 
     def start_reading(self, book: Book) -> None:
-        self.cursor.execute(
-            "INSERT INTO ongoing_reads VALUES (?, ?, ?);",
-            (book.title, dialogs.get_today(), 1),
-        )
-        self.cursor.connection.commit()
-        self.update_view()
+        return self.home.start_reading(book)
 
-    def update_progress(self, book: Book) -> None:
-        old_progress = book.current_run(self.cursor)
-        dialog = dialogs.UpdateProgress(self, book, old_progress["page"])
-        dialog.exec()
-        if dialog.save_changes:
-            if dialog.is_finished():
-                self.cursor.execute(
-                    "DELETE FROM ongoing_reads WHERE book_title = ?;",
-                    (book.title,),
-                ).execute(
-                    "INSERT INTO finished_reads VALUES (?, ?, ?);",
-                    (book.title, old_progress["start"], dialog.end_date()),
-                )
-            else:
-                self.cursor.execute(
-                    "UPDATE ongoing_reads SET page = ? WHERE book_title = ?;",
-                    (dialog.new_page(), book.title),
-                )
-
-            self.cursor.connection.commit()
-            self.update_view()
+    def save_progress(self, book: Book) -> None:
+        return self.home.save_progress(book)
 
 
 class Card(widgets.QFrame):
@@ -233,7 +266,7 @@ class Card(widgets.QFrame):
         quote_action.triggered.connect(self.quote_book)
         if self.book.current_run(self.holder.cursor) is not None:
             update_action = menu.addAction(get_icon("bookmark_icon"), "Update position")
-            update_action.triggered.connect(self.update_progress)
+            update_action.triggered.connect(self.save_progress)
         else:
             start_action = menu.addAction(get_icon("shelf_icon"), "Start reading")
             start_action.triggered.connect(self.start_reading)
@@ -269,15 +302,14 @@ class Card(widgets.QFrame):
     def start_reading(self) -> None:
         self.holder.start_reading(self.book)
 
-    def update_progress(self) -> None:
-        self.holder.update_progress(self.book)
+    def save_progress(self) -> None:
+        self.holder.save_progress(self.book)
 
 
-class SideBar(widgets.QScrollArea):
-    def __init__(self, parent: Home) -> None:
+class QuoteBar(widgets.QScrollArea):
+    def __init__(self, parent: widgets.QWidget, cursor: Cursor) -> None:
         super().__init__(parent)
-        self.home: Home = parent
-        self.cursor = self.home.connection.cursor()
+        self.cursor = cursor
         self.setAlignment(Qt.AlignTop)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
@@ -285,11 +317,10 @@ class SideBar(widgets.QScrollArea):
         holder = widgets.QWidget(self)
         self.layout_ = widgets.QVBoxLayout(holder)
         self.setWidget(holder)
-        self.update_()
+        self.update_view()
 
-    def update_(self) -> None:
+    def update_view(self) -> None:
         _clear_layout(self.layout_)
-        self.layout_.addWidget(widgets.QLabel("<h1>Saved Quotes</h1>"))
         quotes = self.cursor.execute("SELECT text_, author FROM quotes;").fetchall()
         for text, author in quotes:
             card = widgets.QLabel(f'"{text}" - <b>{author.title()}</b>')
@@ -298,6 +329,70 @@ class SideBar(widgets.QScrollArea):
             card.setTextFormat(Qt.TextFormat.RichText)
             card.setWordWrap(True)
             self.layout_.addWidget(card)
+
+
+class ReadingBar(widgets.QScrollArea):
+    def __init__(
+        self,
+        parent: widgets.QWidget,
+        cursor: Cursor,
+        save_progress: Callable[[Book], None],
+    ) -> None:
+        super().__init__(parent)
+        self.cursor = cursor
+        self.save_progress = save_progress
+        self.setAlignment(Qt.AlignTop)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setWidgetResizable(True)
+
+        holder = widgets.QWidget(self)
+        self.layout_ = widgets.QVBoxLayout(holder)
+        self.setWidget(holder)
+        self.update_view()
+
+    def update_view(self) -> None:
+        _clear_layout(self.layout_)
+        records = sorted(
+            self.cursor.execute("SELECT * FROM ongoing_reads;").fetchall(),
+            key=lambda pair: datetime.strptime(pair[1], "%d/%m/%Y"),
+            reverse=True,
+        )
+        for title, *_ in records:
+            self.cursor.execute("SELECT * FROM books WHERE title = ?;", (title,))
+            self.layout_.addWidget(
+                SmallCard(
+                    self,
+                    Book(*self.cursor.fetchone()),
+                    self.cursor,
+                    self.save_progress,
+                )
+            )
+
+
+class SmallCard(widgets.QFrame):
+    def __init__(
+        self,
+        parent: widgets.QWidget,
+        book: Book,
+        cursor: Cursor,
+        save_progress: Callable[[Book], None],
+    ) -> None:
+        super().__init__(parent)
+        self.setSizePolicy(CARD_SIZE_POLICY)
+        self.setFrameStyle(widgets.QFrame.StyledPanel)
+        self.mousePressEvent = lambda _, book_=book: save_progress(book_)
+
+        layout = widgets.QVBoxLayout(self)
+        layout.addWidget(widgets.QLabel(book.title))
+        current_page = book.current_run(cursor)["page"]
+        # noinspection PyArgumentList
+        layout.addWidget(
+            widgets.QProgressBar(
+                self,
+                maximum=book.pages,
+                value=dialogs.moderate(current_page, book.pages),
+            )
+        )
 
 
 def _clear_layout(layout: widgets.QLayout) -> None:
