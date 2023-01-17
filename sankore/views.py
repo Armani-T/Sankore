@@ -15,6 +15,7 @@ CARD_SIZE_POLICY = widgets.QSizePolicy(
     widgets.QSizePolicy.Minimum, widgets.QSizePolicy.Fixed
 )
 
+header = lambda text, level=1: f"<h{level}>{text}</h{level}>"
 get_icon = lambda icon_name: QIcon(QPixmap(dialogs.ASSETS[icon_name]))
 
 
@@ -43,7 +44,6 @@ class Home(widgets.QMainWindow):
         scroll_area.setAlignment(Qt.AlignTop)
         scroll_area.setWidgetResizable(True)
 
-        # self.sidebar = SideBar(self, self.connection.cursor(), self.save_progress)
         self.sidebar = self._create_sidebar()
 
         centre = widgets.QWidget(self)
@@ -58,9 +58,9 @@ class Home(widgets.QMainWindow):
         base.quotes = QuoteBar(self, new_cursor)
         base.read = ReadingBar(self, new_cursor, self.save_progress)
         base_layout = widgets.QVBoxLayout(base)
-        base_layout.addWidget(widgets.QLabel("<h3>Still Reading</h3>"))
+        base_layout.addWidget(widgets.QLabel(header("Still Reading", 3)))
         base_layout.addWidget(base.read)
-        base_layout.addWidget(widgets.QLabel("<h3>Recent Quotes</h3>"))
+        base_layout.addWidget(widgets.QLabel(header("Recent Quotes", 3)))
         base_layout.addWidget(base.quotes)
         return base
 
@@ -127,7 +127,9 @@ class Home(widgets.QMainWindow):
         dialog = dialogs.NewBook(self)
         dialog.exec()
         if dialog.save_changes:
-            self.cursor.execute("INSERT INTO books VALUES (?, ?, ?);", dialog.result())
+            self.cursor.execute(
+                "INSERT INTO books VALUES (?, ?, ?, null);", dialog.result()
+            )
             self.connection.commit()
             self._update_view()
 
