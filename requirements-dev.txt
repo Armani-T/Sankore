@@ -1,4 +1,4 @@
 black==24.3.0
 pyflakes==3.0.1
-pyside6==6.4.2
+pyside6==6.11.1
 mypy==0.991
